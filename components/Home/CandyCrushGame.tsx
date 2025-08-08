@@ -1659,6 +1659,12 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
               nftName
             })
           });
+
+          await actions?.composeCast({
+            text: `Just snagged a ChainCrush NFT with a score of ${score} 💥 \nstill ${remainingSupply} left 👀\n
+Your turn to flex — play, score, and mint yours 🚀🎮✨`,
+            embeds:[APP_URL || '']
+          })
           
           console.log('NFT minting recorded successfully');
         } catch (error) {
@@ -2051,7 +2057,7 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
                   ...(playerData.pfpUrl && { userImg: playerData.pfpUrl }),
                 });
                 
-                const shareUrl = `${APP_URL}?${shareParams.toString()}`;
+                const shareUrl = `${APP_URL}`;
                 
                 if (actions && actions.composeCast) {
                   await actions.composeCast({
