@@ -14,9 +14,11 @@ import Leaderboard from '../Leaderboard'
 import { useConnect, useAccount } from 'wagmi'
 import { motion } from 'framer-motion'
 import dynamic from 'next/dynamic'
+import LoadingSpinner from '../LoadingSpinner'
 
 const CandyCrushGame = dynamic(() => import('./CandyCrushGame'), {
   ssr: false,
+  loading: () => <LoadingSpinner />
 })
 
 export function Demo() {
