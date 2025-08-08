@@ -1318,24 +1318,23 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
 
     const config: Phaser.Types.Core.GameConfig = {
       type: Phaser.AUTO,
-      width: typeof window !== 'undefined' ? window.innerWidth : 800,
-      height: typeof window !== 'undefined' ? window.innerHeight : 600,
+      width: window.innerWidth,
+      height: window.innerHeight,
       parent: gameRef.current,
       transparent: true, // Make canvas transparent to show CSS background
       scale: {
-        mode: Phaser.Scale.FIT,
+        mode: Phaser.Scale.RESIZE,
         autoCenter: Phaser.Scale.CENTER_BOTH,
-        width: typeof window !== 'undefined' ? window.innerWidth : 800,
-        height: typeof window !== 'undefined' ? window.innerHeight : 600,
-        zoom: 1
+        zoom: window.devicePixelRatio || 1
+
       },
       render: {
-        antialias: false,
-        pixelArt: true,
-        roundPixels: true,
-        powerPreference: 'default',
-        batchSize: 1024,
-        mipmapFilter: 'NEAREST'
+        antialias: true,
+        pixelArt: false,
+        roundPixels: false,
+        powerPreference: 'high-performance',
+        batchSize: 4096,
+        mipmapFilter: 'LINEAR_MIPMAP_LINEAR'
       },
       physics: {
         default: 'arcade',
@@ -1661,7 +1660,7 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
           });
 
           await actions?.composeCast({
-            text: `Just snagged a ChainCrush NFT with a score of ${score} 💥 \nstill ${remainingSupply} left 👀\n
+            text: `Just snagged a ChainCrush NFT with a score of ${score} 💥 \n\nStill ${remainingSupply} NFTs left 👀\n
 Your turn to flex — play, score, and mint yours 🚀🎮✨`,
             embeds:[APP_URL || '']
           })
@@ -2290,7 +2289,7 @@ Your turn to flex — play, score, and mint yours 🚀🎮✨`,
               onClick={handleMintNFT}
               style={{ 
                 position: 'fixed', 
-                bottom: '60px', 
+                bottom: '40px', 
                 left: '50%', 
                 transform: 'translateX(-50%)',
                 zIndex: 2000,
