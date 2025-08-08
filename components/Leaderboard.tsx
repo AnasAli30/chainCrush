@@ -204,7 +204,7 @@ export default function Leaderboard() {
       </div>
 
       {/* Leaderboard */}
-      <div className="bg-white rounded-2xl p-2  shadow-lg border border-gray-100" style={{width:"130%",marginLeft:"-15%"}}>
+      <div className="bg-white rounded-2xl p-2  shadow-lg border border-gray-100" style={{width:"105%",marginLeft:"-3%"}}>
        
 
               {/* Stats */}
