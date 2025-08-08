@@ -8,12 +8,12 @@ import { User } from '@/components/Home/User'
 import { WalletActions } from '@/components/Home/WalletActions'
 import { NotificationActions } from './NotificationActions'
 import { ThemeToggle } from '@/components/ThemeToggle'
-import dynamic from 'next/dynamic'
 import NFTManager from '../NFTManager'
 import UserStats from '../UserStats'
 import Leaderboard from '../Leaderboard'
 import { useConnect, useAccount } from 'wagmi'
 import { motion } from 'framer-motion'
+import dynamic from 'next/dynamic'
 
 const CandyCrushGame = dynamic(() => import('./CandyCrushGame'), {
   ssr: false,

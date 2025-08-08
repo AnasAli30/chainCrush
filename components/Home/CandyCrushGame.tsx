@@ -6,10 +6,10 @@ import Phaser from 'phaser';
 import { APP_URL } from '@/lib/constants';
 import { useMiniAppContext } from '@/hooks/use-miniapp-context';
 import { getPlayerData } from '@/lib/leaderboard';
+import { useContractWrite, useContractRead, useAccount, useWaitForTransactionReceipt } from 'wagmi';
 import { parseEther } from 'viem';
 import { CONTRACT_ADDRESSES, CHAINCRUSH_NFT_ABI } from '@/lib/contracts';
 import ConfirmEndGameModal from '../ConfirmEndGameModal';
-import { useWagmiClient } from '@/hooks/use-wagmi-client';
 
 interface CandyCrushGameProps {
   onBack?: () => void;
@@ -26,12 +26,7 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
   const [level, setLevel] = useState(1);
   const [moves, setMoves] = useState(10);
   const [animatedScore, setAnimatedScore] = useState(0);
-  const [previousBestScore, setPreviousBestScore] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return parseInt(localStorage.getItem('candyCrushMaxScore') || '0');
-    }
-    return 0;
-  });
+  const [previousBestScore, setPreviousBestScore] = useState(() => parseInt(localStorage.getItem('candyCrushMaxScore') || '0'));
   const [gameKey, setGameKey] = useState<number>(0);
   
   // Challenge system state
@@ -119,9 +114,7 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
     setChallengeTarget(10);
     setChallengeProgress(0);
     setAnimatedScore(0);
-    if (typeof window !== 'undefined') {
-      setPreviousBestScore(parseInt(localStorage.getItem('candyCrushMaxScore') || '0'));
-    }
+    setPreviousBestScore(parseInt(localStorage.getItem('candyCrushMaxScore') || '0'));
     setGameKey((k: number) => k + 1); // Increment gameKey to remount game container
     
     // Reset mint status to show "Mint NFT" button again
@@ -584,7 +577,7 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
 
     function triggerVibration(pattern: number[]) {
       // Check if vibration is supported
-      if (typeof window !== 'undefined' && 'vibrate' in navigator) {
+      if ('vibrate' in navigator) {
         try {
           navigator.vibrate(pattern);
         } catch (error) {
@@ -911,14 +904,12 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
         
         if (gameMoves <= 0) {
           // Store previous best score before updating
-          if (typeof window !== 'undefined') {
-            const currentBest = parseInt(localStorage.getItem('candyBestScore') || '0');
-            setPreviousBestScore(currentBest);
-            
-            // Update best score if current score is better
-            if (gameScore > currentBest) {
-              localStorage.setItem('candyBestScore', gameScore.toString());
-            }
+          const currentBest = parseInt(localStorage.getItem('candyBestScore') || '0');
+          setPreviousBestScore(currentBest);
+          
+          // Update best score if current score is better
+          if (gameScore > currentBest) {
+            localStorage.setItem('candyBestScore', gameScore.toString());
           }
           
           setGameOver(true);
@@ -1352,7 +1343,7 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
       // Animate all candies falling down and fading out
       let total = 0, done = 0;
       // Vibrate for reshuffle start
-      if (typeof window !== 'undefined' && 'vibrate' in navigator) {
+      if ('vibrate' in navigator) {
         navigator.vibrate([100, 50, 100]);
       }
       for (let row = 0; row < GRID_ROWS; row++) {
@@ -1405,7 +1396,7 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
             onComplete: () => {
               landed++;
               // Vibrate for each candy landing (short pulse)
-              if (typeof window !== 'undefined' && 'vibrate' in navigator) {
+              if ('vibrate' in navigator) {
                 navigator.vibrate(10);
               }
               // When the last candy animates in, update UI and check for matches
@@ -1513,22 +1504,43 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
     []
   );
 
-  const {
-    address,
-    mintNFT,
-    mintData,
-    isMintError,
-    mintErrorObj,
-    isMinting,
-    mintSuccess,
-    totalSupply,
-    remainingSupply,
-    canMintToday,
-    remainingMintsToday
-  } = useWagmiClient();
+  const { address } = useAccount();
 
   const [mintStatus, setMintStatus] = useState<'idle' | 'minting' | 'success' | 'error'>('idle');
   const [mintError, setMintError] = useState<string>('');
+  const { writeContract: mintNFT, data: mintData, isError: isMintError, error: mintErrorObj } = useContractWrite();
+  const { isLoading: isMinting, isSuccess: mintSuccess } = useWaitForTransactionReceipt({ hash: mintData });
+
+  // Contract reads for supply and daily limits
+  const { data: totalSupply } = useContractRead({
+    address: CONTRACT_ADDRESSES.CHAINCRUSH_NFT as `0x${string}`,
+    abi: CHAINCRUSH_NFT_ABI,
+    functionName: 'getCurrentTokenId',
+    query: { enabled: !!address }
+  });
+
+  const { data: remainingSupply } = useContractRead({
+    address: CONTRACT_ADDRESSES.CHAINCRUSH_NFT as `0x${string}`,
+    abi: CHAINCRUSH_NFT_ABI,
+    functionName: 'getRemainingSupply',
+    query: { enabled: !!address }
+  });
+
+  const { data: canMintToday } = useContractRead({
+    address: CONTRACT_ADDRESSES.CHAINCRUSH_NFT as `0x${string}`,
+    abi: CHAINCRUSH_NFT_ABI,
+    functionName: 'canMintToday',
+    args: address ? [address] : undefined,
+    query: { enabled: !!address }
+  });
+
+  const { data: remainingMintsToday } = useContractRead({
+    address: CONTRACT_ADDRESSES.CHAINCRUSH_NFT as `0x${string}`,
+    abi: CHAINCRUSH_NFT_ABI,
+    functionName: 'getRemainingMintsToday',
+    args: address ? [address] : undefined,
+    query: { enabled: !!address }
+  });
 
   // On game over, show NFT minting option
   useEffect(() => {
