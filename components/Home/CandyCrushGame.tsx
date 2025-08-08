@@ -1383,7 +1383,7 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
       console.error('Failed to initialize Phaser game:', error);
       // Show error message to user
       setGameInitialized(false);
-      alert('Game failed to load. Please refresh the page and try again.');
+      setGameError('Game failed to load. Please refresh the page and try again.');
     }
 
     // Add reshuffleGrid function in Phaser logic and expose to React
@@ -1705,6 +1705,8 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
 
 
   
+
+  // Show error if game failed to load
 
   return (
     <div style={{ 
