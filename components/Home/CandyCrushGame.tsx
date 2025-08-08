@@ -184,13 +184,18 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
         this.gridY = gridY;
         this.candyType = type;
         
-        // High quality scaling for crisp images
+        // Ultra high quality scaling for crisp images
         this.setDisplaySize(CANDY_SIZE, CANDY_SIZE);
         this.setOrigin(0.5, 0.5); // Center the sprite
         this.setInteractive();
         
-        // Ensure high quality rendering
-        // this.setPipeline('TextureTintPipeline'); // Removed for compatibility
+        // Ensure ultra high quality rendering
+        // this.setTexture('candy-' + type, undefined, { 
+        //   frame: undefined,
+        //   flipX: false,
+        //   flipY: false,
+        //   tint: 0xffffff
+        // }); // Simplified for compatibility
         
         scene.add.existing(this);
       }
@@ -224,14 +229,16 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
         this.load.image('candy-' + type, `/candy/${type}.png`);
       });
       
-      // Ensure images maintain quality when loaded
+      // Ensure images maintain ultra high quality when loaded
       this.load.on('filecomplete-image', (key: string) => {
         const texture = this.textures.get(key);
         if (texture) {
-          // Set high quality filtering for each texture
+          // Set ultra high quality filtering for each texture
           texture.setFilter(Phaser.Textures.FilterMode.LINEAR);
+          // Enable mipmaps for better quality at different scales
+          // texture.setMipmapFilter(Phaser.Textures.FilterMode.LINEAR); // Not available in this version
         }
-        console.log('✅ Loaded high-quality meme image:', key);
+        console.log('✅ Loaded ultra high-quality meme image:', key);
       });
       
       // Log any errors but don't create fallbacks
@@ -267,8 +274,12 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
         function create(this: Phaser.Scene) {
       scene = this;
       
-      // Set high quality rendering for the scene
+      // Set ultra high quality rendering for the scene
       // this.renderer.setPipeline('TextureTintPipeline'); // Removed for compatibility
+      
+      // Enable high quality rendering
+      this.cameras.main.setBackgroundColor('#ffffff');
+      this.cameras.main.setRoundPixels(false);
       
       // Calculate responsive grid dimensions after scene is initialized
       const availableWidth = this.cameras.main.width - (GRID_PADDING * 2);
@@ -1331,15 +1342,16 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
         zoom: typeof window !== 'undefined' ? (window.devicePixelRatio || 1) : 1
       },
       render: {
-        // High quality rendering settings
+        // Ultra high quality rendering settings
         antialias: true,
         pixelArt: false,
         roundPixels: false,
         powerPreference: 'high-performance',
-        batchSize: 4096,
+        batchSize: 8192,
         mipmapFilter: 'LINEAR_MIPMAP_LINEAR',
         failIfMajorPerformanceCaveat: false,
-        preserveDrawingBuffer: false
+        preserveDrawingBuffer: false,
+        maxTextures: 16
       },
       physics: {
         default: 'arcade',
