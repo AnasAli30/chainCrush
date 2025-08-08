@@ -184,12 +184,13 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
         this.gridY = gridY;
         this.candyType = type;
         
-        // High quality scaling with proper filtering
+        // High quality scaling for crisp images
         this.setDisplaySize(CANDY_SIZE, CANDY_SIZE);
+        this.setOrigin(0.5, 0.5); // Center the sprite
         this.setInteractive();
         
-        // Ensure high quality rendering and proper scaling
-        this.setScale(1);
+        // Ensure high quality rendering
+        // this.setPipeline('TextureTintPipeline'); // Removed for compatibility
         
         scene.add.existing(this);
       }
@@ -218,7 +219,7 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
     }
 
     function preload(this: Phaser.Scene) {
-      // Load all the meme images from candy folder with high quality settings
+      // Load all the meme images from candy folder
       CANDY_TYPES.forEach(type => {
         this.load.image('candy-' + type, `/candy/${type}.png`);
       });
@@ -229,13 +230,6 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
         if (texture) {
           // Set high quality filtering for each texture
           texture.setFilter(Phaser.Textures.FilterMode.LINEAR);
-          
-          // Ensure the texture is properly scaled for high DPI displays
-          const source = texture.getSourceImage();
-          if (source) {
-            // Log the source dimensions for debugging
-            console.log(`Texture ${key} source dimensions:`, source.width, 'x', source.height);
-          }
         }
         console.log('✅ Loaded high-quality meme image:', key);
       });
@@ -272,6 +266,9 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
 
         function create(this: Phaser.Scene) {
       scene = this;
+      
+      // Set high quality rendering for the scene
+      // this.renderer.setPipeline('TextureTintPipeline'); // Removed for compatibility
       
       // Calculate responsive grid dimensions after scene is initialized
       const availableWidth = this.cameras.main.width - (GRID_PADDING * 2);
@@ -1331,10 +1328,10 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
         mode: Phaser.Scale.RESIZE,
         autoCenter: Phaser.Scale.CENTER_BOTH,
         // Handle high DPI displays for better image quality
-        zoom: typeof window !== 'undefined' ? Math.min(window.devicePixelRatio || 1, 2) : 1
+        zoom: typeof window !== 'undefined' ? (window.devicePixelRatio || 1) : 1
       },
       render: {
-        // WebGL settings for better quality while maintaining stability
+        // High quality rendering settings
         antialias: true,
         pixelArt: false,
         roundPixels: false,
