@@ -30,9 +30,31 @@ export function Demo() {
   const { actions } = useMiniAppContext();
   const [showLeaderboard, setShowLeaderboard] = useState(false)
   const [activeTab, setActiveTab] = useState<'home' | 'nfts' | 'stats' | 'leaderboard'>('home')
+  const [showRewardPopup, setShowRewardPopup] = useState(false)
   
   const { connect, connectors } = useConnect()
   const { isConnected } = useAccount()
+
+  // Check if user has seen the reward popup before
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const hasSeenRewardPopup = localStorage.getItem('hasSeenRewardPopup')
+      if (!hasSeenRewardPopup) {
+        // Show popup after a short delay for better UX
+        const timer = setTimeout(() => {
+          setShowRewardPopup(true)
+        }, 1000)
+        return () => clearTimeout(timer)
+      }
+    }
+  }, [])
+
+  const handleCloseRewardPopup = () => {
+    setShowRewardPopup(false)
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('hasSeenRewardPopup', 'true')
+    }
+  }
 
   useEffect(()=>{
     if(isConnected){
@@ -233,7 +255,112 @@ export function Demo() {
         </div>
       </div>
       
-      <BottomNavbar 
+      {/* Reward Popup for First-Time Users */}
+      {showRewardPopup && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.7)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 3000,
+          }}
+          onClick={handleCloseRewardPopup}
+        >
+          <motion.div
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.8, opacity: 0 }}
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              width: 'min(90vw, 500px)',
+              borderRadius: '20px',
+              padding: '30px',
+              border: '1px solid rgba(255,255,255,0.2)',
+              backdropFilter: 'blur(20px)',
+              background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(168, 85, 247, 0.1))',
+              boxShadow: '0 25px 60px rgba(0,0,0,0.4)'
+            }}
+          >
+            {/* Close Button */}
+            <button
+              onClick={handleCloseRewardPopup}
+              style={{
+                position: 'absolute',
+                top: 15,
+                right: 15,
+                background: 'rgba(255,255,255,0.1)',
+                border: '1px solid rgba(255,255,255,0.2)',
+                color: '#fff',
+                borderRadius: '50%',
+                width: 35,
+                height: 35,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                fontSize: '18px'
+              }}
+            >
+              ✕
+            </button>
+
+            {/* Content */}
+            <div style={{ textAlign: 'center', color: '#fff',display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center" }}>
+              {/* <div style={{ fontSize: '48px', marginBottom: '20px' }}>🏆</div> */}
+              <h2 style={{ fontSize: '28px', fontWeight: 'bold', marginBottom: '15px' }}>
+                Welcome to ChainCrush!
+              </h2>
+              <p style={{ fontSize: '16px', opacity: 0.9, marginBottom: '5px', lineHeight: '1.5' }}>
+                Get ready for the sweetest rewards! Play daily 
+              </p>
+              <img src="/candy/2.png" alt="" style={{width:"50px",height:"50px"}} />
+              <p style={{fontSize:"16px",opacity:0.9,marginBottom:"5px",lineHeight:"1.5"}}> compete for PEPE coins.</p>
+              {/* Reward Info */}
+              <div style={{ 
+                background: 'rgba(255,255,255,0.1)', 
+                borderRadius: '15px', 
+                padding: '20px',
+                marginBottom: '20px'
+              }}>
+                <h3 style={{ fontSize: '20px', fontWeight: 'bold', marginBottom: '15px' }}>
+                  🎁 Weekly Rewards
+                </h3>
+                <div style={{ textAlign: 'left', fontSize: '14px' }}>
+                  <div style={{ marginBottom: '8px' }}>🥇 1st Place: 2,000,000 PEPE</div>
+                  <div style={{ marginBottom: '8px' }}>🥈 2nd Place: 1,500,000 PEPE</div>
+                  <div style={{ marginBottom: '8px' }}>🥉 3rd Place: 1,000,000 PEPE</div>
+                  <div style={{ marginBottom: '8px' }}>🏅 4th-6th: 500,000 PEPE each</div>
+                  <div style={{ marginBottom: '8px' }}>🎖️ 7th-8th: 250,000 PEPE each</div>
+                  <div>🏆 9th-10th: 100,000 PEPE each</div>
+                </div>
+              </div>
+              
+              <motion.button
+                onClick={handleCloseRewardPopup}
+                style={{
+                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '12px',
+                  padding: '12px 30px',
+                  fontSize: '16px',
+                  fontWeight: 'bold',
+                  cursor: 'pointer'
+                }}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                Let's Start Playing! 🎮
+              </motion.button>
+            </div>
+          </motion.div>
+        </div>
+      )}
+      
+      <BottomNavbar
         activeTab="home" 
         onTabChange={setActiveTab} 
         onShowGame={setShowGame} 
