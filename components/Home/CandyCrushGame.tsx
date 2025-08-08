@@ -22,6 +22,7 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
   const [gameInitialized, setGameInitialized] = useState(false);
   const [gameOverState, setGameOverState] = useState(false); // Track game over for blur effect
   const [gameOver, setGameOver] = useState(false);
+  const [gameError, setGameError] = useState<string | null>(null);
   const [score, setScore] = useState(0);
   const [level, setLevel] = useState(1);
   const [moves, setMoves] = useState(10);
@@ -1330,14 +1331,12 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
         batchSize: 2048,
         mipmapFilter: 'LINEAR_MIPMAP_LINEAR',
         failIfMajorPerformanceCaveat: false,
-        preserveDrawingBuffer: false,
-        stencil: false,
-        depth: false
+        preserveDrawingBuffer: false
       },
       physics: {
         default: 'arcade',
         arcade: {
-          gravity: { y: 0 },
+          gravity: { x: 0, y: 0 },
           debug: false
         }
       },
@@ -1347,6 +1346,15 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
       }
     };
 
+    // Check WebGL support
+    const canvas = document.createElement('canvas');
+    const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+    
+    if (!gl) {
+      console.warn('WebGL not supported, using canvas renderer');
+      config.type = Phaser.CANVAS;
+    }
+    
     try {
       const game = new Phaser.Game(config);
       
