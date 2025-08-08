@@ -3,15 +3,11 @@ import { ethers } from "ethers";
 import { canUserMint, incrementDailyMintCount, saveUserMint, getUserDailyMintCount } from "@/lib/database";
 
 const PRIVATE_KEY = process.env.SERVER_PRIVATE_KEY;
-const CHAINCRUSH_NFT_ADDRESS = process.env.CHAINCRUSH_NFT_ADDRESS;
+const CHAINCRUSH_NFT_ADDRESS = process.env.CHAINCRUSH_NFT_ADDRESS || "0x0000000000000000000000000000000000000000";
 const DAILY_MINT_LIMIT = parseInt(process.env.DAILY_MINT_LIMIT || "6");
 
 if (!PRIVATE_KEY) {
   throw new Error("SERVER_PRIVATE_KEY is not set");
-}
-
-if (!CHAINCRUSH_NFT_ADDRESS) {
-  throw new Error("CHAINCRUSH_NFT_ADDRESS is not set");
 }
 
 export async function POST(request: NextRequest) {

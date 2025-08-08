@@ -1,11 +1,11 @@
 // Simple rewards functions - placeholder implementation
-export type RewardToken = "ARB" | "USDC" | "ETH" | "CUSTOM";
+export type RewardToken = "MON" | "USDC" | "ETH" | "CUSTOM";
 
-export const rewardTypes: RewardToken[] = ["ARB", "USDC", "ETH", "CUSTOM"];
+export const rewardTypes: RewardToken[] = ["MON", "USDC", "ETH", "CUSTOM"];
 
 export function getRandomValue(tokenType: RewardToken): number {
   const ranges = {
-    ARB: { min: 10, max: 100 },
+    MON: { min: 10, max: 100 },
     USDC: { min: 1, max: 10 },
     ETH: { min: 0.001, max: 0.01 },
     CUSTOM: { min: 1, max: 50 } // Adjust based on your token's value

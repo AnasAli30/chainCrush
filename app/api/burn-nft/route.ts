@@ -2,14 +2,10 @@ import { NextRequest } from "next/server";
 import { ethers } from "ethers";
 
 const PRIVATE_KEY = process.env.SERVER_PRIVATE_KEY;
-const TOKEN_REWARD_ADDRESS = process.env.TOKEN_REWARD_ADDRESS;
+const TOKEN_REWARD_ADDRESS = process.env.TOKEN_REWARD_ADDRESS || "0x0000000000000000000000000000000000000000";
 
 if (!PRIVATE_KEY) {
   throw new Error("SERVER_PRIVATE_KEY is not set");
-}
-
-if (!TOKEN_REWARD_ADDRESS) {
-  throw new Error("TOKEN_REWARD_ADDRESS is not set");
 }
 
 export async function POST(request: NextRequest) {
