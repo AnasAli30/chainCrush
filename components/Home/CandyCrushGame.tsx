@@ -26,7 +26,12 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
   const [level, setLevel] = useState(1);
   const [moves, setMoves] = useState(10);
   const [animatedScore, setAnimatedScore] = useState(0);
-  const [previousBestScore, setPreviousBestScore] = useState(() => parseInt(localStorage.getItem('candyCrushMaxScore') || '0'));
+  const [previousBestScore, setPreviousBestScore] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return parseInt(localStorage.getItem('candyCrushMaxScore') || '0');
+    }
+    return 0;
+  });
   const [gameKey, setGameKey] = useState<number>(0);
   
   // Challenge system state
@@ -114,7 +119,9 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
     setChallengeTarget(10);
     setChallengeProgress(0);
     setAnimatedScore(0);
-    setPreviousBestScore(parseInt(localStorage.getItem('candyCrushMaxScore') || '0'));
+    if (typeof window !== 'undefined') {
+      setPreviousBestScore(parseInt(localStorage.getItem('candyCrushMaxScore') || '0'));
+    }
     setGameKey((k: number) => k + 1); // Increment gameKey to remount game container
     
     // Reset mint status to show "Mint NFT" button again
@@ -904,12 +911,14 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
         
         if (gameMoves <= 0) {
           // Store previous best score before updating
-          const currentBest = parseInt(localStorage.getItem('candyBestScore') || '0');
-          setPreviousBestScore(currentBest);
-          
-          // Update best score if current score is better
-          if (gameScore > currentBest) {
-            localStorage.setItem('candyBestScore', gameScore.toString());
+          if (typeof window !== 'undefined') {
+            const currentBest = parseInt(localStorage.getItem('candyBestScore') || '0');
+            setPreviousBestScore(currentBest);
+            
+            // Update best score if current score is better
+            if (gameScore > currentBest) {
+              localStorage.setItem('candyBestScore', gameScore.toString());
+            }
           }
           
           setGameOver(true);

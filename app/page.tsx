@@ -2,6 +2,9 @@ import App from '@/components/pages/app'
 import { APP_URL } from '@/lib/constants'
 import type { Metadata } from 'next'
 
+// Force dynamic rendering to prevent SSR issues
+export const dynamic = 'force-dynamic'
+
 const frame = {
   version: 'next',
   imageUrl: `${APP_URL}/images/feed.png`,
