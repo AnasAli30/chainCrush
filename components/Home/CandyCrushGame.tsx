@@ -1319,16 +1319,27 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
         mode: Phaser.Scale.RESIZE,
         autoCenter: Phaser.Scale.CENTER_BOTH,
         // Handle high DPI displays for better image quality
-        zoom: typeof window !== 'undefined' ? (window.devicePixelRatio || 1) : 1
+        zoom: typeof window !== 'undefined' ? Math.min(window.devicePixelRatio || 1, 2) : 1
       },
       render: {
-        // High quality rendering settings
-        antialias: true,
-        pixelArt: false,
-        roundPixels: false,
-        powerPreference: 'high-performance',
-        batchSize: 4096,
-        mipmapFilter: 'LINEAR_MIPMAP_LINEAR'
+        // WebGL settings to prevent framebuffer issues
+        antialias: false,
+        pixelArt: true,
+        roundPixels: true,
+        powerPreference: 'default',
+        batchSize: 2048,
+        mipmapFilter: 'LINEAR_MIPMAP_LINEAR',
+        failIfMajorPerformanceCaveat: false,
+        preserveDrawingBuffer: false,
+        stencil: false,
+        depth: false
+      },
+      physics: {
+        default: 'arcade',
+        arcade: {
+          gravity: { y: 0 },
+          debug: false
+        }
       },
       scene: {
         preload: preload,
@@ -1336,7 +1347,36 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
       }
     };
 
-    new Phaser.Game(config);
+    try {
+      const game = new Phaser.Game(config);
+      
+      // Add error handling for WebGL issues
+      game.events.on('error', (error: any) => {
+        console.error('Phaser game error:', error);
+        // Fallback to canvas renderer if WebGL fails
+        if (error.message && error.message.includes('framebuffer')) {
+          console.log('WebGL framebuffer error detected, attempting fallback...');
+          game.destroy(true);
+          
+          // Try with canvas renderer
+          const canvasConfig = {
+            ...config,
+            type: Phaser.CANVAS,
+            render: {
+              ...config.render,
+              type: Phaser.CANVAS
+            }
+          };
+          
+          new Phaser.Game(canvasConfig);
+        }
+      });
+    } catch (error) {
+      console.error('Failed to initialize Phaser game:', error);
+      // Show error message to user
+      setGameInitialized(false);
+      alert('Game failed to load. Please refresh the page and try again.');
+    }
 
     // Add reshuffleGrid function in Phaser logic and expose to React
     function reshuffleGrid() {
