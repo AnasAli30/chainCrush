@@ -3,9 +3,14 @@
 import { Demo } from '@/components/Home'
 import { useFrame } from '@/components/farcaster-provider'
 import { SafeAreaContainer } from '@/components/safe-area-container'
+import { WagmiProvider } from 'wagmi'
+import { config } from '@/components/wallet-provider'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { useMemo } from 'react'
 
 export default function Home() {
   const { context, isLoading, isSDKLoaded } = useFrame()
+  const queryClient = useMemo(() => new QueryClient(), [])
 
   if (isLoading) {
     return (
@@ -31,7 +36,11 @@ export default function Home() {
 
   return (
     <SafeAreaContainer insets={context?.client.safeAreaInsets}>
-      <Demo />
+      <WagmiProvider config={config}>
+        <QueryClientProvider client={queryClient}>
+          <Demo />
+        </QueryClientProvider>
+      </WagmiProvider>
     </SafeAreaContainer>
   )
 }

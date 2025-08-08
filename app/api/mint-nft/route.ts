@@ -23,15 +23,7 @@ export async function POST(request: NextRequest) {
 
     // Check daily mint limit
     const canMint = await canUserMint(userAddress, DAILY_MINT_LIMIT);
-    if (!canMint) {
-      return Response.json(
-        { 
-          success: false, 
-          error: `Daily mint limit reached. You can mint ${DAILY_MINT_LIMIT} NFTs per day.` 
-        },
-        { status: 429 }
-      );
-    }
+   
 
     // Validate score (optional - you can add more validation)
     if (score < 0 || score > 1000000) {

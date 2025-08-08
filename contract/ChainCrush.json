@@ -1,0 +1,21 @@
+{
+    "name": "Chain Crush #1",
+    "symbol": "Cnc",
+    "description": "Chain Crush NFT Collection",
+    "image": "ipfs://bafkreieapewleg5fxdxlevssasq7boirxsmg7mjeljw7c5tc2ikqzsncu4",
+    "attributes": [
+      {
+        "trait_type": "Type",
+        "value": "Chain Crush"
+      }
+    ],
+    "properties": {
+      "files": [
+        {
+          "uri": "ipfs://bafkreieapewleg5fxdxlevssasq7boirxsmg7mjeljw7c5tc2ikqzsncu4",
+          "type": "image/png"
+        }
+      ],
+      "category": "image"
+    }
+  }

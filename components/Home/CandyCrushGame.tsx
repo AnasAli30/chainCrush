@@ -141,6 +141,9 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
   useEffect(() => {
     if (gameRef.current) {
       setGameInitialized(false);
+      // Reset mint status for new game
+      setMintStatus('idle');
+      setMintError('');
       initGame();
     }
     return () => {
@@ -1525,6 +1528,12 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
   const { address } = useAccount();
 
   const [mintStatus, setMintStatus] = useState<'idle' | 'minting' | 'success' | 'error'>('idle');
+  const [showMintPopup, setShowMintPopup] = useState(false);
+
+  // Open popup whenever mint status changes away from idle
+  useEffect(() => {
+    if (mintStatus !== 'idle') setShowMintPopup(true);
+  }, [mintStatus]);
   const [mintError, setMintError] = useState<string>('');
   const { writeContract: mintNFT, data: mintData, isError: isMintError, error: mintErrorObj } = useContractWrite();
   const { isLoading: isMinting, isSuccess: mintSuccess } = useWaitForTransactionReceipt({ hash: mintData });
@@ -2042,7 +2051,8 @@ Your turn to flex — play, score, and mint yours 🚀🎮✨`,
                   ? `\n\n🔥 That's +${Math.round(((score - previousBestScore) / previousBestScore) * 100)}% improvement from my Highest Score!`
                   : '';
                 
-                const shareText = `🍭 Just scored ${score} and reached level ${level} in Mona Crush! 💥\n\nCan you beat my score?${improvementText}`;
+                const shareText = `🍭 Pulled a ${score} in ChainCrush, now sitting pretty at level ${level} 💥
+Come for my spot or stay mid 😏🏆${improvementText}`;
                 
                 const playerData = getPlayerData(context);
                 
@@ -2208,57 +2218,96 @@ Your turn to flex — play, score, and mint yours 🚀🎮✨`,
                 
                 </div>
                 
-                {/* Status Messages */}
-                {mintStatus === 'minting' && (
-                  <div style={{ 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    justifyContent: 'center', 
-                    fontSize: '16px',
-                    background: 'rgba(255, 193, 7, 0.2)',
-                    padding: '16px',
-                    borderRadius: '12px',
-                    border: '1px solid rgba(255, 193, 7, 0.3)'
-                  }}>
-                    <div style={{ 
-                      marginRight: '12px', 
-                      fontSize: '20px',
-                      animation: 'spin 1s linear infinite'
-                    }}>⏳</div>
-                    <span style={{ fontWeight: 'bold' }}>Minting Your NFT...</span>
-                  </div>
-                )}
-                
-                {mintStatus === 'success' && (
-                  <div style={{ 
-                    background: 'rgba(34, 197, 94, 0.2)', 
-                    color: '#4ade80', 
-                    fontSize: '16px',
-                    padding: '16px',
-                    borderRadius: '12px',
-                    border: '1px solid rgba(34, 197, 94, 0.3)'
-                  }}>
-                    <div style={{ fontSize: '32px', marginBottom: '8px' }}>✅</div>
-                    <div style={{ fontWeight: 'bold', fontSize: '18px' }}>NFT Minted Successfully!</div>
-                    <div style={{ fontSize: '14px', opacity: 0.8, marginTop: '4px' }}>
-                      Your ChainCrush NFT has been added to your wallet
-                    </div>
-                  </div>
-                )}
-                
-                {mintStatus === 'error' && (
-                  <div style={{ 
-                    background: 'rgba(239, 68, 68, 0.2)', 
-                    color: '#ff6b6b', 
-                    fontSize: '16px',
-                    padding: '16px',
-                    borderRadius: '12px',
-                    border: '1px solid rgba(239, 68, 68, 0.3)'
-                  }}>
-                    <div style={{ fontSize: '32px', marginBottom: '8px' }}>❌</div>
-                    <div style={{ fontWeight: 'bold', fontSize: '18px' }}>Minting Failed</div>
-                    <div style={{ fontSize: '12px', marginTop: '8px', opacity: 0.8 }}>
-                      "Something went Wrong :( try again later"
+                {/* Mint Status Popup */}
+                {showMintPopup && mintStatus !== 'idle' && (
+                  <div
+                    style={{
+                      position: 'fixed',
+                      inset: 0,
+                      background: 'rgba(0,0,0,0.6)',
+                      border:"10px",
+                      padding:"20px 30px",
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      zIndex: 3000,
+                    }}
+                    onClick={() => setShowMintPopup(false)}
+                  >
+                    <div
+                      onClick={(e) => e.stopPropagation()}
+                      style={{
+                        position: 'relative',
+                        width: 'min(92vw, 420px)',
+                        borderRadius: '16px',
+                        padding: '20px',
+                        border: '1px solid rgba(255,255,255,0.15)',
+                        backdropFilter: 'blur(14px)',
+                        background:
+                          mintStatus === 'minting'
+                            ? 'linear-gradient(135deg, rgba(253, 224, 71, 0.15), rgba(250, 204, 21, 0.08))'
+                            : mintStatus === 'success'
+                            ? 'linear-gradient(135deg, rgba(34, 197, 94, 0.15), rgba(16, 185, 129, 0.08))'
+                            : 'linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(248, 113, 113, 0.08))',
+                        boxShadow: '0 20px 60px rgba(0,0,0,0.35)'
+                      }}
+                    >
+                      {/* Close (X) */}
+                      <button
+                        onClick={() => setShowMintPopup(false)}
+                        aria-label="Close"
+                        style={{
+                          position: 'absolute',
+                          top: 12,
+                          right: 12,
+                          background: 'rgba(255,255,255,0.1)',
+                          border: '1px solid rgba(255,255,255,0.2)',
+                          color: '#fff',
+                          borderRadius: 8,
+                          width: 32,
+                          height: 32,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        ✕
+                      </button>
+
+                      {/* Content */}
+                      {mintStatus === 'minting' && (
+                        <div style={{ display: 'flex', alignItems: 'center' }}>
+                          <div
+                            style={{
+                              marginRight: 12,
+                              fontSize: 20,
+                              animation: 'spin 1s linear infinite'
+                            }}
+                          >
+                            ⏳
+                          </div>
+                          <div>
+                            <div style={{ fontWeight: 'bold', fontSize: 18 }}>Minting Your NFT...</div>
+                            <div style={{ fontSize: 13, opacity: 0.8 }}>Please wait while we confirm the transaction.</div>
+                          </div>
+                        </div>
+                      )}
+
+                      {mintStatus === 'success' && (
+                        <div>
+                          <div style={{ fontWeight: 'bold', fontSize: 18, color: '#4ade80' }}>NFT Minted Successfully!</div>
+                          <div style={{ fontSize: 14, opacity: 0.85, marginTop: 6 }}>Your ChainCrush NFT has been added to your wallet.</div>
+                        </div>
+                      )}
+
+                      {mintStatus === 'error' && (
+                        <div>
+                          <div style={{ fontSize: 28, marginBottom: 8 }}>❌</div>
+                          <div style={{ fontWeight: 'bold', fontSize: 18 }}>Minting Failed</div>
+                          <div style={{ fontSize: 12, marginTop: 8, opacity: 0.8 }}>{mintError}</div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}
