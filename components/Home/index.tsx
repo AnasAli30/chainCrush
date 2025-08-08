@@ -1,8 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faHome, faImages, faChartBar, faTrophy } from '@fortawesome/free-solid-svg-icons'
+import { useMiniAppContext } from '@/hooks/use-miniapp-context';
+
 import { FarcasterActions } from '@/components/Home/FarcasterActions'
 import { User } from '@/components/Home/User'
 import { WalletActions } from '@/components/Home/WalletActions'
@@ -25,11 +27,18 @@ export function Demo() {
   const [showGame, setShowGame] = useState(false)
   const [showNFTs, setShowNFTs] = useState(false)
   const [showStats, setShowStats] = useState(false)
+  const { actions } = useMiniAppContext();
   const [showLeaderboard, setShowLeaderboard] = useState(false)
   const [activeTab, setActiveTab] = useState<'home' | 'nfts' | 'stats' | 'leaderboard'>('home')
   
   const { connect, connectors } = useConnect()
   const { isConnected } = useAccount()
+
+  useEffect(()=>{
+    if(isConnected){
+      actions?.addFrame()
+    }
+  },[isConnected])
 
   if (showGame) {
     return (
