@@ -55,7 +55,7 @@ export function Demo() {
         <div className="flex min-h-screen flex-col items-center justify-center p-4 space-y-8">
           <div className="w-full max-w-4xl space-y-6">
             <div className="text-center space-y-4">
-              <h1 className="text-4xl font-bold text-pink-600">🎴 NFTs</h1>
+             
               <div className="bg-gradient-to-r from-pink-100 to-purple-100 p-8 rounded-2xl shadow-lg">
                 <div className="text-6xl mb-4">🚧</div>
                 <h2 className="text-2xl font-bold text-pink-600 mb-4">Coming Soon!</h2>
@@ -149,36 +149,67 @@ export function Demo() {
             >
               <h2 
                 className="text-3xl font-bold mb-6"
-                style={{ color: 'rgb(var(--text-primary))' }}
+                style={{ color: 'rgb(var(--text-primary))', display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column" }}
               >
-                Welcome to
-                <h1 className="text-4xl font-bold text-white  text-transparent"> ChainCrush!</h1>
+                WelCome To
+              <img src="/images/icon.png" alt=""  style={{borderRadius:"50%",height:"220px",width:"220px"}} /> 
               </h2>
-              <p 
-                className="text-lg mb-8 leading-relaxed"
-                style={{ color: 'rgb(var(--text-secondary))' ,width:"120%",marginLeft:"-10%"}}
-              >
-                Play the most addictive candy-matching game on the blockchain. 
-                Earn NFTs, climb leaderboards, and compete with friends!
-              </p>
-              
+             
               {/* Play Game Button */}
-              <button
+              <motion.button
                 onClick={() => setShowGame(true)}
-                className="relative overflow-hidden group font-bold py-6 px-9 rounded-2xl text-xl transition-all duration-500 transform hover:scale-105 shadow-2xl mb-6"
+                className="relative overflow-hidden font-bold py-6 px-9 rounded-2xl text-xl shadow-2xl mb-6"
                 style={{
-                  background: 'var(--gradient-primary)',
                   boxShadow: '0 20px 40px -12px rgba(99, 102, 241, 0.4)'
                 }}
+                animate={{
+                  scale: [1, 1.05, 1, 1.05, 1]
+                }}
+                transition={{
+                  scale: {
+                    duration: 2,
+                    repeat: Infinity,
+                    ease: "easeInOut"
+                  }
+                }}
+                whileHover={{ 
+                  scale: 1.15,
+                  boxShadow: '0 25px 50px -12px rgba(99, 102, 241, 0.6)'
+                }}
+                whileTap={{ scale: 0.95 }}
               >
-                <span className="relative z-10 text-white">🎮 Start Playing Now!</span>
-                <div 
-                  className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-                  style={{
-                    background: 'var(--gradient-secondary)'
+                <motion.div 
+                  className="absolute inset-0"
+                  animate={{
+                    background: [
+                      'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                      'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+                      'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+                      'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
+                      'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+                    ]
+                  }}
+                  transition={{
+                    duration: 3,
+                    repeat: Infinity,
+                    ease: "easeInOut"
                   }}
                 />
-              </button>
+                
+                <span className="relative z-10 text-white font-bold text-xl">
+                  🎮 Start Playing Now!
+                </span>
+                
+                <motion.div 
+                  className="absolute inset-0"
+                  style={{
+                    background: 'linear-gradient(135deg, #ff6b6b 0%, #feca57 50%, #48dbfb 100%)'
+                  }}
+                  initial={{ opacity: 0 }}
+                  whileHover={{ opacity: 1 }}
+                  transition={{ duration: 0.3 }}
+                />
+              </motion.button>
               
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                 <div className="bg-white p-4 rounded-lg shadow">
@@ -188,8 +219,8 @@ export function Demo() {
                 </div>
                 <div className="bg-white p-4 rounded-lg shadow">
                   <div className="text-2xl mb-2">🎴</div>
-                  <div className="font-semibold text-[#19adff]">Collect NFTs</div>
-                  <div className="text-[#28374d]">Mint unique ChainCrush NFTs</div>
+                  <div className="font-semibold text-[#19adff]">Collect & Burn NFTs</div>
+                  <div className="text-[#28374d]">Mint unique NFTs & burn rare ones for rewards</div>
                 </div>
                 <div className="bg-white p-4 rounded-lg shadow">
                   <div className="text-2xl mb-2">🏆</div>
