@@ -33,8 +33,12 @@ export async function POST(request: NextRequest) {
         [userAddress, tokenId, rewardToken, parsedRewardAmount]
       )
     );
-    const signedMessageHash = ethers.hashMessage(ethers.getBytes(messageHash));
-    const signature = await ethers.sign(signedMessageHash, PRIVATE_KEY);
+
+    
+    // Sign the message
+    const wallet = new ethers.Wallet(PRIVATE_KEY || "");
+    const signature = await wallet.signMessage(ethers.getBytes(messageHash));
+
 
     return Response.json({
       success: true,
