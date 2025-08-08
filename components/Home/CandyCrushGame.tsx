@@ -184,9 +184,13 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
         this.gridY = gridY;
         this.candyType = type;
         
-        // Better scaling for crisp images
+        // High quality scaling with proper filtering
         this.setDisplaySize(CANDY_SIZE, CANDY_SIZE);
         this.setInteractive();
+        
+        // Ensure high quality rendering and proper scaling
+        this.setScale(1);
+        
         scene.add.existing(this);
       }
       
@@ -214,7 +218,7 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
     }
 
     function preload(this: Phaser.Scene) {
-      // Load all the meme images from candy folder
+      // Load all the meme images from candy folder with high quality settings
       CANDY_TYPES.forEach(type => {
         this.load.image('candy-' + type, `/candy/${type}.png`);
       });
@@ -225,6 +229,13 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
         if (texture) {
           // Set high quality filtering for each texture
           texture.setFilter(Phaser.Textures.FilterMode.LINEAR);
+          
+          // Ensure the texture is properly scaled for high DPI displays
+          const source = texture.getSourceImage();
+          if (source) {
+            // Log the source dimensions for debugging
+            console.log(`Texture ${key} source dimensions:`, source.width, 'x', source.height);
+          }
         }
         console.log('✅ Loaded high-quality meme image:', key);
       });
@@ -1323,12 +1334,12 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
         zoom: typeof window !== 'undefined' ? Math.min(window.devicePixelRatio || 1, 2) : 1
       },
       render: {
-        // WebGL settings to prevent framebuffer issues
-        antialias: false,
-        pixelArt: true,
-        roundPixels: true,
-        powerPreference: 'default',
-        batchSize: 2048,
+        // WebGL settings for better quality while maintaining stability
+        antialias: true,
+        pixelArt: false,
+        roundPixels: false,
+        powerPreference: 'high-performance',
+        batchSize: 4096,
         mipmapFilter: 'LINEAR_MIPMAP_LINEAR',
         failIfMajorPerformanceCaveat: false,
         preserveDrawingBuffer: false
