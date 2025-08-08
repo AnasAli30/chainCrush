@@ -6,10 +6,10 @@ import Phaser from 'phaser';
 import { APP_URL } from '@/lib/constants';
 import { useMiniAppContext } from '@/hooks/use-miniapp-context';
 import { getPlayerData } from '@/lib/leaderboard';
-import { useContractWrite, useContractRead, useAccount, useWaitForTransactionReceipt } from 'wagmi';
 import { parseEther } from 'viem';
 import { CONTRACT_ADDRESSES, CHAINCRUSH_NFT_ABI } from '@/lib/contracts';
 import ConfirmEndGameModal from '../ConfirmEndGameModal';
+import { useWagmiClient } from '@/hooks/use-wagmi-client';
 
 interface CandyCrushGameProps {
   onBack?: () => void;
@@ -1513,43 +1513,22 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
     []
   );
 
-  const { address } = useAccount();
+  const {
+    address,
+    mintNFT,
+    mintData,
+    isMintError,
+    mintErrorObj,
+    isMinting,
+    mintSuccess,
+    totalSupply,
+    remainingSupply,
+    canMintToday,
+    remainingMintsToday
+  } = useWagmiClient();
 
   const [mintStatus, setMintStatus] = useState<'idle' | 'minting' | 'success' | 'error'>('idle');
   const [mintError, setMintError] = useState<string>('');
-  const { writeContract: mintNFT, data: mintData, isError: isMintError, error: mintErrorObj } = useContractWrite();
-  const { isLoading: isMinting, isSuccess: mintSuccess } = useWaitForTransactionReceipt({ hash: mintData });
-
-  // Contract reads for supply and daily limits
-  const { data: totalSupply } = useContractRead({
-    address: CONTRACT_ADDRESSES.CHAINCRUSH_NFT as `0x${string}`,
-    abi: CHAINCRUSH_NFT_ABI,
-    functionName: 'getCurrentTokenId',
-    query: { enabled: !!address }
-  });
-
-  const { data: remainingSupply } = useContractRead({
-    address: CONTRACT_ADDRESSES.CHAINCRUSH_NFT as `0x${string}`,
-    abi: CHAINCRUSH_NFT_ABI,
-    functionName: 'getRemainingSupply',
-    query: { enabled: !!address }
-  });
-
-  const { data: canMintToday } = useContractRead({
-    address: CONTRACT_ADDRESSES.CHAINCRUSH_NFT as `0x${string}`,
-    abi: CHAINCRUSH_NFT_ABI,
-    functionName: 'canMintToday',
-    args: address ? [address] : undefined,
-    query: { enabled: !!address }
-  });
-
-  const { data: remainingMintsToday } = useContractRead({
-    address: CONTRACT_ADDRESSES.CHAINCRUSH_NFT as `0x${string}`,
-    abi: CHAINCRUSH_NFT_ABI,
-    functionName: 'getRemainingMintsToday',
-    args: address ? [address] : undefined,
-    query: { enabled: !!address }
-  });
 
   // On game over, show NFT minting option
   useEffect(() => {
