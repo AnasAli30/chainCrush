@@ -4,7 +4,7 @@ import { canUserMint, incrementDailyMintCount, saveUserMint, getUserDailyMintCou
 
 const PRIVATE_KEY = process.env.SERVER_PRIVATE_KEY;
 const CHAINCRUSH_NFT_ADDRESS = process.env.CHAINCRUSH_NFT_ADDRESS;
-const DAILY_MINT_LIMIT = parseInt(process.env.DAILY_MINT_LIMIT || "3");
+const DAILY_MINT_LIMIT = parseInt(process.env.DAILY_MINT_LIMIT || "6");
 
 if (!PRIVATE_KEY) {
   throw new Error("SERVER_PRIVATE_KEY is not set");

@@ -33,7 +33,9 @@ export default function ConfirmEndGameModal({
         padding: '20px',
         borderRadius: '10px',
         maxWidth: '300px',
-        textAlign: 'center'
+        textAlign: 'center',
+        color:"black",
+        fontWeight:"bold"
       }}>
         <h3 style={{ marginBottom: '15px' }}>Confirm Action</h3>
         <p style={{ marginBottom: '20px' }}>{message}</p>

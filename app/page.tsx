@@ -9,7 +9,7 @@ const frame = {
     title: 'Play ChainCrush',
     action: {
       type: 'launch_frame',
-      name: 'ChainCrush - Candy Crush Game',
+      name: 'ChainCrush - meme Crush Game',
       url: APP_URL,
       splashImageUrl: `${APP_URL}/images/splash.png`,
       splashBackgroundColor: '#ff69b4',
@@ -19,10 +19,10 @@ const frame = {
 
 export async function generateMetadata(): Promise<Metadata> {
   return {
-    title: 'ChainCrush - Candy Crush Game',
+    title: 'ChainCrush - Meme Crush Game',
     openGraph: {
-      title: 'ChainCrush - Candy Crush Game',
-      description: 'The sweetest Candy Crush game on Farcaster!',
+      title: 'ChainCrush - Meme Crush Game',
+      description: 'The sweetest Meme Crush game on Farcaster!',
     },
     other: {
       'fc:frame': JSON.stringify(frame),

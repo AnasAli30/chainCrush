@@ -16,6 +16,15 @@ export interface DailyMintCount {
   lastMintTime: number;
 }
 
+export interface GameScore {
+  fid: number;
+  pfpUrl: string;
+  username?: string;
+  score: number;
+  level: number;
+  timestamp: number;
+}
+
 export async function getUserDailyMintCount(userAddress: string): Promise<number> {
   const client = await clientPromise;
   const db = client.db('chaincrush');
@@ -77,7 +86,7 @@ export async function getUserMintHistory(userAddress: string, limit: number = 50
     .limit(limit)
     .toArray();
   
-  return mints as UserMint[];
+  return mints as unknown as UserMint[];
 }
 
 export async function getTotalMints(): Promise<number> {
@@ -111,4 +120,67 @@ export async function getTopScores(limit: number = 10): Promise<Array<{ userAddr
     .toArray();
   
   return topScores as Array<{ userAddress: string; score: number; timestamp: number }>;
+}
+
+export async function saveGameScore(gameScore: GameScore): Promise<void> {
+  const client = await clientPromise;
+  const db = client.db('chaincrush');
+  
+  // Check if player already exists
+  const existingPlayer = await db.collection('gameScores').findOne({ fid: gameScore.fid });
+  
+  if (existingPlayer) {
+    // Update player's best score if current score is higher
+    if (gameScore.score > existingPlayer.score) {
+      await db.collection('gameScores').updateOne(
+        { fid: gameScore.fid },
+        {
+          $set: {
+            pfpUrl: gameScore.pfpUrl,
+            username: gameScore.username,
+            score: gameScore.score,
+            level: gameScore.level,
+            timestamp: gameScore.timestamp,
+            updatedAt: new Date()
+          }
+        }
+      );
+      console.log(`Updated player ${gameScore.fid} with new best score: ${gameScore.score}`);
+    } else {
+      console.log(`Player ${gameScore.fid} score ${gameScore.score} not higher than existing ${existingPlayer.score}`);
+    }
+  } else {
+    // Create new player record
+    await db.collection('gameScores').insertOne({
+      ...gameScore,
+      createdAt: new Date()
+    });
+    console.log(`Created new player ${gameScore.fid} with score: ${gameScore.score}`);
+  }
+}
+
+export async function getLeaderboard(limit: number = 50): Promise<GameScore[]> {
+  const client = await clientPromise;
+  const db = client.db('chaincrush');
+  
+  const leaderboard = await db.collection('gameScores')
+    .find({})
+    .sort({ score: -1 })
+    .limit(limit)
+    .toArray();
+  
+  return leaderboard as unknown as GameScore[];
+}
+
+export async function getUserBestScore(fid: number): Promise<GameScore | null> {
+  const client = await clientPromise;
+  const db = client.db('chaincrush');
+  
+  const bestScore = await db.collection('gameScores')
+    .findOne(
+      { fid },
+      { sort: { score: -1 } }
+    );
+  
+  return bestScore as GameScore | null;
 } 

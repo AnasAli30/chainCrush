@@ -39,6 +39,14 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
   // Add reshuffles state
   const [reshuffles, setReshuffles] = useState(1);
   const reshuffleGridRef = useRef<null | (() => void)>(null);
+  
+  // Combo system state
+  const [comboCount, setComboCount] = useState(0);
+  const [showComboAnimation, setShowComboAnimation] = useState(false);
+  
+  // Daily limit countdown state
+  const [timeUntilReset, setTimeUntilReset] = useState('');
+  const [dailyLimitReached, setDailyLimitReached] = useState(false);
 
   // Score counting animation
   useEffect(() => {
@@ -65,6 +73,36 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
     }
   }, [score, gameOver]);
 
+  // Daily limit countdown timer
+  useEffect(() => {
+    const updateCountdown = () => {
+      const now = new Date();
+      const tomorrow = new Date(now);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      tomorrow.setHours(0, 0, 0, 0); // Reset to midnight
+      
+      const timeLeft = tomorrow.getTime() - now.getTime();
+      
+      if (timeLeft > 0) {
+        const hours = Math.floor(timeLeft / (1000 * 60 * 60));
+        const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
+        
+        setTimeUntilReset(`${hours}h ${minutes}m ${seconds}s`);
+      } else {
+        setTimeUntilReset('00h 00m 00s');
+      }
+    };
+
+    // Update immediately
+    updateCountdown();
+    
+    // Update every second
+    const interval = setInterval(updateCountdown, 1000);
+    
+    return () => clearInterval(interval);
+  }, []);
+
   const handleRestart = () => {
     setGameInitialized(false);
     setGameOver(false);
@@ -78,6 +116,10 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
     setAnimatedScore(0);
     setPreviousBestScore(parseInt(localStorage.getItem('candyCrushMaxScore') || '0'));
     setGameKey((k: number) => k + 1); // Increment gameKey to remount game container
+    
+    // Reset mint status to show "Mint NFT" button again
+    setMintStatus('idle');
+    setMintError('');
     
     if (gameRef.current) {
       const existingGame = gameRef.current.querySelector('canvas');
@@ -854,6 +896,10 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
         // No more matches found - game is now stable
         isGameStable = true;
         console.log('✅ Game stable - no more matches found');
+        
+        // Reset combo when no matches are found
+        setComboCount(0);
+        
         updateUI(); // Update status
         
         if (gameMoves <= 0) {
@@ -868,6 +914,11 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
           
           setGameOver(true);
           setGameOverState(true); // Set blur state
+          
+          // Submit score to database
+          if (context?.user?.fid && context?.user?.pfpUrl) {
+            submitScoreToDatabase(context.user.fid, context.user.pfpUrl, context?.user?.username || 'Anonymous', gameScore, level);
+          }
           
 
         }
@@ -887,13 +938,28 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
       gameChallengeProgress += challengeCandiesMatched;
       console.log(`🍭 Challenge progress: ${challengeCandiesMatched} candies of type ${gameChallengeCandy} matched (${gameChallengeProgress}/${gameChallengeTarget})`);
       
-      gameScore += matches.length * 100;
+      // Increment combo count
+      setComboCount(prev => prev + 1);
+      
+      // Calculate combo bonus score
+      const comboMultiplier = Math.min(comboCount + 1, 5); // Cap at 5x
+      const baseScore = matches.length * 100;
+      const comboBonus = baseScore * (comboMultiplier - 1);
+      const totalScore = baseScore + comboBonus;
+      
+      gameScore += totalScore;
       updateUI();
       
-      console.log(`💥 Removing ${matches.length} matches`);
+      console.log(`💥 Removing ${matches.length} matches (Combo: ${comboMultiplier}x, Score: +${totalScore})`);
       
-      // Vibrate based on match size - bigger matches = longer vibration
-      const vibrationIntensity = Math.min(matches.length * 30, 200);
+      // Show combo animation only for 2x+ combos
+      if (comboCount + 1 >= 2) {
+        setShowComboAnimation(true);
+        setTimeout(() => setShowComboAnimation(false), 2000);
+      }
+      
+      // Vibrate based on match size and combo - bigger matches and combos = longer vibration
+      const vibrationIntensity = Math.min(matches.length * 30 + (comboCount * 20), 300);
       triggerVibration([vibrationIntensity]);
       
       debugGrid('BEFORE MATCH REMOVAL');
@@ -913,24 +979,33 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
       
       debugGrid('AFTER MATCH REMOVAL');
       
-      // Animate removal
+      // Enhanced destruction animation
       let completedAnimations = 0;
-      matches.forEach(candy => {
+      matches.forEach((candy, index) => {
+        // Enhanced candy destruction animation with rotation and scaling
         scene.tweens.add({
           targets: candy,
           scaleX: 0,
           scaleY: 0,
           alpha: 0,
-          duration: 250,
+          rotation: Math.PI * 2, // Full rotation
+          duration: 300,
+          ease: 'Cubic.easeIn',
           onComplete: () => {
             candy.destroy();
             completedAnimations++;
+            
             // Only proceed when ALL removal animations are done
             if (completedAnimations === matches.length) {
               debugGrid('BEFORE CASCADE');
               animatedCascade();
             }
           }
+        });
+        
+        // Stagger the animations slightly for better visual effect
+        scene.time.delayedCall(index * 50, () => {
+          candy.setVisible(true);
         });
       });
     }
@@ -1430,7 +1505,7 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
   );
 
   const { address } = useAccount();
-  const [showMintModal, setShowMintModal] = useState(false);
+
   const [mintStatus, setMintStatus] = useState<'idle' | 'minting' | 'success' | 'error'>('idle');
   const [mintError, setMintError] = useState<string>('');
   const { writeContract: mintNFT, data: mintData, isError: isMintError, error: mintErrorObj } = useContractWrite();
@@ -1440,7 +1515,7 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
   const { data: totalSupply } = useContractRead({
     address: CONTRACT_ADDRESSES.CHAINCRUSH_NFT as `0x${string}`,
     abi: CHAINCRUSH_NFT_ABI,
-    functionName: 'getTotalSupply',
+    functionName: 'getCurrentTokenId',
     query: { enabled: !!address }
   });
 
@@ -1470,11 +1545,44 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
   // On game over, show NFT minting option
   useEffect(() => {
     if (gameOver && address) {
-      setShowMintModal(true);
+      // Submit score to database if we have valid user data
+      if (context?.user?.fid && context?.user?.pfpUrl) {
+        submitScoreToDatabase(context.user.fid, context.user.pfpUrl, context.user.username || 'Anonymous', score, level);
+      } else {
+        console.log('Cannot submit score: Missing FID or pfpUrl', {
+          fid: context?.user?.fid,
+          pfpUrl: context?.user?.pfpUrl
+        });
+      }
     }
   }, [gameOver, address]);
 
   // Handle NFT minting
+  const submitScoreToDatabase = async (fid: number, pfpUrl: string, username: string, gameScore: number, gameLevel: number) => {
+    try {
+      const response = await fetch('/api/submit-score', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fid,
+          pfpUrl,
+          username,
+          score: gameScore,
+          level: gameLevel
+        })
+      });
+
+      const result = await response.json();
+      if (!result.success) {
+        console.error('Failed to submit score:', result.error);
+      } else {
+        console.log('Score submitted successfully:', result.data);
+      }
+    } catch (error) {
+      console.error('Error submitting score:', error);
+    }
+  };
+
   const handleMintNFT = async () => {
     if (!address) return;
 
@@ -1536,7 +1644,7 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      background: gameInitialized ? 'radial-gradient(circle at center, #ff69b4 0%, #ffffff 100%)' : 'linear-gradient(135deg, #ff6b9d 0%, #c44569 50%, #f8b500 100%)'
+      background: gameInitialized ? 'radial-gradient(circle at center, #19adff 0%, #ffffff 100%)' : 'linear-gradient(135deg, #19adff 0%, #28374d 50%, #ffffff 100%)'
     }}>
       {/* Candy Wonderland Animated Background */}
       {gameInitialized && (
@@ -1689,7 +1797,7 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
         </div>
       )}
       
-      {/* Candy background during initialization */}
+      {/* Loading Screen */}
       {!gameInitialized && (
         <div style={{
           position: 'fixed',
@@ -1697,31 +1805,117 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
           left: 0,
           width: '100vw',
           height: '100vh',
-          background: 'radial-gradient(circle at center, #ff69b4 0%, #ffffff 100%)',
+          background: 'radial-gradient(circle at center, #19adff 0%, #ffffff 100%)',
           display: 'flex',
+          flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
           zIndex: 2000,
           overflow: 'hidden'
         }}>
-          <img
-            src="/candy/molandakita.png"
-            alt="Candy"
-            style={{
-              position: 'absolute',
-              left: 'calc(50% - 30px)', // center horizontally (image width is 120px)
-              width: '90px',
-              height: '90px',
-              animation: 'fall-spin 2.5s linear infinite'
-            }}
-          />
+          {/* Loading Title */}
+          <div style={{
+            fontSize: '48px',
+            fontWeight: 'bold',
+            color: '#ffffff',
+            textShadow: '0 4px 8px rgba(0,0,0,0.3)',
+            marginBottom: '40px',
+            textAlign: 'center',
+            animation: 'pulse 2s ease-in-out infinite'
+          }}>
+            Candy Crush
+          </div>
+          
+          {/* Progress Bar Container */}
+          <div style={{
+            width: '300px',
+            height: '8px',
+            backgroundColor: 'rgba(255,255,255,0.2)',
+            borderRadius: '4px',
+            overflow: 'hidden',
+            position: 'relative',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
+          }}>
+            {/* Animated Progress Bar */}
+            <div style={{
+              width: '100%',
+              height: '100%',
+              background: 'linear-gradient(90deg, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4, #feca57)',
+              borderRadius: '4px',
+              animation: 'progressAnimation 3s ease-in-out infinite',
+              backgroundSize: '200% 100%',
+              boxShadow: '0 0 10px rgba(255,255,255,0.5)'
+            }} />
+          </div>
+          
+          {/* Loading Text */}
+          <div style={{
+            fontSize: '18px',
+            color: '#ffffff',
+            marginTop: '20px',
+            textAlign: 'center',
+            opacity: 0.8,
+            animation: 'fadeInOut 2s ease-in-out infinite'
+          }}>
+            Loading Game...
+          </div>
+          
+          {/* Animated Dots */}
+          <div style={{
+            display: 'flex',
+            gap: '8px',
+            marginTop: '15px'
+          }}>
+            {[0, 1, 2].map((i) => (
+              <div key={i} style={{
+                width: '8px',
+                height: '8px',
+                backgroundColor: '#ffffff',
+                borderRadius: '50%',
+                animation: `bounce 1.4s ease-in-out infinite`,
+                animationDelay: `${i * 0.16}s`
+              }} />
+            ))}
+          </div>
+          
+          {/* CSS Animations */}
+          <style dangerouslySetInnerHTML={{
+            __html: `
+              @keyframes progressAnimation {
+                0% { background-position: 0% 50%; }
+                50% { background-position: 100% 50%; }
+                100% { background-position: 0% 50%; }
+              }
+              
+              @keyframes pulse {
+                0%, 100% { transform: scale(1); opacity: 1; }
+                50% { transform: scale(1.05); opacity: 0.9; }
+              }
+              
+              @keyframes fadeInOut {
+                0%, 100% { opacity: 0.6; }
+                50% { opacity: 1; }
+              }
+              
+              @keyframes bounce {
+                0%, 80%, 100% { 
+                  transform: scale(0);
+                  opacity: 0.5;
+                }
+                40% { 
+                  transform: scale(1);
+                  opacity: 1;
+                }
+              }
+            `
+          }} />
         </div>
       )}
       
       <div
         key={gameKey}
         ref={gameRef}
-        style={{ width: '100vw', height: '100vh', position: 'fixed', top: 0, left: 0, zIndex: 1000, filter: gameOverState ? 'blur(5px)' : 'none', transition: 'filter 0.5s ease'}}
+        style={{ width: '100vw', height: '100vh', position: 'fixed', top: 0, left: 0, zIndex: 1000, filter: gameOverState ? 'blur(10px)' : 'none', transition: 'filter 0.5s ease'}}
       />
       
 
@@ -1732,7 +1926,7 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
           <button
             style={{
               position: 'fixed',
-              top: '10px',
+              top: '2px',
               left: '0px',
               zIndex: 2100,
               padding: '8px 16px',
@@ -1753,7 +1947,7 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
             }}
             onClick={handleBackToMenu}
           >
-            ◀ Games
+            ◀ Home
           </button>
           {/* Game Over Content */}
           <div style={{
@@ -1780,119 +1974,8 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
             }}>
               GAME OVER
             </h1>
-            {/* NFT Minting Modal */}
-            {showMintModal && (
-              <div
-                style={{
-                  position: 'fixed',
-                  top: '50%',
-                  left: '50%',
-                  transform: 'translate(-50%, -50%)',
-                  background: 'rgba(0,0,0,0.9)',
-                  padding: '30px',
-                  borderRadius: '15px',
-                  border: '2px solid #ff69b4',
-                  zIndex: 4000,
-                  minWidth: '300px',
-                  textAlign: 'center',
-                  color: 'white',
-                  pointerEvents: 'auto'
-                }}
-              >
-                <h2 style={{ marginBottom: '20px', color: '#ff69b4' }}>🎮 Mint Your NFT!</h2>
-                <p style={{ marginBottom: '20px' }}>
-                  You scored {score} points! Mint a ChainCrush NFT to commemorate your achievement.
-                </p>
-                
-                {/* Supply and Daily Limit Info */}
-                <div style={{ 
-                  background: 'rgba(255, 105, 180, 0.1)', 
-                  padding: '15px', 
-                  borderRadius: '8px', 
-                  marginBottom: '20px',
-                  fontSize: '14px'
-                }}>
-                  <div style={{ marginBottom: '8px' }}>
-                    📊 Supply: {totalSupply ? Number(totalSupply).toLocaleString() : '...'} / 10,000
-                  </div>
-                  <div style={{ marginBottom: '8px' }}>
-                    🎯 Remaining: {remainingSupply ? Number(remainingSupply).toLocaleString() : '...'} NFTs
-                  </div>
-                  <div style={{ marginBottom: '8px' }}>
-                    ⏰ Daily Limit: {remainingMintsToday !== undefined ? Number(remainingMintsToday) : '...'} / 3 mints left
-                  </div>
-                  {canMintToday === false && (
-                    <div style={{ color: '#ef4444', fontWeight: 'bold' }}>
-                      ❌ Daily mint limit reached! Try again tomorrow.
-                    </div>
-                  )}
-                </div>
-                
-                {mintStatus === 'idle' && (
-                  <button
-                    onClick={handleMintNFT}
-                    disabled={!address || canMintToday === false || remainingSupply === BigInt(0)}
-                    style={{
-                      background: (address && canMintToday !== false && remainingSupply !== BigInt(0)) 
-                        ? 'linear-gradient(45deg, #ff69b4, #ff1493)' 
-                        : '#666',
-                      color: 'white',
-                      padding: '12px 24px',
-                      border: 'none',
-                      borderRadius: '8px',
-                      fontSize: '16px',
-                      cursor: (address && canMintToday !== false && remainingSupply !== BigInt(0)) 
-                        ? 'pointer' 
-                        : 'not-allowed',
-                      marginRight: '10px'
-                    }}
-                  >
-                    {!address ? 'Connect Wallet' : 
-                     canMintToday === false ? 'Daily Limit Reached' :
-                     remainingSupply === BigInt(0) ? 'Supply Exhausted' :
-                     '🎴 Mint NFT'}
-                  </button>
-                )}
-                
-                {mintStatus === 'minting' && (
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <div style={{ marginRight: '10px' }}>⏳</div>
-                    <span>Minting NFT...</span>
-                  </div>
-                )}
-                
-                {mintStatus === 'success' && (
-                  <div style={{ color: '#4ade80' }}>
-                    <div style={{ fontSize: '24px', marginBottom: '10px' }}>✅</div>
-                    <div>NFT Minted Successfully!</div>
-                  </div>
-                )}
-                
-                {mintStatus === 'error' && (
-                  <div style={{ color: '#ef4444' }}>
-                    <div style={{ fontSize: '24px', marginBottom: '10px' }}>❌</div>
-                    <div>Minting Failed</div>
-                    <div style={{ fontSize: '12px', marginTop: '5px' }}>{mintError}</div>
-                  </div>
-                )}
-                
-                <button
-                  onClick={() => setShowMintModal(false)}
-                  style={{
-                    background: 'transparent',
-                    color: '#ff69b4',
-                    padding: '8px 16px',
-                    border: '1px solid #ff69b4',
-                    borderRadius: '6px',
-                    fontSize: '14px',
-                    cursor: 'pointer',
-                    marginTop: '15px'
-                  }}
-                >
-                  Close
-                </button>
-              </div>
-            )}
+            {/* Mint NFT Section - Embedded in Game Over */}
+            
             {/* Current Score */}
             <button style={{
               fontSize: '40px',
@@ -1934,16 +2017,19 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
                     text: shareText,
                     embeds: [shareUrl],
                   });
+
+                  
                 } 
               } catch (error) {
                 console.error('Error sharing score:', error);
               }
             }}>
-              <div style={{fontSize: '14px', marginBottom: '5px', display: 'flex', alignItems: 'center', gap: '6px'}}>
+              <div style={{fontSize: '14px', marginBottom: '5px', display: 'flex', alignItems: 'center', gap: '6px',textAlign:"center",justifyContent:"center"}}>
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 256 256" fill="none" style={{display: 'inline-block', verticalAlign: 'middle'}}><rect width="256" height="256" rx="56" fill="#7C65C1"></rect><path d="M183.296 71.68H211.968L207.872 94.208H200.704V180.224L201.02 180.232C204.266 180.396 206.848 183.081 206.848 186.368V191.488L207.164 191.496C210.41 191.66 212.992 194.345 212.992 197.632V202.752H155.648V197.632C155.648 194.345 158.229 191.66 161.476 191.496L161.792 191.488V186.368C161.792 183.081 164.373 180.396 167.62 180.232L167.936 180.224V138.24C167.936 116.184 150.056 98.304 128 98.304C105.944 98.304 88.0638 116.184 88.0638 138.24V180.224L88.3798 180.232C91.6262 180.396 94.2078 183.081 94.2078 186.368V191.488L94.5238 191.496C97.7702 191.66 100.352 194.345 100.352 197.632V202.752H43.0078V197.632C43.0078 194.345 45.5894 191.66 48.8358 191.496L49.1518 191.488V186.368C49.1518 183.081 51.7334 180.396 54.9798 180.232L55.2958 180.224V94.208H48.1278L44.0318 71.68H72.7038V54.272H183.296V71.68Z" fill="white"></path></svg>
-                Cast my score
+                Cast my score 
                
               </div>
+              <p style={{fontSize: '12px', color: '#ffffff', fontWeight: 'bold'}}>(+10% score improvement)</p>
               <div>{animatedScore}</div>
               {score > previousBestScore && previousBestScore > 0 && (
                 <div style={{
@@ -1965,9 +2051,176 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
                 Level {level}
               </div>
             </button>
+
+            {address && (
+              <div style={{
+                backgroundColor: 'rgba(0,0,0,0.5)',
+                padding: '10px',
+                borderRadius: '16px',
+                width:"80%",
+                margin: '20px 0',
+                textAlign: 'center',
+                color: 'white',
+                // border: '3px solid',
+                borderImage: 'linear-gradient(45deg, #19adff, #28374d, #ffffff) 1',
+                                  boxShadow: '0 8px 32px rgba(25, 173, 255, 0.3), inset 0 1px 0 rgba(255,255,255,0.1)',
+                backdropFilter: 'blur(10px)',
+                pointerEvents: 'auto'
+              }}>
+               
+
+                {/* Supply and Daily Limit Info */}
+                <div style={{ 
+                  // background: 'linear-gradient(135deg, rgba(255, 105, 180, 0.15) 0%, rgba(138, 43, 226, 0.15) 100%)', 
+                  padding: '16px', 
+                  borderRadius: '12px', 
+                  // marginBottom: '20px',
+                  fontSize: '16px',
+                  // border: '1px solid rgba(255, 105, 180, 0.3)',
+                  boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.1)'
+                }}>
+                  <div style={{ 
+                    display: 'grid', 
+                    gridTemplateColumns: '1fr 1fr', 
+                    gap: '12px',
+                    marginBottom: '12px'
+                  }}>
+                    <div style={{ 
+                      background: 'rgba(255, 255, 255, 0.05)', 
+                      padding: '8px', 
+                      borderRadius: '8px',
+                      fontSize: '14px'
+                    }}>
+                      <div style={{ fontSize: '18px', marginBottom: '4px' }}>📊</div>
+                      <div style={{ fontSize: '12px', opacity: 0.8 }}>Supply</div>
+                      <div style={{ fontWeight: 'bold' }}>
+                        {totalSupply ? Number(totalSupply).toLocaleString() : '...'} / 10,000
+                      </div>
+                    </div>
+                    <div style={{ 
+                      background: 'rgba(255, 255, 255, 0.05)', 
+                      padding: '8px', 
+                      borderRadius: '8px',
+                      fontSize: '14px'
+                    }}>
+                      <div style={{ fontSize: '18px', marginBottom: '4px' }}>🎯</div>
+                      <div style={{ fontSize: '12px', opacity: 0.8 }}>Remaining</div>
+                      <div style={{ fontWeight: 'bold' }}>
+                        {remainingSupply ? Number(remainingSupply).toLocaleString() : '...'} NFTs
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div style={{ 
+                    background: 'rgba(255, 255, 255, 0.05)', 
+                    padding: '12px', 
+                    borderRadius: '8px',
+                    fontSize: '15px',
+                    display: 'flex',
+                    flexDirection:"column",
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px'
+                  }}>
+                    <span style={{ fontSize: '18px' }}>⏰</span>
+                    <span style={{ fontWeight: 'bold' }}>
+                      Daily Limit: {remainingMintsToday !== undefined ? Number(remainingMintsToday) : '...'} / 5 remaining
+                    </span>
+                    {timeUntilReset && (
+                    <div >
+                      <div>{canMintToday === false ? 'Next reset in:' : 'Daily reset in:'}</div>
+                      <div style={{ 
+                        fontSize: '16px', 
+                        fontFamily: 'monospace',
+                        marginTop: '4px',
+                        textShadow: canMintToday === false 
+                          ? '0 0 10px rgba(99, 102, 241, 0.5)'
+                          : '0 0 10px rgba(34, 197, 94, 0.5)'
+                      }}>
+                        {timeUntilReset}
+                      </div>
+                    </div>
+                  )}
+                  </div>
+                  
+                  {canMintToday === false && (
+                    <div style={{ 
+                      marginTop: '12px',
+                      background: 'rgba(239, 68, 68, 0.2)', 
+                      color: '#ff6b6b', 
+                      fontWeight: 'bold', 
+                      fontSize: '14px',
+                      padding: '8px 12px',
+                      borderRadius: '8px',
+                      border: '1px solid rgba(239, 68, 68, 0.3)'
+                    }}>
+                      ❌ Daily mint limit reached! Try again tomorrow.
+                    </div>
+                  )}
+                  
+                  {/* Countdown Timer - Always Show */}
+                
+                </div>
+                
+                {/* Status Messages */}
+                {mintStatus === 'minting' && (
+                  <div style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center', 
+                    fontSize: '16px',
+                    background: 'rgba(255, 193, 7, 0.2)',
+                    padding: '16px',
+                    borderRadius: '12px',
+                    border: '1px solid rgba(255, 193, 7, 0.3)'
+                  }}>
+                    <div style={{ 
+                      marginRight: '12px', 
+                      fontSize: '20px',
+                      animation: 'spin 1s linear infinite'
+                    }}>⏳</div>
+                    <span style={{ fontWeight: 'bold' }}>Minting Your NFT...</span>
+                  </div>
+                )}
+                
+                {mintStatus === 'success' && (
+                  <div style={{ 
+                    background: 'rgba(34, 197, 94, 0.2)', 
+                    color: '#4ade80', 
+                    fontSize: '16px',
+                    padding: '16px',
+                    borderRadius: '12px',
+                    border: '1px solid rgba(34, 197, 94, 0.3)'
+                  }}>
+                    <div style={{ fontSize: '32px', marginBottom: '8px' }}>✅</div>
+                    <div style={{ fontWeight: 'bold', fontSize: '18px' }}>NFT Minted Successfully!</div>
+                    <div style={{ fontSize: '14px', opacity: 0.8, marginTop: '4px' }}>
+                      Your ChainCrush NFT has been added to your wallet
+                    </div>
+                  </div>
+                )}
+                
+                {mintStatus === 'error' && (
+                  <div style={{ 
+                    background: 'rgba(239, 68, 68, 0.2)', 
+                    color: '#ff6b6b', 
+                    fontSize: '16px',
+                    padding: '16px',
+                    borderRadius: '12px',
+                    border: '1px solid rgba(239, 68, 68, 0.3)'
+                  }}>
+                    <div style={{ fontSize: '32px', marginBottom: '8px' }}>❌</div>
+                    <div style={{ fontWeight: 'bold', fontSize: '18px' }}>Minting Failed</div>
+                    <div style={{ fontSize: '12px', marginTop: '8px', opacity: 0.8 }}>
+                      {mintError}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
             
             {/* Best Score */}
-            <div style={{
+            {/* <div style={{
               fontSize: '13px',
               color: '#ffff00',
               fontWeight: 'bold',
@@ -1979,43 +2232,78 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
             }}>
               Best
               <p style={{ fontSize: '29px', fontWeight: 'bold', color: '#ffff00' }}>{Math.max(score, previousBestScore)}</p>
-            </div>
+            </div> */}
             
            
           </div>
           
-          {/* Play Again Button - Bottom Center */}
-          <button
-            style={{ 
-              position: 'fixed', 
-              bottom: '60px', 
-              left: '50%', 
-              transform: 'translateX(-50%)',
-              zIndex: 2000,
-              padding: '10px 20px',
-              fontSize: '20px',
-              fontWeight: 'bold',
-              backgroundColor: '#4CAF50',
-              color: 'white',
-              border: 'none',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              boxShadow: '0 4px 8px rgba(0,0,0,0.3)',
-              transition: 'all 0.5s ease',
-              pointerEvents: 'auto' // Enable clicks for button
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = '#45a049';
-              e.currentTarget.style.transform = 'translateX(-50%) scale(1.05)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = '#4CAF50';
-              e.currentTarget.style.transform = 'translateX(-50%) scale(1)';
-            }}
-            onClick={handleRestart}
-          >
-            ▶ Play Again 
-          </button>
+          {/* Mint Button - Bottom Center (replaces Play Again) */}
+          {mintStatus !== 'success' && address && canMintToday !== false && remainingSupply !== BigInt(0) && (
+            <button
+              onClick={handleMintNFT}
+              style={{ 
+                position: 'fixed', 
+                bottom: '60px', 
+                left: '50%', 
+                transform: 'translateX(-50%)',
+                zIndex: 2000,
+                padding: '12px 24px',
+                fontSize: '18px',
+                fontWeight: 'bold',
+                background: 'linear-gradient(45deg, #ff69b4, #ff1493)',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                boxShadow: '0 4px 8px rgba(0,0,0,0.3)',
+                transition: 'all 0.5s ease',
+                pointerEvents: 'auto'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateX(-50%) scale(1.05)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateX(-50%) scale(1)';
+              }}
+            >
+              {mintStatus === 'minting' ? '⏳ Minting...' : '🎴 Mint NFT'}
+            </button>
+          )}
+
+          {/* Play Again Button - Show after successful mint OR when daily limit reached OR no wallet */}
+          {(mintStatus === 'success' || !address || (address && (canMintToday === false || remainingSupply === BigInt(0)))) && (
+            <button
+              style={{ 
+                position: 'fixed', 
+                bottom: '40px', 
+                left: '50%', 
+                transform: 'translateX(-50%)',
+                zIndex: 2000,
+                padding: '10px 20px',
+                fontSize: '20px',
+                fontWeight: 'bold',
+                backgroundColor: '#19adff',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                boxShadow: '0 4px 8px rgba(0,0,0,0.3)',
+                transition: 'all 0.5s ease',
+                pointerEvents: 'auto'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = '#1589cc';
+                e.currentTarget.style.transform = 'translateX(-50%) scale(1.05)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = '#19adff';
+                e.currentTarget.style.transform = 'translateX(-50%) scale(1)';
+              }}
+              onClick={handleRestart}
+            >
+              ▶ Play Again 
+            </button>
+          )}
         </>
       )}
       
@@ -2169,7 +2457,7 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
             }}
             disabled={reshuffles === 0}
             style={{
-              background: reshuffles === 0 ? '#ccc' : 'radial-gradient(circle at center, #ff69b4 0%, #ffffff 100%)',
+              background: reshuffles === 0 ? '#ccc' : 'radial-gradient(circle at center, #19adff 0%, #ffffff 100%)',
               color: '#fff',
               fontWeight: 'bold',
               fontSize: 16,
@@ -2187,6 +2475,157 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
           </button>
         </div>
       )}
+      
+      {/* Thunder Combo Animation */}
+      {showComboAnimation && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100vw',
+          height: '100vh',
+          zIndex: 3000,
+          pointerEvents: 'none',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}>
+          {/* Thunder Flash Effect */}
+          <div style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            background: 'linear-gradient(45deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.3))',
+            animation: 'thunderFlash 0.3s ease-out forwards'
+          }} />
+          
+          {/* Thunder Lightning Effect */}
+          <div style={{
+            position: 'absolute',
+            top: '20%',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            width: '4px',
+            height: '60%',
+            background: 'linear-gradient(to bottom, #ffff00, #ff6b6b, #ffff00)',
+            boxShadow: '0 0 20px #ffff00, 0 0 40px #ff6b6b',
+            animation: 'thunderLightning 0.5s ease-out forwards'
+          }} />
+          
+          {/* Combo Text */}
+          <div style={{
+            fontSize: '96px',
+            fontWeight: 'bold',
+            color: '#ff6b6b',
+            textShadow: '0 0 30px rgba(255, 107, 107, 0.9), 0 0 60px rgba(255, 107, 107, 0.6)',
+            animation: 'comboThunder 2s ease-out forwards',
+            textAlign: 'center',
+            zIndex: 1,
+            position: 'relative'
+          }}>
+            {comboCount}x COMBO!
+          </div>
+          
+          {/* Thunder Sound Effect (Visual) */}
+          <div style={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            width: '200px',
+            height: '200px',
+            borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(255, 255, 255, 0.8) 0%, transparent 70%)',
+            animation: 'thunderRipple 0.8s ease-out forwards'
+          }} />
+        </div>
+      )}
+      
+      <style dangerouslySetInnerHTML={{
+        __html: `
+          @keyframes thunderFlash {
+            0% {
+              opacity: 0;
+            }
+            10% {
+              opacity: 1;
+            }
+            30% {
+              opacity: 0.8;
+            }
+            100% {
+              opacity: 0;
+            }
+          }
+          
+          @keyframes thunderLightning {
+            0% {
+              opacity: 0;
+              transform: translateX(-50%) scaleY(0);
+            }
+            20% {
+              opacity: 1;
+              transform: translateX(-50%) scaleY(1);
+            }
+            40% {
+              opacity: 0.8;
+              transform: translateX(-50%) scaleY(1.2);
+            }
+            60% {
+              opacity: 0.6;
+              transform: translateX(-50%) scaleY(0.8);
+            }
+            100% {
+              opacity: 0;
+              transform: translateX(-50%) scaleY(0);
+            }
+          }
+          
+          @keyframes comboThunder {
+            0% {
+              opacity: 0;
+              transform: scale(0.5) rotate(-5deg);
+            }
+            20% {
+              opacity: 1;
+              transform: scale(1.3) rotate(2deg);
+            }
+            40% {
+              opacity: 1;
+              transform: scale(1) rotate(0deg);
+            }
+            60% {
+              opacity: 1;
+              transform: scale(1.1) rotate(-1deg);
+            }
+            80% {
+              opacity: 0.8;
+              transform: scale(1.05) rotate(0deg);
+            }
+            100% {
+              opacity: 0;
+              transform: scale(1.2) rotate(0deg);
+            }
+          }
+          
+          @keyframes thunderRipple {
+            0% {
+              opacity: 0.8;
+              transform: translate(-50%, -50%) scale(0);
+            }
+            50% {
+              opacity: 0.6;
+              transform: translate(-50%, -50%) scale(1);
+            }
+            100% {
+              opacity: 0;
+              transform: translate(-50%, -50%) scale(2);
+            }
+          }
+        `
+      }} />
     </div>
   );
 } 
