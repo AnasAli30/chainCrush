@@ -22,7 +22,6 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
   const [gameInitialized, setGameInitialized] = useState(false);
   const [gameOverState, setGameOverState] = useState(false); // Track game over for blur effect
   const [gameOver, setGameOver] = useState(false);
-  const [gameError, setGameError] = useState<string | null>(null);
   const [score, setScore] = useState(0);
   const [level, setLevel] = useState(1);
   const [moves, setMoves] = useState(10);
@@ -184,19 +183,9 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
         this.gridY = gridY;
         this.candyType = type;
         
-        // Ultra high quality scaling for crisp images
+        // Better scaling for crisp images
         this.setDisplaySize(CANDY_SIZE, CANDY_SIZE);
-        this.setOrigin(0.5, 0.5); // Center the sprite
         this.setInteractive();
-        
-        // Ensure ultra high quality rendering
-        // this.setTexture('candy-' + type, undefined, { 
-        //   frame: undefined,
-        //   flipX: false,
-        //   flipY: false,
-        //   tint: 0xffffff
-        // }); // Simplified for compatibility
-        
         scene.add.existing(this);
       }
       
@@ -229,16 +218,14 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
         this.load.image('candy-' + type, `/candy/${type}.png`);
       });
       
-      // Ensure images maintain ultra high quality when loaded
+      // Ensure images maintain quality when loaded
       this.load.on('filecomplete-image', (key: string) => {
         const texture = this.textures.get(key);
         if (texture) {
-          // Set ultra high quality filtering for each texture
+          // Set high quality filtering for each texture
           texture.setFilter(Phaser.Textures.FilterMode.LINEAR);
-          // Enable mipmaps for better quality at different scales
-          // texture.setMipmapFilter(Phaser.Textures.FilterMode.LINEAR); // Not available in this version
         }
-        console.log('✅ Loaded ultra high-quality meme image:', key);
+        console.log('✅ Loaded high-quality meme image:', key);
       });
       
       // Log any errors but don't create fallbacks
@@ -273,13 +260,6 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
 
         function create(this: Phaser.Scene) {
       scene = this;
-      
-      // Set ultra high quality rendering for the scene
-      // this.renderer.setPipeline('TextureTintPipeline'); // Removed for compatibility
-      
-      // Enable high quality rendering
-      this.cameras.main.setBackgroundColor('#ffffff');
-      this.cameras.main.setRoundPixels(false);
       
       // Calculate responsive grid dimensions after scene is initialized
       const availableWidth = this.cameras.main.width - (GRID_PADDING * 2);
@@ -1342,23 +1322,13 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
         zoom: typeof window !== 'undefined' ? (window.devicePixelRatio || 1) : 1
       },
       render: {
-        // Ultra high quality rendering settings
+        // High quality rendering settings
         antialias: true,
         pixelArt: false,
         roundPixels: false,
         powerPreference: 'high-performance',
-        batchSize: 8192,
-        mipmapFilter: 'LINEAR_MIPMAP_LINEAR',
-        failIfMajorPerformanceCaveat: false,
-        preserveDrawingBuffer: false,
-        maxTextures: 16
-      },
-      physics: {
-        default: 'arcade',
-        arcade: {
-          gravity: { x: 0, y: 0 },
-          debug: false
-        }
+        batchSize: 4096,
+        mipmapFilter: 'LINEAR_MIPMAP_LINEAR'
       },
       scene: {
         preload: preload,
@@ -1366,45 +1336,7 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
       }
     };
 
-    // Check WebGL support
-    const canvas = document.createElement('canvas');
-    const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
-    
-    if (!gl) {
-      console.warn('WebGL not supported, using canvas renderer');
-      config.type = Phaser.CANVAS;
-    }
-    
-    try {
-      const game = new Phaser.Game(config);
-      
-      // Add error handling for WebGL issues
-      game.events.on('error', (error: any) => {
-        console.error('Phaser game error:', error);
-        // Fallback to canvas renderer if WebGL fails
-        if (error.message && error.message.includes('framebuffer')) {
-          console.log('WebGL framebuffer error detected, attempting fallback...');
-          game.destroy(true);
-          
-          // Try with canvas renderer
-          const canvasConfig = {
-            ...config,
-            type: Phaser.CANVAS,
-            render: {
-              ...config.render,
-              type: Phaser.CANVAS
-            }
-          };
-          
-          new Phaser.Game(canvasConfig);
-        }
-      });
-    } catch (error) {
-      console.error('Failed to initialize Phaser game:', error);
-      // Show error message to user
-      setGameInitialized(false);
-      setGameError('Game failed to load. Please refresh the page and try again.');
-    }
+    new Phaser.Game(config);
 
     // Add reshuffleGrid function in Phaser logic and expose to React
     function reshuffleGrid() {
@@ -1725,8 +1657,6 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
 
 
   
-
-  // Show error if game failed to load
 
   return (
     <div style={{ 
