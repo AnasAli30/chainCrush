@@ -59,12 +59,14 @@ export function WalletActions() {
                   <button
                     type="button"
                     className="bg-white text-black rounded-md p-2 text-sm"
-                    onClick={() =>
-                      window.open(
-                        `https://testnet.monadexplorer.com/tx/${hash}`,
-                        '_blank',
-                      )
-                    }
+                    onClick={() => {
+                      if (typeof window !== 'undefined') {
+                        window.open(
+                          `https://testnet.monadexplorer.com/tx/${hash}`,
+                          '_blank',
+                        )
+                      }
+                    }}
                   >
                     View Transaction
                   </button>

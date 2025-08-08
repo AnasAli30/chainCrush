@@ -577,7 +577,7 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
 
     function triggerVibration(pattern: number[]) {
       // Check if vibration is supported
-      if ('vibrate' in navigator) {
+      if (typeof window !== 'undefined' && 'vibrate' in navigator) {
         try {
           navigator.vibrate(pattern);
         } catch (error) {
@@ -1311,15 +1311,15 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
 
     const config: Phaser.Types.Core.GameConfig = {
       type: Phaser.AUTO,
-      width: window.innerWidth,
-      height: window.innerHeight,
+      width: typeof window !== 'undefined' ? window.innerWidth : 800,
+      height: typeof window !== 'undefined' ? window.innerHeight : 600,
       parent: gameRef.current,
       transparent: true, // Make canvas transparent to show CSS background
       scale: {
         mode: Phaser.Scale.RESIZE,
         autoCenter: Phaser.Scale.CENTER_BOTH,
         // Handle high DPI displays for better image quality
-        zoom: window.devicePixelRatio || 1
+        zoom: typeof window !== 'undefined' ? (window.devicePixelRatio || 1) : 1
       },
       render: {
         // High quality rendering settings
@@ -1343,7 +1343,7 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
       // Animate all candies falling down and fading out
       let total = 0, done = 0;
       // Vibrate for reshuffle start
-      if ('vibrate' in navigator) {
+      if (typeof window !== 'undefined' && 'vibrate' in navigator) {
         navigator.vibrate([100, 50, 100]);
       }
       for (let row = 0; row < GRID_ROWS; row++) {
@@ -1396,7 +1396,7 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
             onComplete: () => {
               landed++;
               // Vibrate for each candy landing (short pulse)
-              if ('vibrate' in navigator) {
+              if (typeof window !== 'undefined' && 'vibrate' in navigator) {
                 navigator.vibrate(10);
               }
               // When the last candy animates in, update UI and check for matches

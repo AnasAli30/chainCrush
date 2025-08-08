@@ -17,8 +17,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     // Check for saved theme preference or default to dark
-    const savedTheme = localStorage.getItem('theme') as Theme
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+    const savedTheme = typeof window !== 'undefined' ? localStorage.getItem('theme') as Theme : null
+    const prefersDark = typeof window !== 'undefined' ? window.matchMedia('(prefers-color-scheme: dark)').matches : false
     
     if (savedTheme) {
       setThemeState(savedTheme)
@@ -30,8 +30,10 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     // Apply theme to document
-    document.documentElement.setAttribute('data-theme', theme)
-    localStorage.setItem('theme', theme)
+    if (typeof window !== 'undefined') {
+      document.documentElement.setAttribute('data-theme', theme)
+      localStorage.setItem('theme', theme)
+    }
   }, [theme])
 
   const toggleTheme = () => {

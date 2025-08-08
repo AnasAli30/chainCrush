@@ -28,6 +28,13 @@ DAILY_MINT_LIMIT=6
 
 # Custom Token Address (optional)
 NEXT_PUBLIC_CUSTOM_TOKEN_ADDRESS=0x0000000000000000000000000000000000000000
+
+# MongoDB Connection String
+MONGODB_URI=mongodb+srv://username:password@cluster0.mongodb.net/chaincrush?retryWrites=true&w=majority
+
+# Redis Configuration (optional)
+UPSTASH_REDIS_REST_URL=https://your-redis-url.upstash.io
+UPSTASH_REDIS_REST_TOKEN=your-redis-token
 ```
 
 ## Development Setup
