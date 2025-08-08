@@ -19,7 +19,7 @@ export async function GET() {
       screenshotUrls: [],
       tags: ["arbitrum", "farcaster", "miniapp", "game"],
       primaryCategory: "games",
-      buttonTitle: "Launch Template",
+      buttonTitle: "Play Now",
       splashImageUrl: `${APP_URL}/images/splash.png`,
       splashBackgroundColor: "#ffffff",
       webhookUrl: `${APP_URL}/api/webhook`,
