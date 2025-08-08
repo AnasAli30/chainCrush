@@ -60,11 +60,76 @@ export default function UserStats() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4">
-        <div className="text-center space-y-4">
-          <div className="text-6xl mb-4 animate-pulse">⏳</div>
-          <h2 className="text-2xl font-bold text-white-800">Loading Stats</h2>
-          <p className="text-white-800">Fetching your ChainCrush statistics...</p>
+      <div className="min-h-screen p-4 space-y-6">
+        {/* Header Skeleton */}
+        <div className="text-center space-y-2 mb-8">
+          <div className="w-48 h-10 bg-gray-200 rounded mx-auto mb-2 animate-pulse"></div>
+          <div className="w-64 h-4 bg-gray-200 rounded mx-auto animate-pulse"></div>
+        </div>
+        
+        {/* Daily Mint Status Skeleton */}
+        <div className="bg-gradient-to-r from-[#19adff] to-[#28374d] p-6 rounded-2xl text-white shadow-lg">
+          <div className="flex items-center justify-between mb-4">
+            <div className="w-32 h-6 bg-white bg-opacity-20 rounded animate-pulse"></div>
+            <div className="w-8 h-8 bg-white bg-opacity-20 rounded animate-pulse"></div>
+          </div>
+          <div className="grid grid-cols-2 gap-6">
+            <div className="text-center">
+              <div className="w-20 h-4 bg-white bg-opacity-20 rounded mx-auto mb-2 animate-pulse"></div>
+              <div className="w-16 h-8 bg-white bg-opacity-20 rounded mx-auto animate-pulse"></div>
+            </div>
+            <div className="text-center">
+              <div className="w-24 h-4 bg-white bg-opacity-20 rounded mx-auto mb-2 animate-pulse"></div>
+              <div className="w-16 h-8 bg-white bg-opacity-20 rounded mx-auto animate-pulse"></div>
+            </div>
+          </div>
+        </div>
+
+        {/* Recent Mints Skeleton */}
+        <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
+          <div className="flex items-center space-x-3 mb-4">
+            <div className="w-8 h-8 bg-gray-200 rounded animate-pulse"></div>
+            <div className="w-32 h-6 bg-gray-200 rounded animate-pulse"></div>
+          </div>
+          <div className="space-y-3">
+            {[...Array(3)].map((_, index) => (
+              <div key={index} className="flex justify-between items-center p-4 bg-gradient-to-r from-gray-100 to-gray-200 rounded-xl border border-gray-200">
+                <div className="flex items-center space-x-3">
+                  <div className="w-8 h-8 bg-gray-200 rounded animate-pulse"></div>
+                  <div>
+                    <div className="w-24 h-5 bg-gray-200 rounded mb-2 animate-pulse"></div>
+                    <div className="w-20 h-4 bg-gray-200 rounded animate-pulse"></div>
+                  </div>
+                </div>
+                <div className="w-16 h-6 bg-gray-200 rounded animate-pulse"></div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Top Scores Skeleton */}
+        <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
+          <div className="flex items-center space-x-3 mb-4">
+            <div className="w-8 h-8 bg-gray-200 rounded animate-pulse"></div>
+            <div className="w-32 h-6 bg-gray-200 rounded animate-pulse"></div>
+          </div>
+          <div className="space-y-3">
+            {[...Array(5)].map((_, index) => (
+              <div key={index} className="flex justify-between items-center p-4 bg-gradient-to-r from-gray-100 to-gray-200 rounded-xl border border-gray-200">
+                <div className="flex items-center space-x-3">
+                  <div className="w-8 h-8 bg-gray-200 rounded-full animate-pulse"></div>
+                  <div>
+                    <div className="w-32 h-5 bg-gray-200 rounded mb-2 animate-pulse"></div>
+                    <div className="w-24 h-4 bg-gray-200 rounded animate-pulse"></div>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="w-20 h-6 bg-gray-200 rounded mb-1 animate-pulse"></div>
+                  <div className="w-12 h-3 bg-gray-200 rounded animate-pulse"></div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     );

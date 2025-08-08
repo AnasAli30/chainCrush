@@ -12,6 +12,8 @@ import CandyCrushGame from './CandyCrushGame'
 import NFTManager from '../NFTManager'
 import UserStats from '../UserStats'
 import Leaderboard from '../Leaderboard'
+import { useConnect, useAccount } from 'wagmi'
+import { motion } from 'framer-motion'
 
 export function Demo() {
   const [showGame, setShowGame] = useState(false)
@@ -19,6 +21,9 @@ export function Demo() {
   const [showStats, setShowStats] = useState(false)
   const [showLeaderboard, setShowLeaderboard] = useState(false)
   const [activeTab, setActiveTab] = useState<'home' | 'nfts' | 'stats' | 'leaderboard'>('home')
+  
+  const { connect, connectors } = useConnect()
+  const { isConnected } = useAccount()
 
   if (showGame) {
     return (
@@ -85,7 +90,7 @@ export function Demo() {
       <div className="flex min-h-screen flex-col items-center justify-center p-4 space-y-8">
         <div className="w-full max-w-4xl space-y-6">
           {/* Welcome Header */}
-          <div className="text-center space-y-6">
+          {/* <div className="text-center space-y-6">
             <div className="space-y-4">
               <h1 
                 className="text-4xl font-bold text-white  text-transparent"
@@ -99,7 +104,23 @@ export function Demo() {
                 The Sweetest Candy Crush Game on Farcaster!
               </p>
             </div>
-          </div>
+          </div> */}
+
+          {/* Wallet Connection Button */}
+          {!isConnected && (
+            <div className="mb-3 w-full max-w-sm mx-auto">
+              <motion.button
+                type="button"
+                onClick={() => connect({ connector: connectors[0] })}
+                className="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <FontAwesomeIcon icon={faHome} className="w-4 h-4 mr-2" />
+                Connect Wallet
+              </motion.button>
+            </div>
+          )}
 
           {/* Main Content Area */}
           <div className="text-center space-y-6">
@@ -115,11 +136,12 @@ export function Demo() {
                 className="text-3xl font-bold mb-6"
                 style={{ color: 'rgb(var(--text-primary))' }}
               >
-                Welcome to ChainCrush!
+                Welcome to
+                <h1 className="text-4xl font-bold text-white  text-transparent"> ChainCrush!</h1>
               </h2>
               <p 
                 className="text-lg mb-8 leading-relaxed"
-                style={{ color: 'rgb(var(--text-secondary))' }}
+                style={{ color: 'rgb(var(--text-secondary))' ,width:"120%",marginLeft:"-10%"}}
               >
                 Play the most addictive candy-matching game on the blockchain. 
                 Earn NFTs, climb leaderboards, and compete with friends!

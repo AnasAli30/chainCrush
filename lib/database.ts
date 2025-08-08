@@ -23,6 +23,73 @@ export interface GameScore {
   score: number;
   level: number;
   timestamp: number;
+  nftMinted?: boolean;
+  nftName?: string;
+  nftCount?: number; // Added for NFT tracking
+  lastNftMint?: number; // Added for NFT tracking
+  hasNft?: boolean; // Added for NFT tracking
+}
+
+export interface UsedAuthKey {
+  fusedKey: string;
+  randomString: string;
+  timestamp: number;
+  ipAddress: string;
+  createdAt: Date;
+}
+
+// Authentication key management functions
+export async function isAuthKeyUsed(fusedKey: string): Promise<boolean> {
+  const client = await clientPromise;
+  const db = client.db('chaincrush');
+  
+  const usedKey = await db.collection('usedAuthKeys').findOne({ fusedKey });
+  return !!usedKey;
+}
+
+export async function storeUsedAuthKey(authKeyData: Omit<UsedAuthKey, 'createdAt'>): Promise<void> {
+  const client = await clientPromise;
+  const db = client.db('chaincrush');
+  
+  await db.collection('usedAuthKeys').insertOne({
+    ...authKeyData,
+    createdAt: new Date()
+  });
+}
+
+export async function cleanupOldAuthKeys(): Promise<void> {
+  const client = await clientPromise;
+  const db = client.db('chaincrush');
+  
+  // Remove keys older than 24 hours
+  const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+  
+  await db.collection('usedAuthKeys').deleteMany({
+    createdAt: { $lt: twentyFourHoursAgo }
+  });
+}
+
+// Optional database validation for critical operations
+export async function validateAuthKeyInDatabase(fusedKey: string, randomString: string): Promise<boolean> {
+  try {
+    const isUsed = await isAuthKeyUsed(fusedKey);
+    if (isUsed) {
+      return false;
+    }
+    
+    // Store the key for future validation
+    await storeUsedAuthKey({
+      fusedKey,
+      randomString,
+      timestamp: Date.now(),
+      ipAddress: 'unknown' // Will be set by the calling API route
+    });
+    
+    return true;
+  } catch (error) {
+    console.error('Database validation error:', error);
+    return false;
+  }
 }
 
 export async function getUserDailyMintCount(userAddress: string): Promise<number> {
@@ -183,4 +250,58 @@ export async function getUserBestScore(fid: number): Promise<GameScore | null> {
     );
   
   return bestScore as GameScore | null;
+} 
+
+// NFT minting tracking functions
+export async function incrementUserNftCount(fid: number): Promise<void> {
+  const client = await clientPromise;
+  const db = client.db('chaincrush');
+  
+  await db.collection('gameScores').updateOne(
+    { fid },
+    { 
+      $inc: { nftCount: 1 },
+      $set: { lastNftMint: Date.now() }
+    },
+    { upsert: true }
+  );
+}
+
+export async function getUserNftCount(fid: number): Promise<number> {
+  const client = await clientPromise;
+  const db = client.db('chaincrush');
+  
+  const userData = await db.collection('gameScores').findOne({ fid });
+  return userData?.nftCount || 0;
+}
+
+export async function updateUserNftInfo(fid: number, nftName: string): Promise<void> {
+  const client = await clientPromise;
+  const db = client.db('chaincrush');
+  
+  await db.collection('gameScores').updateOne(
+    { fid },
+    { 
+      $set: { 
+        nftName,
+        hasNft: true,
+        lastNftMint: Date.now()
+      }
+    },
+    { upsert: true }
+  );
+}
+
+export async function getLeaderboardWithNfts(limit: number = 50): Promise<GameScore[]> {
+  const client = await clientPromise;
+  const db = client.db('chaincrush');
+  
+  // Get all game scores with NFT data, filter out users without NFTs
+  const leaderboard = await db.collection('gameScores')
+    .find({ hasNft: true }) // Only get users who have minted NFTs
+    .sort({ score: -1 })
+    .limit(limit)
+    .toArray();
+  
+  return leaderboard as unknown as GameScore[];
 } 

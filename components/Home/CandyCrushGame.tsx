@@ -1560,9 +1560,9 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
   // Handle NFT minting
   const submitScoreToDatabase = async (fid: number, pfpUrl: string, username: string, gameScore: number, gameLevel: number) => {
     try {
-      const response = await fetch('/api/submit-score', {
+      const { authenticatedFetch } = await import('@/lib/auth');
+      const response = await authenticatedFetch('/api/submit-score', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           fid,
           pfpUrl,
@@ -1591,9 +1591,9 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
 
     try {
       // Get signature from server
-      const response = await fetch('/api/mint-nft', {
+      const { authenticatedFetch } = await import('@/lib/auth');
+      const response = await authenticatedFetch('/api/mint-nft', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           userAddress: address,
           score: score
@@ -1626,11 +1626,33 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
   useEffect(() => {
     if (mintSuccess) {
       setMintStatus('success');
+      
+      // Record NFT minting in database
+      const recordNftMint = async () => {
+        try {
+          const { authenticatedFetch } = await import('@/lib/auth');
+          const nftName = `ChainCrush NFT #${score}`;
+          
+          await authenticatedFetch('/api/nft-minted', {
+            method: 'POST',
+            body: JSON.stringify({
+              fid: context.user.fid,
+              nftName
+            })
+          });
+          
+          console.log('NFT minting recorded successfully');
+        } catch (error) {
+          console.error('Failed to record NFT minting:', error);
+        }
+      };
+      
+      recordNftMint();
     } else if (isMintError) {
       setMintStatus('error');
       setMintError(mintErrorObj?.message || 'Minting failed');
     }
-  }, [mintSuccess, isMintError, mintErrorObj]);
+  }, [mintSuccess, isMintError, mintErrorObj, context.user.fid, score]);
 
 
 
@@ -1823,7 +1845,7 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
             textAlign: 'center',
             animation: 'pulse 2s ease-in-out infinite'
           }}>
-            Candy Crush
+            Chain Crush
           </div>
           
           {/* Progress Bar Container */}
@@ -2445,19 +2467,18 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
         }}
         message="Are you sure you want to end this game? Your progress will be lost."
       />
-      {/* Only show reshuffle button when game is initialized and not over */}
-      {gameInitialized && !gameOver && (
+      {/* Only show reshuffle button when game is initialized, not over, and reshuffles available */}
+      {gameInitialized && !gameOver && reshuffles > 0 && (
         <div style={{ position: 'fixed', bottom: 20, left: 0, width: '100vw', display: 'flex', justifyContent: 'center', zIndex: 2002 }}>
           <button
             onClick={() => {
-              if (reshuffles > 0 && reshuffleGridRef.current) {
+              if (reshuffleGridRef.current) {
                 reshuffleGridRef.current();
                 setReshuffles(r => r - 1);
               }
             }}
-            disabled={reshuffles === 0}
             style={{
-              background: reshuffles === 0 ? '#ccc' : 'radial-gradient(circle at center, #19adff 0%, #ffffff 100%)',
+              background: 'radial-gradient(circle at center, #19adff 0%, #ffffff 100%)',
               color: '#fff',
               fontWeight: 'bold',
               fontSize: 16,
@@ -2466,8 +2487,7 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
               padding: '12px 36px',
               margin: '0 auto',
               boxShadow: '0 2px 8px #ff69b422',
-              cursor: reshuffles === 0 ? 'not-allowed' : 'pointer',
-              opacity: reshuffles === 0 ? 0.6 : 1,
+              cursor: 'pointer',
               transition: 'all 0.2s',
             }}
           >

@@ -1,4 +1,4 @@
-# Monad Farcaster MiniApp Template
+# Chain Crush
 
 The template demonstrates all Mini App capabilities and lets you easily modify it, so you can build Mini Apps.
 
@@ -92,7 +92,7 @@ const frame = {
     title: "Template", // Text on the embed button
     action: {
       type: "launch_frame",
-      name: "Monad Farcaster MiniApp Template",
+      name: "Chain Crush",
       url: appUrl, // URL that is opened when the embed button is tapped or clicked.
       splashImageUrl: `${appUrl}/images/splash.png`,
       splashBackgroundColor: "#f7f7f7",
@@ -131,7 +131,7 @@ const frame = {
     title: "Launch Template",
     action: {
       type: "launch_frame",
-      name: "Monad Farcaster MiniApp Template",
+      name: "Chain Crush",
       url: appUrl,
       splashImageUrl: `${appUrl}/images/splash.png`, // App icon in the splash screen (200px * 200px)
       splashBackgroundColor: "#f7f7f7", // Splash screen background color
@@ -267,7 +267,7 @@ const farcasterConfig = {
     },
     frame: {
         version: "1",
-        name: "Monad Farcaster MiniApp Template",
+        name: "Chain Crush",
         iconUrl: `${appUrl}/images/icon.png`, // Icon of the app in the app store
         homeUrl: `${appUrl}`, // Default launch URL
         imageUrl: `${appUrl}/images/feed.png`, // Default image to show if shared in a feed.
@@ -289,6 +289,75 @@ You can learn more about publishing the Mini App and other manifest properties [
 
 In this guide, you explored Farcaster Mini Apps — the simplest way to create engaging, high-retention, and easily monetizable applications!
 
-You also discovered the key capabilities of Mini Apps and how you can use the [Monad Farcaster MiniApp Template](https://github.com/monad-developers/monad-miniapp-template) to build your own.
+You also discovered the key capabilities of Mini Apps and how you can use the [Chain Crush](https://github.com/monad-developers/monad-miniapp-template) to build your own.
 
 For more details, check out the official Mini App documentation [here](https://miniapps.farcaster.xyz/).
+
+# ChainCrush
+
+A Candy Crush game built on Farcaster with NFT minting capabilities.
+
+## Features
+
+- Candy Crush gameplay with Phaser.js
+- NFT minting with blockchain integration
+- Leaderboard system
+- Dark/Light theme support
+- Combo animations and effects
+- Daily mint limits with countdown timers
+- Reward system with PEPE coin distribution
+
+## Authentication Middleware
+
+The application includes a comprehensive security middleware that protects all POST API routes with replay attack prevention:
+
+### How it works:
+1. **Frontend**: Generates a random string and creates a "fused key" using ethers.js keccak256 hash
+2. **Middleware**: Validates requests by recreating the hash and comparing it with the provided fused key (Edge Runtime compatible)
+3. **Database Validation**: API routes can optionally validate keys against database for enhanced replay protection
+4. **Dual Protection**: In-memory cache in middleware + database storage for critical operations
+
+### Security Features:
+- ✅ **Unique Keys**: Each request uses a unique random string
+- ✅ **Ethers.js Integration**: Uses same crypto library as blockchain operations
+- ✅ **Edge Runtime Compatible**: Works with Next.js Edge Runtime
+- ✅ **Dual Replay Protection**: In-memory cache + database validation
+- ✅ **Memory Management**: Automatic cache size limiting
+- ✅ **Database Storage**: Persistent key storage for critical operations
+
+### Setup:
+1. Create a `.env.local` file in the root directory
+2. Add your secret key:
+   ```
+   API_SECRET_KEY=your-super-secret-key-change-this-in-production
+   NEXT_PUBLIC_API_SECRET_KEY=your-super-secret-key-change-this-in-production
+   ```
+3. The middleware automatically protects all POST routes in `/api/*`
+
+### Protected Routes:
+- `/api/submit-score` - Submit game scores
+- `/api/mint-nft` - Mint NFTs
+- `/api/send-notification` - Send notifications
+- `/api/burn-nft` - Burn NFTs
+- `/api/check-nft-owner` - Check NFT ownership
+- `/api/get-nft-trait` - Get NFT traits
+- `/api/webhook` - Webhook endpoints
+
+### Database Collections:
+- `usedAuthKeys` - Stores used authentication keys with expiration
+- `gameScores` - Game leaderboard data with NFT tracking
+
+## Development
+
+```bash
+npm install
+npm run dev
+```
+
+## Environment Variables
+
+Required environment variables:
+- `API_SECRET_KEY` - Secret key for API authentication
+- `NEXT_PUBLIC_API_SECRET_KEY` - Public secret key (same as above)
+- Database connection strings
+- Blockchain contract addresses

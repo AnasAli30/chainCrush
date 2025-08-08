@@ -22,9 +22,9 @@ export function NotificationActions() {
       mutationFn: async () => {
         if (!fid) throw new Error("No fid");
 
-        return await fetch("/api/send-notification", {
+        const { authenticatedFetch } = await import('@/lib/auth');
+        return await authenticatedFetch("/api/send-notification", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             fid,
             notificationDetails,
