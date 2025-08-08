@@ -145,6 +145,13 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
     }
     return () => {
       if (gameRef.current) {
+        // Properly destroy Phaser game instance
+        const phaserGame = (gameRef.current as any).phaserGame;
+        if (phaserGame) {
+          phaserGame.destroy(true);
+        }
+        
+        // Remove any remaining canvas elements
         const canvas = gameRef.current.querySelector('canvas');
         if (canvas) canvas.remove();
       }
@@ -1316,19 +1323,26 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
       parent: gameRef.current,
       transparent: true, // Make canvas transparent to show CSS background
       scale: {
-        mode: Phaser.Scale.RESIZE,
+        mode: Phaser.Scale.FIT,
         autoCenter: Phaser.Scale.CENTER_BOTH,
-        // Handle high DPI displays for better image quality
-        zoom: typeof window !== 'undefined' ? (window.devicePixelRatio || 1) : 1
+        width: typeof window !== 'undefined' ? window.innerWidth : 800,
+        height: typeof window !== 'undefined' ? window.innerHeight : 600,
+        zoom: 1
       },
       render: {
-        // High quality rendering settings
-        antialias: true,
-        pixelArt: false,
-        roundPixels: false,
-        powerPreference: 'high-performance',
-        batchSize: 4096,
-        mipmapFilter: 'LINEAR_MIPMAP_LINEAR'
+        antialias: false,
+        pixelArt: true,
+        roundPixels: true,
+        powerPreference: 'default',
+        batchSize: 1024,
+        mipmapFilter: 'NEAREST'
+      },
+      physics: {
+        default: 'arcade',
+        arcade: {
+          gravity: { x: 0, y: 0 },
+          debug: false
+        }
       },
       scene: {
         preload: preload,
@@ -1336,7 +1350,12 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
       }
     };
 
-    new Phaser.Game(config);
+    const game = new Phaser.Game(config);
+    
+    // Store game instance for cleanup
+    if (gameRef.current) {
+      (gameRef.current as any).phaserGame = game;
+    }
 
     // Add reshuffleGrid function in Phaser logic and expose to React
     function reshuffleGrid() {
