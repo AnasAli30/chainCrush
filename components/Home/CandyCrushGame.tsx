@@ -2259,7 +2259,7 @@ Your turn to flex — play, score, and mint yours 🚀🎮✨`,
                     <div style={{ fontSize: '32px', marginBottom: '8px' }}>❌</div>
                     <div style={{ fontWeight: 'bold', fontSize: '18px' }}>Minting Failed</div>
                     <div style={{ fontSize: '12px', marginTop: '8px', opacity: 0.8 }}>
-                      {mintError}
+                      "Something went Wrong :( try again later"
                     </div>
                   </div>
                 )}
