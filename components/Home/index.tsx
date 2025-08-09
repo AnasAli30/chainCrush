@@ -162,7 +162,7 @@ export function Demo() {
               <motion.button
                 type="button"
                 onClick={() => connect({ connector: connectors[0] })}
-                className="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
+                className="w-full bg-black text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >
@@ -170,7 +170,7 @@ export function Demo() {
                 Connect Wallet
               </motion.button>
             </div>
-          )}
+           )} 
 
           {/* Main Content Area */}
           <div className="text-center space-y-6">

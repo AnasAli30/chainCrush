@@ -35,6 +35,7 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
   const [challengeProgress, setChallengeProgress] = useState(0);
 
   const [showConfirmEnd, setShowConfirmEnd] = useState(false);
+  const [showNoMovesPopup, setShowNoMovesPopup] = useState(false);
 
   // Add reshuffles state
   const [reshuffles, setReshuffles] = useState(1);
@@ -116,6 +117,7 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
     setAnimatedScore(0);
     setPreviousBestScore(parseInt(localStorage.getItem('candyCrushMaxScore') || '0'));
     setGameKey((k: number) => k + 1); // Increment gameKey to remount game container
+    setShowNoMovesPopup(false); // Reset no moves popup
     
     // Reset mint status to show "Mint NFT" button again
     setMintStatus('idle');
@@ -133,6 +135,33 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
 
   const handleBackToMenu = () => {
     if (onBack) onBack();
+  };
+
+  // Handle no moves popup actions
+  const handleContinueSearching = () => {
+    setShowNoMovesPopup(false);
+    // Player can continue trying to find moves
+  };
+
+  const handleEndGameFromNoMoves = () => {
+    setShowNoMovesPopup(false);
+    // Force end the game
+    setGameOver(true);
+    setGameOverState(true);
+    
+    // Store previous best score before updating
+    const currentBest = parseInt(localStorage.getItem('candyBestScore') || '0');
+    setPreviousBestScore(currentBest);
+    
+    // Update best score if current score is better
+    if (score > currentBest) {
+      localStorage.setItem('candyBestScore', score.toString());
+    }
+    
+    // Submit score to database
+    if (context?.user?.fid && context?.user?.pfpUrl) {
+      submitScoreToDatabase(context.user.fid, context.user.pfpUrl, context?.user?.username || 'Anonymous', score, level);
+    }
   };
 
 
@@ -847,6 +876,66 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
       return matches.length > 0;
     }
 
+    // Function to check if there are any possible moves left
+    function checkForPossibleMoves(): boolean {
+      console.log('🔍 Checking for possible moves...');
+      
+      // Check all possible adjacent swaps
+      for (let row = 0; row < GRID_ROWS; row++) {
+        for (let col = 0; col < GRID_COLS; col++) {
+          const currentCandy = grid[row][col];
+          if (!currentCandy) continue;
+          
+          // Check right swap
+          if (col < GRID_COLS - 1) {
+            const rightCandy = grid[row][col + 1];
+            if (rightCandy) {
+              // Temporarily swap
+              grid[row][col] = rightCandy;
+              grid[row][col + 1] = currentCandy;
+              
+              // Check if this swap creates matches
+              const hasMatches = checkForMatchesAfterSwap();
+              
+              // Swap back
+              grid[row][col] = currentCandy;
+              grid[row][col + 1] = rightCandy;
+              
+              if (hasMatches) {
+                console.log(`✅ Found possible move at (${row},${col}) -> (${row},${col + 1})`);
+                return true;
+              }
+            }
+          }
+          
+          // Check down swap
+          if (row < GRID_ROWS - 1) {
+            const downCandy = grid[row + 1][col];
+            if (downCandy) {
+              // Temporarily swap
+              grid[row][col] = downCandy;
+              grid[row + 1][col] = currentCandy;
+              
+              // Check if this swap creates matches
+              const hasMatches = checkForMatchesAfterSwap();
+              
+              // Swap back
+              grid[row][col] = currentCandy;
+              grid[row + 1][col] = downCandy;
+              
+              if (hasMatches) {
+                console.log(`✅ Found possible move at (${row},${col}) -> (${row + 1},${col})`);
+                return true;
+              }
+            }
+          }
+        }
+      }
+      
+      console.log('❌ No possible moves found');
+      return false;
+    }
+
     function checkForMatches() {
       const matches: Candy[] = [];
       
@@ -932,7 +1021,13 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
             submitScoreToDatabase(context.user.fid, context.user.pfpUrl, context?.user?.username || 'Anonymous', gameScore, level);
           }
           
-
+        } else {
+          // Check for possible moves when moves are available but no matches found
+          const hasPossibleMoves = checkForPossibleMoves();
+          if (!hasPossibleMoves) {
+            console.log('🚫 No possible moves detected - showing popup');
+            setShowNoMovesPopup(true);
+          }
         }
       }
     }
@@ -2142,15 +2237,15 @@ Come for my spot or stay mid 😏🏆${improvementText}`;
 
                 {/* Supply and Daily Limit Info - Only show if daily limit not reached */}
                 {canMintToday !== false && (
-                  <div style={{ 
-                    // background: 'linear-gradient(135deg, rgba(255, 105, 180, 0.15) 0%, rgba(138, 43, 226, 0.15) 100%)', 
-                    padding: '16px', 
-                    borderRadius: '12px', 
-                    // marginBottom: '20px',
-                    fontSize: '16px',
-                    // border: '1px solid rgba(255, 105, 180, 0.3)',
-                    boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.1)'
-                  }}>
+                <div style={{ 
+                  // background: 'linear-gradient(135deg, rgba(255, 105, 180, 0.15) 0%, rgba(138, 43, 226, 0.15) 100%)', 
+                  padding: '16px', 
+                  borderRadius: '12px', 
+                  // marginBottom: '20px',
+                  fontSize: '16px',
+                  // border: '1px solid rgba(255, 105, 180, 0.3)',
+                  boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.1)'
+                }}>
                   <div style={{ 
                     display: 'grid', 
                     gridTemplateColumns: '1fr 1fr', 
@@ -2201,7 +2296,7 @@ Come for my spot or stay mid 😏🏆${improvementText}`;
                     {timeUntilReset && (
                     <div >
                       <div>{canMintToday === false ? 'Next reset in:' : 'Daily reset in:'}</div>
-                      <div style={{ 
+                    <div style={{ 
                         fontSize: '16px', 
                         fontFamily: 'monospace',
                         marginTop: '4px',
@@ -2213,8 +2308,8 @@ Come for my spot or stay mid 😏🏆${improvementText}`;
                       </div>
                     </div>
                   )}
-                  </div>
-                  
+                </div>
+                
                     {/* Countdown Timer - Always Show */}
                   
                   </div>
@@ -2225,21 +2320,21 @@ Come for my spot or stay mid 😏🏆${improvementText}`;
                   
                   
                     timeUntilReset && (
-                      <div style={{ 
+                  <div style={{ 
                         background: 'rgba(255, 255, 255, 0.1)', 
                         padding: '12px', 
                         borderRadius: '8px',
                         fontSize: '15px',
-                        display: 'flex',
+                    display: 'flex', 
                         flexDirection: 'column',
-                        alignItems: 'center',
-                        justifyContent: 'center',
+                    alignItems: 'center', 
+                    justifyContent: 'center', 
                         gap: '8px'
                       }}>
                         <span style={{ fontWeight: 'bold', color: '#ffff00' }}>
                           Can mint next nft in:
                         </span>
-                        <div style={{ 
+                    <div style={{ 
                           fontSize: '18px', 
                           fontFamily: 'monospace',
                           fontWeight: 'bold',
@@ -2316,7 +2411,7 @@ Come for my spot or stay mid 😏🏆${improvementText}`;
                             style={{
                               marginRight: 12,
                               fontSize: 20,
-                              animation: 'spin 1s linear infinite'
+                      animation: 'spin 1s linear infinite'
                             }}
                           >
                             ⏳
@@ -2325,10 +2420,10 @@ Come for my spot or stay mid 😏🏆${improvementText}`;
                             <div style={{ fontWeight: 'bold', fontSize: 18 }}>Minting Your NFT...</div>
                             <div style={{ fontSize: 13, opacity: 0.8 }}>Please wait while we confirm the transaction.</div>
                           </div>
-                        </div>
-                      )}
-
-                      {mintStatus === 'success' && (
+                  </div>
+                )}
+                
+                {mintStatus === 'success' && (
                         <div>
                           <div style={{ fontWeight: 'bold', fontSize: 18, color: '#4ade80', marginBottom: 12 }}>NFT Minted Successfully!</div>
                           <div style={{ fontSize: 14, opacity: 0.85, marginBottom: 16 }}>Your ChainCrush NFT has been added to your wallet.</div>
@@ -2341,7 +2436,7 @@ Come for my spot or stay mid 😏🏆${improvementText}`;
                               background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                               color: '#fff',
                               border: 'none',
-                              borderRadius: '12px',
+                    borderRadius: '12px',
                               padding: '12px 20px',
                               fontSize: '16px',
                               fontWeight: 'bold',
@@ -2363,10 +2458,10 @@ Come for my spot or stay mid 😏🏆${improvementText}`;
                           >
                             🚀 Share Your Achievement
                           </button>
-                        </div>
-                      )}
-
-                      {mintStatus === 'error' && (
+                  </div>
+                )}
+                
+                {mintStatus === 'error' && (
                         <div>
                           <div style={{ fontSize: 28, marginBottom: 8 }}>❌</div>
                           <div style={{ fontWeight: 'bold', fontSize: 18 }}>Minting Failed</div>
@@ -2605,6 +2700,117 @@ Come for my spot or stay mid 😏🏆${improvementText}`;
         }}
         message="Are you sure you want to end this game? Your progress will be lost."
       />
+      
+      {/* No Moves Left Popup */}
+      {showNoMovesPopup && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.7)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 3000,
+            padding: '20px'
+          }}
+        >
+          <div
+            style={{
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              borderRadius: '20px',
+              padding: '30px',
+              maxWidth: '400px',
+              width: '100%',
+              textAlign: 'center',
+              boxShadow: '0 20px 40px rgba(0,0,0,0.3)',
+              border: '2px solid rgba(255,255,255,0.2)'
+            }}
+          >
+            <div style={{ fontSize: '48px', marginBottom: '20px' }}>🤔</div>
+            <h2 style={{ 
+              color: '#fff', 
+              fontSize: '24px', 
+              fontWeight: 'bold', 
+              marginBottom: '15px',
+              textShadow: '0 2px 4px rgba(0,0,0,0.3)'
+            }}>
+              No Moves Detected!
+            </h2>
+            <p style={{ 
+              color: 'rgba(255,255,255,0.9)', 
+              fontSize: '16px', 
+              lineHeight: '1.5', 
+              marginBottom: '25px' 
+            }}>
+              It looks like there might not be any valid moves left on the board. What would you like to do?
+            </p>
+            
+            <div style={{ display: 'flex', gap: '15px', flexDirection: 'column' }}>
+              <button
+                onClick={handleContinueSearching}
+                style={{
+                  background: 'rgba(255,255,255,0.2)',
+                  border: '2px solid rgba(255,255,255,0.3)',
+                  color: '#fff',
+                  padding: '15px 25px',
+                  borderRadius: '12px',
+                  fontSize: '16px',
+                  fontWeight: 'bold',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease',
+                  backdropFilter: 'blur(10px)'
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.background = 'rgba(255,255,255,0.3)';
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.background = 'rgba(255,255,255,0.2)';
+                  e.currentTarget.style.transform = 'translateY(0px)';
+                }}
+              >
+                🔍 Keep Looking for Moves
+              </button>
+              
+              <button
+                onClick={handleEndGameFromNoMoves}
+                style={{
+                  background: 'linear-gradient(135deg, #ff6b6b, #ee5a52)',
+                  border: 'none',
+                  color: '#fff',
+                  padding: '15px 25px',
+                  borderRadius: '12px',
+                  fontSize: '16px',
+                  fontWeight: 'bold',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease',
+                  boxShadow: '0 4px 15px rgba(238, 90, 82, 0.4)'
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                  e.currentTarget.style.boxShadow = '0 6px 20px rgba(238, 90, 82, 0.6)';
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0px)';
+                  e.currentTarget.style.boxShadow = '0 4px 15px rgba(238, 90, 82, 0.4)';
+                }}
+              >
+                🏁 End Game Now
+              </button>
+            </div>
+            
+            <p style={{ 
+              color: 'rgba(255,255,255,0.7)', 
+              fontSize: '12px', 
+              marginTop: '15px',
+              fontStyle: 'italic'
+            }}>
+              You have {moves} moves remaining
+            </p>
+          </div>
+        </div>
+      )}
       {/* Only show reshuffle button when game is initialized, not over, and reshuffles available */}
       {gameInitialized && !gameOver && reshuffles > 0 && (
         <div style={{ position: 'fixed', bottom: 20, left: 0, width: '100vw', display: 'flex', justifyContent: 'center', zIndex: 2002 }}>
