@@ -3,8 +3,9 @@
 import { useState, useEffect } from 'react';
 import { useAccount } from 'wagmi';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTrophy, faMedal, faAward, faInfoCircle, faCoins } from '@fortawesome/free-solid-svg-icons';
+import { faTrophy, faMedal, faAward, faInfoCircle, faCoins, faShare } from '@fortawesome/free-solid-svg-icons';
 import { useMiniAppContext } from '@/hooks/use-miniapp-context';
+import { APP_URL } from '@/lib/constants';
 
 
 interface LeaderboardEntry {
@@ -29,6 +30,7 @@ export default function Leaderboard() {
   const [totalPlayers, setTotalPlayers] = useState(0);
   const [userRank, setUserRank] = useState<number | null>(null);
   const { context, actions } = useMiniAppContext();
+  const [userInfo, setUserInfo] = useState<LeaderboardEntry | null>(null);
   const [showRewardInfo, setShowRewardInfo] = useState(false);
   // New timer states
   const [timeLeft, setTimeLeft] = useState<{ days: number; hours: number }>({ days: 0, hours: 0 });
@@ -90,9 +92,33 @@ export default function Leaderboard() {
     }
   };
 
+  // Fetch user's specific info and rank
+  const fetchUserInfo = async () => {
+    if (!context?.user?.fid) return;
+    
+    try {
+      // Get all leaderboard data to find user's position
+      const response = await fetch('/api/game-leaderboard?limit=1000');
+      const result = await response.json();
+      
+      if (result.success) {
+        const allPlayers = result.data.leaderboard;
+        const userIndex = allPlayers.findIndex((player: LeaderboardEntry) => player.fid === context.user.fid);
+        
+        if (userIndex !== -1) {
+          setUserRank(userIndex + 1);
+          setUserInfo(allPlayers[userIndex]);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching user info:', error);
+    }
+  };
+
   useEffect(() => {
     fetchLeaderboard(true);
-  }, []);
+    fetchUserInfo();
+  }, [context?.user?.fid]);
 
   // Fallback shows 0d 0h when no timer is available
  
@@ -189,6 +215,26 @@ export default function Leaderboard() {
       return `${(amount / 1000).toFixed(0)}K`;
     }
     return amount.toLocaleString();
+  };
+
+  // Share user's leaderboard position
+  const handleShareUserInfo = async () => {
+    if (!userInfo || !userRank) return;
+    
+    try {
+      const isRewardEligible = userRank <= 10 && userInfo.nftCount && userInfo.nftCount > 0;
+      const rewardText = isRewardEligible
+      ? `\n💰 Loot Secured: ${formatReward(getRewardAmount(userRank - 1))} $PEPE`
+      : '';
+    
+    await actions?.composeCast({
+      text: `🥇 Just locked in Rank #${userRank} on ChainCrush  😎\n\n🎯 Score: ${userInfo.score.toLocaleString()}\n⚡ Level: ${userInfo.level}${rewardText}\n\nThink you can smoke me? Pull up and prove it 🕹️🔥`,
+      embeds: [APP_URL || ""]
+    });
+    
+    } catch (error) {
+      console.error('Failed to share user info:', error);
+    }
   };
 
   // Dynamic colors for top 10 ranks
@@ -322,12 +368,83 @@ export default function Leaderboard() {
         </div>
       </div>
 
+      {/* User Info Section */}
+      {userInfo && userRank && (
+        <div className="mb-4 rounded-xl border border-[#19adff] bg-white/95 backdrop-blur-sm shadow-md overflow-hidden">
+          {/* Compact Header */}
+          <div className="flex items-center justify-between px-3 py-2 bg-gradient-to-r from-[#19adff] to-[#1590d4] border-b border-[#19adff]/20">
+            <div className="flex items-center space-x-2">
+              <div className="text-lg">👤</div>
+              <span className="text-sm font-semibold text-white">Your Rank</span>
+              <div className="text-xs bg-white/20 text-white px-2 py-1 rounded-full font-bold">
+                #{userRank}
+              </div>
+            </div>
+            <button
+              onClick={handleShareUserInfo}
+              className="flex items-center space-x-1 bg-white/100 hover:bg-white/80 text-[#19adff] px-3 py-1 rounded-lg transition-colors duration-200"
+            >
+              <FontAwesomeIcon icon={faShare} className="text-xs" />
+              <span className="text-xs font-medium">Share</span>
+            </button>
+          </div>
+          
+          {/* Compact User Info */}
+          <div className="flex items-center p-3 space-x-3">
+            {/* Avatar with Rank Badge */}
+            <div className="relative">
+              <div className="w-12 h-12 rounded-full overflow-hidden border border-[#19adff]/30">
+                <img 
+                  src={userInfo.pfpUrl} 
+                  alt={`User ${userInfo.fid}`}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            </div>
+           
+           {/* User Details */}
+           <div className="flex-1 min-w-0">
+             <div className="flex items-center justify-between">
+               <div>
+                 <p className="font-bold text-[#19adff] text-lg mb-3 truncate">
+                   {userInfo.username || context?.user?.username || `User ${userInfo.fid}`}
+                 </p>
+                 <div className="flex items-center space-x-2 text-xs text-gray-600">
+                   <span>{new Date(userInfo.timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                   {userInfo.nftCount && userInfo.nftCount > 0 ? (
+                     <span className="text-[#19adff] font-medium">🎨 {userInfo.nftCount} NFT{userInfo.nftCount > 1 ? 's' : ''}</span>
+                   ) : (
+                     <span className="text-gray-400">🚫 No NFTs</span>
+                   )}
+                 </div>
+               </div>
+               
+               {/* Score & Level */}
+               <div className="text-right">
+                 <p className="text-lg font-bold text-[#19adff]">{userInfo.score.toLocaleString()}</p>
+                 <p className="text-xs text-gray-600">Level {userInfo.level}</p>
+               </div>
+             </div>
+             
+             {/* Reward Info */}
+             {userRank <= 10 && userInfo.nftCount && userInfo.nftCount > 0 && (
+               <div className="mt-2 px-2 py-1 bg-gradient-to-r from-green-50 to-emerald-50 rounded-md border border-green-200">
+                 <p className="text-xs font-bold text-green-700 flex items-center">
+                   💰 Reward: {formatReward(getRewardAmount(userRank - 1))} PEPE
+                 </p>
+               </div>
+             )}
+           </div>
+         </div>
+       </div>
+      )}
+
       {/* Leaderboard */}
       <div className="bg-white rounded-2xl p-2  shadow-lg border border-gray-100" style={{width:"105%",marginLeft:"-3%"}}>
        
 
               {/* Stats */}
-       <div className="bg-white rounded-2xl p-6 mb-6 shadow-lg border border-gray-100">
+       {/* <div className="bg-white rounded-2xl p-6 mb-6 shadow-lg border border-gray-100">
          <div className="flex items-center space-x-3 mb-4">
            <div className="text-2xl">📊</div>
            <h3 className="text-xl font-bold text-[#19adff]">Leaderboard Stats</h3>
@@ -344,7 +461,7 @@ export default function Leaderboard() {
              <p className="text-sm text-[#28374d]">Highest Score</p>
            </div>
          </div>
-       </div>
+       </div> */}
         
         {leaderboard.length === 0 && !loading ? (
           <div className="text-center py-8">
@@ -406,16 +523,16 @@ export default function Leaderboard() {
                   
                   {/* Player Info */}
                   <div className="flex-1">
-                    <p className={`font-bold ${rankColors.text}`}>
+                    <p className={`font-bold mb-3 text-lg ${rankColors.text}`}>
                       {entry.username || `${entry.fid}`}
                     </p>
-                    <p className={`text-sm ${rankColors.text} opacity-80`}>
+                    {/* <p className={`text-sm ${rankColors.text} opacity-80`}>
                       {new Date(entry.timestamp).toLocaleDateString('en-US', {
                         year: 'numeric',
                         month: 'short',
                         day: 'numeric'
                       })}
-                    </p>
+                    </p> */}
                     {entry.nftCount && entry.nftCount > 0 ? (
                       <p className={`text-xs ${index < 10 && entry.nftCount > 0 ? 'text-yellow-300' : rankColors.text} font-medium`}>
                         🎨 {entry.nftCount} NFT{entry.nftCount > 1 ? 's' : ''}
