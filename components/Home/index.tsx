@@ -62,6 +62,19 @@ export function Demo() {
     }
   },[isConnected])
 
+  // Sync activeTab with current view
+  useEffect(() => {
+    if (showNFTs) {
+      setActiveTab('nfts')
+    } else if (showStats) {
+      setActiveTab('stats')
+    } else if (showLeaderboard) {
+      setActiveTab('leaderboard')
+    } else {
+      setActiveTab('home')
+    }
+  }, [showNFTs, showStats, showLeaderboard])
+
   if (showGame) {
     return (
       <CandyCrushGame onBack={() => {
@@ -94,7 +107,7 @@ export function Demo() {
             </div>
           </div>
         </div>
-        <BottomNavbar activeTab="nfts" onTabChange={setActiveTab} onShowGame={setShowGame} onShowNFTs={setShowNFTs} onShowStats={setShowStats} onShowLeaderboard={setShowLeaderboard} />
+        <BottomNavbar activeTab={activeTab} onTabChange={setActiveTab} onShowGame={setShowGame} onShowNFTs={setShowNFTs} onShowStats={setShowStats} onShowLeaderboard={setShowLeaderboard} />
       </div>
     )
   }
@@ -391,7 +404,7 @@ export function Demo() {
 }
 
 interface BottomNavbarProps {
-  activeTab: 'home'  | 'stats' | 'leaderboard'
+  activeTab: 'home' | 'nfts' | 'stats' | 'leaderboard'
   onTabChange: (tab: 'home' | 'nfts' | 'stats' | 'leaderboard') => void
   onShowGame: (show: boolean) => void
   onShowNFTs: (show: boolean) => void
