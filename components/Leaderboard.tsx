@@ -514,7 +514,7 @@ export default function Leaderboard() {
                          </div>
                        )}
                        {index > 2 && (
-                         <div className="w-6 h-6 bg-white text-[#19adff] rounded-full flex items-center justify-center font-bold">
+                         <div className="w-8 h-8 p-1 bg-white text-[#19adff] rounded-full flex items-center justify-center font-bold">
                            #{index + 1}
                          </div>
                        )}

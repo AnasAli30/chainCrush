@@ -391,7 +391,7 @@ export function Demo() {
 }
 
 interface BottomNavbarProps {
-  activeTab: 'home' | 'nfts' | 'stats' | 'leaderboard'
+  activeTab: 'home'  | 'stats' | 'leaderboard'
   onTabChange: (tab: 'home' | 'nfts' | 'stats' | 'leaderboard') => void
   onShowGame: (show: boolean) => void
   onShowNFTs: (show: boolean) => void
@@ -457,7 +457,7 @@ function BottomNavbar({ activeTab, onTabChange, onShowGame, onShowNFTs, onShowSt
 
 
 
-        <button
+        {/* <button
           onClick={() => handleTabClick('nfts')}
           className="flex flex-col items-center justify-center flex-1 h-full transition-colors duration-200"
           style={{
@@ -468,7 +468,7 @@ function BottomNavbar({ activeTab, onTabChange, onShowGame, onShowNFTs, onShowSt
         >
           <FontAwesomeIcon icon={faImages} className="text-xl mb-1" />
           <div className="text-xs font-medium">NFTs</div>
-        </button>
+        </button> */}
 
         <button
           onClick={() => handleTabClick('stats')}
