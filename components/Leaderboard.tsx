@@ -572,7 +572,7 @@ export default function Leaderboard() {
                     Level {entry.level}
                   </p>
 
-                  {entry.duration&& entry.duration!=0? <p className={`text-xs ${rankColors.text} opacity-70`}>
+                  {entry.duration&& entry.duration!=0? <p className={`text-xs ${rankColors.text} opacity-90`}>
                         ⏱️ {formatDuration(entry?.duration)}
                       </p>:""}
                 </div>
