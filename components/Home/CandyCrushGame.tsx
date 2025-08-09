@@ -1668,11 +1668,11 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
             })
           });
 
-          await actions?.composeCast({
-            text: `Just snagged a ChainCrush NFT with a score of ${score} 💥 \n\nStill ${remainingSupply} NFTs left 👀\n
-Your turn to flex — play, score, and mint yours 🚀🎮✨`,
-            embeds:[APP_URL || '']
-          })
+//           await actions?.composeCast({
+//             text: `Just snagged a ChainCrush NFT with a score of ${score} 💥 \n\nStill ${remainingSupply} NFTs left 👀\n
+// Your turn to flex — play, score, and mint yours 🚀🎮✨`,
+//             embeds:[APP_URL || '']
+//           })
           
           console.log('NFT minting recorded successfully');
         } catch (error) {
@@ -1685,7 +1685,7 @@ Your turn to flex — play, score, and mint yours 🚀🎮✨`,
       setMintStatus('error');
       setMintError(mintErrorObj?.message || 'Minting failed');
     }
-  }, [mintSuccess, isMintError, mintErrorObj, context.user.fid, score]);
+  }, [mintSuccess, isMintError, mintErrorObj]);
 
 
 
