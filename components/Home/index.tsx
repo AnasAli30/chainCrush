@@ -326,15 +326,33 @@ export function Demo() {
                 marginBottom: '20px'
               }}>
                 <h3 style={{ fontSize: '20px', fontWeight: 'bold', marginBottom: '15px' }}>
-                  🎁 Weekly Rewards
+                  🎁 Top 10 Players Get Rewards
                 </h3>
-                <div style={{ textAlign: 'left', fontSize: '14px' }}>
-                  <div style={{ marginBottom: '8px' }}>🥇 1st Place: 2,000,000 PEPE</div>
-                  <div style={{ marginBottom: '8px' }}>🥈 2nd Place: 1,500,000 PEPE</div>
-                  <div style={{ marginBottom: '8px' }}>🥉 3rd Place: 1,000,000 PEPE</div>
-                  <div style={{ marginBottom: '8px' }}>🏅 4th-6th: 500,000 PEPE each</div>
-                  <div style={{ marginBottom: '8px' }}>🎖️ 7th-8th: 250,000 PEPE each</div>
-                  <div>🏆 9th-10th: 100,000 PEPE each</div>
+                <div style={{ textAlign: 'left', fontSize: '13px', lineHeight: '1.4' }}>
+                  <div style={{ marginBottom: '6px' }}>
+                    <strong>🥇 1st Place (25%)</strong><br />
+                    <span style={{ opacity: 0.9 }}>1,113,408 PEPE</span>
+                  </div>
+                  <div style={{ marginBottom: '6px' }}>
+                    <strong>🥈 2nd Place (18%)</strong><br />
+                    <span style={{ opacity: 0.9 }}>801,653 PEPE</span>
+                  </div>
+                  <div style={{ marginBottom: '6px' }}>
+                    <strong>🥉 3rd Place (13%)</strong><br />
+                    <span style={{ opacity: 0.9 }}>578,972 PEPE</span>
+                  </div>
+                  <div style={{ marginBottom: '6px' }}>
+                    <strong>4th–6th Place (8% each)</strong><br />
+                    <span style={{ opacity: 0.9 }}>356,290 PEPE each</span>
+                  </div>
+                  <div style={{ marginBottom: '6px' }}>
+                    <strong>7th–8th Place (6% each)</strong><br />
+                    <span style={{ opacity: 0.9 }}>267,218 PEPE each</span>
+                  </div>
+                  <div>
+                    <strong>9th–10th Place (4% each)</strong><br />
+                    <span style={{ opacity: 0.9 }}>178,145 PEPE each</span>
+                  </div>
                 </div>
               </div>
               

@@ -120,6 +120,7 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
     // Reset mint status to show "Mint NFT" button again
     setMintStatus('idle');
     setMintError('');
+    setNftRecorded(false); // Reset NFT recording flag
     
     if (gameRef.current) {
       const existingGame = gameRef.current.querySelector('canvas');
@@ -144,6 +145,7 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
       // Reset mint status for new game
       setMintStatus('idle');
       setMintError('');
+      setNftRecorded(false); // Reset NFT recording flag
       initGame();
     }
     return () => {
@@ -1529,6 +1531,7 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
 
   const [mintStatus, setMintStatus] = useState<'idle' | 'minting' | 'success' | 'error'>('idle');
   const [showMintPopup, setShowMintPopup] = useState(false);
+  const [nftRecorded, setNftRecorded] = useState(false);
 
   // Open popup whenever mint status changes away from idle
   useEffect(() => {
@@ -1546,7 +1549,7 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
     query: { enabled: !!address }
   });
 
-  const { data: remainingSupply } = useContractRead({
+  const { data: contractRemainingSupply } = useContractRead({
     address: CONTRACT_ADDRESSES.CHAINCRUSH_NFT as `0x${string}`,
     abi: CHAINCRUSH_NFT_ABI,
     functionName: 'getRemainingSupply',
@@ -1610,11 +1613,28 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
     }
   };
 
+  const handleShareNFT = async () => {
+    try {
+      const supplyText = contractRemainingSupply ? `Still ${Number(contractRemainingSupply)} NFTs left 👀` : "Limited NFTs available 👀";
+      
+      await actions?.composeCast({
+        text: `Just snagged a ChainCrush NFT with a score of ${score} 💥 \n\n${supplyText}\n\nYour turn to flex — play, score, and mint yours 🚀🎮✨`,
+        embeds: [APP_URL || '']
+      });
+      
+      // Close the popup after sharing
+      setShowMintPopup(false);
+    } catch (error) {
+      console.error('Failed to share NFT:', error);
+    }
+  };
+
   const handleMintNFT = async () => {
     if (!address) return;
 
     setMintStatus('minting');
     setMintError('');
+    setNftRecorded(false); // Reset the flag for new minting attempt
 
     try {
       // Get signature from server
@@ -1651,8 +1671,9 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
 
   // Handle mint success/error
   useEffect(() => {
-    if (mintSuccess) {
+    if (mintSuccess && !nftRecorded) {
       setMintStatus('success');
+      setNftRecorded(true); // Prevent duplicate calls
       
       // Record NFT minting in database
       const recordNftMint = async () => {
@@ -1667,12 +1688,6 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
               nftName
             })
           });
-
-//           await actions?.composeCast({
-//             text: `Just snagged a ChainCrush NFT with a score of ${score} 💥 \n\nStill ${remainingSupply} NFTs left 👀\n
-// Your turn to flex — play, score, and mint yours 🚀🎮✨`,
-//             embeds:[APP_URL || '']
-//           })
           
           console.log('NFT minting recorded successfully');
         } catch (error) {
@@ -1685,7 +1700,7 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
       setMintStatus('error');
       setMintError(mintErrorObj?.message || 'Minting failed');
     }
-  }, [mintSuccess, isMintError, mintErrorObj]);
+  }, [mintSuccess, isMintError, mintErrorObj, nftRecorded]);
 
 
 
@@ -2085,7 +2100,6 @@ Come for my spot or stay mid 😏🏆${improvementText}`;
                 Cast my score 
                
               </div>
-              <p style={{fontSize: '12px', color: '#ffffff', fontWeight: 'bold'}}>(+10% score improvement)</p>
               <div>{animatedScore}</div>
               {score > previousBestScore && previousBestScore > 0 && (
                 <div style={{
@@ -2162,7 +2176,7 @@ Come for my spot or stay mid 😏🏆${improvementText}`;
                       <div style={{ fontSize: '18px', marginBottom: '4px' }}>🎯</div>
                       <div style={{ fontSize: '12px', opacity: 0.8 }}>Remaining</div>
                       <div style={{ fontWeight: 'bold' }}>
-                        {remainingSupply ? Number(remainingSupply).toLocaleString() : '...'} NFTs
+                        {contractRemainingSupply ? Number(contractRemainingSupply).toLocaleString() : '...'} NFTs
                       </div>
                     </div>
                   </div>
@@ -2296,8 +2310,39 @@ Come for my spot or stay mid 😏🏆${improvementText}`;
 
                       {mintStatus === 'success' && (
                         <div>
-                          <div style={{ fontWeight: 'bold', fontSize: 18, color: '#4ade80' }}>NFT Minted Successfully!</div>
-                          <div style={{ fontSize: 14, opacity: 0.85, marginTop: 6 }}>Your ChainCrush NFT has been added to your wallet.</div>
+                          <div style={{ fontWeight: 'bold', fontSize: 18, color: '#4ade80', marginBottom: 12 }}>NFT Minted Successfully!</div>
+                          <div style={{ fontSize: 14, opacity: 0.85, marginBottom: 16 }}>Your ChainCrush NFT has been added to your wallet.</div>
+                          
+                          {/* Share Button */}
+                          <button
+                            onClick={handleShareNFT}
+                            style={{
+                              width: '100%',
+                              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                              color: '#fff',
+                              border: 'none',
+                              borderRadius: '12px',
+                              padding: '12px 20px',
+                              fontSize: '16px',
+                              fontWeight: 'bold',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              gap: '8px',
+                              transition: 'all 0.3s ease'
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.transform = 'scale(1.02)';
+                              e.currentTarget.style.boxShadow = '0 8px 25px rgba(102, 126, 234, 0.4)';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.transform = 'scale(1)';
+                              e.currentTarget.style.boxShadow = 'none';
+                            }}
+                          >
+                            🚀 Share Your Achievement
+                          </button>
                         </div>
                       )}
 
@@ -2305,7 +2350,7 @@ Come for my spot or stay mid 😏🏆${improvementText}`;
                         <div>
                           <div style={{ fontSize: 28, marginBottom: 8 }}>❌</div>
                           <div style={{ fontWeight: 'bold', fontSize: 18 }}>Minting Failed</div>
-                          <div style={{ fontSize: 12, marginTop: 8, opacity: 0.8 }}>{mintError}</div>
+                          <div style={{ fontSize: 12, marginTop: 8, opacity: 0.8 }}>Something went wrong</div>
                         </div>
                       )}
                     </div>
@@ -2333,7 +2378,7 @@ Come for my spot or stay mid 😏🏆${improvementText}`;
           </div>
           
           {/* Mint Button - Bottom Center (replaces Play Again) */}
-          {mintStatus !== 'success' && address && canMintToday !== false && remainingSupply !== BigInt(0) && (
+          {mintStatus !== 'success' && address && canMintToday !== false && contractRemainingSupply !== BigInt(0) && (
             <button
               onClick={handleMintNFT}
               style={{ 
@@ -2349,10 +2394,10 @@ Come for my spot or stay mid 😏🏆${improvementText}`;
                 color: 'white',
                 border: 'none',
                 borderRadius: '8px',
-                cursor: 'pointer',
                 boxShadow: '0 4px 8px rgba(0,0,0,0.3)',
                 transition: 'all 0.5s ease',
-                pointerEvents: 'auto'
+                pointerEvents: 'auto',
+                cursor: mintStatus === 'minting' ? 'not-allowed' : 'pointer'
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.transform = 'translateX(-50%) scale(1.05)';
@@ -2366,7 +2411,7 @@ Come for my spot or stay mid 😏🏆${improvementText}`;
           )}
 
           {/* Play Again Button - Show after successful mint OR when daily limit reached OR no wallet */}
-          {(mintStatus === 'success' || !address || (address && (canMintToday === false || remainingSupply === BigInt(0)))) && (
+          {(mintStatus === 'success' || !address || (address && (canMintToday === false || contractRemainingSupply === BigInt(0)))) && (
             <button
               style={{ 
                 position: 'fixed', 
