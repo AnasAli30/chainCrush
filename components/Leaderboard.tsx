@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { useAccount } from 'wagmi';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTrophy, faMedal, faAward, faInfoCircle, faCoins } from '@fortawesome/free-solid-svg-icons';
+import { useMiniAppContext } from '@/hooks/use-miniapp-context';
+
 
 interface LeaderboardEntry {
   fid: number;
@@ -21,7 +23,12 @@ export default function Leaderboard() {
   const { address } = useAccount();
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [offset, setOffset] = useState(0);
+  const [totalPlayers, setTotalPlayers] = useState(0);
   const [userRank, setUserRank] = useState<number | null>(null);
+  const { context, actions } = useMiniAppContext();
   const [showRewardInfo, setShowRewardInfo] = useState(false);
   // New timer states
   const [timeLeft, setTimeLeft] = useState<{ days: number; hours: number }>({ days: 0, hours: 0 });
@@ -42,24 +49,49 @@ export default function Leaderboard() {
   const per7to8 = distributionAmounts[6];
   const per9to10 = distributionAmounts[8];
 
-  useEffect(() => {
-    const fetchLeaderboard = async () => {
+  // Initial fetch and load more function
+  const fetchLeaderboard = async (isInitial = true) => {
+    if (isInitial) {
       setLoading(true);
-      try {
-        const response = await fetch('/api/game-leaderboard?limit=100');
-        const result = await response.json();
-        
-        if (result.success) {
-          setLeaderboard(result.data.leaderboard);
-        }
-      } catch (error) {
-        console.error('Error fetching leaderboard:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
+      setOffset(0);
+      setLeaderboard([]);
+    } else {
+      setLoadingMore(true);
+    }
 
-    fetchLeaderboard();
+    try {
+      const currentOffset = isInitial ? 0 : offset;
+      const response = await fetch(`/api/game-leaderboard?limit=50&offset=${currentOffset}`);
+      const result = await response.json();
+      
+      if (result.success) {
+        const newData = result.data.leaderboard;
+        
+        if (isInitial) {
+          setLeaderboard(newData);
+        } else {
+          setLeaderboard(prev => [...prev, ...newData]);
+        }
+        
+        setHasMore(result.data.hasMore);
+        setOffset(currentOffset + 50);
+        setTotalPlayers(result.data.total);
+      } else {
+        console.error('Failed to fetch leaderboard:', result.error);
+      }
+    } catch (error) {
+      console.error('Error fetching leaderboard:', error);
+    } finally {
+      if (isInitial) {
+        setLoading(false);
+      } else {
+        setLoadingMore(false);
+      }
+    }
+  };
+
+  useEffect(() => {
+    fetchLeaderboard(true);
   }, []);
 
   // Fallback shows 0d 0h when no timer is available
@@ -98,7 +130,94 @@ export default function Leaderboard() {
     return () => clearInterval(interval);
   }, [timer]);
 
+  // Infinite scroll logic
+  useEffect(() => {
+    const handleScroll = () => {
+      if (loadingMore || !hasMore) return;
+
+      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+      const windowHeight = window.innerHeight;
+      const documentHeight = document.documentElement.scrollHeight;
+
+      // Trigger load more when user is 200px from bottom
+      if (scrollTop + windowHeight >= documentHeight - 200) {
+        fetchLeaderboard(false);
+      }
+    };
+
+    const throttledScroll = throttle(handleScroll, 200);
+    window.addEventListener('scroll', throttledScroll);
+
+    return () => {
+      window.removeEventListener('scroll', throttledScroll);
+    };
+  }, [loadingMore, hasMore, offset]);
+
+  // Simple throttle function
+  const throttle = (func: Function, delay: number) => {
+    let timeoutId: NodeJS.Timeout;
+    let lastExecTime = 0;
+    return function (...args: any[]) {
+      const currentTime = Date.now();
+
+      if (currentTime - lastExecTime > delay) {
+        func(...args);
+        lastExecTime = currentTime;
+      } else {
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => {
+          func(...args);
+          lastExecTime = Date.now();
+        }, delay - (currentTime - lastExecTime));
+      }
+    };
+  };
+
   const displayTime = timerLoading ? '...' : `${timeLeft.days}d ${timeLeft.hours}h`;
+
+  // Get reward amount for each rank
+  const getRewardAmount = (rank: number) => {
+    if (rank >= 10) return 0;
+    return distributionAmounts[rank];
+  };
+
+  // Format reward amount for display
+  const formatReward = (amount: number) => {
+    if (amount >= 1000000) {
+      return `${(amount / 1000000).toFixed(1)}M`;
+    } else if (amount >= 1000) {
+      return `${(amount / 1000).toFixed(0)}K`;
+    }
+    return amount.toLocaleString();
+  };
+
+  // Dynamic colors for top 10 ranks
+  const getRankColors = (rank: number) => {
+    const colors = [
+      // 1st - Gold
+      { bg: 'bg-gradient-to-r from-yellow-400 to-yellow-600', border: 'border-yellow-500', text: 'text-yellow-900' },
+      // 2nd - Silver  
+      { bg: 'bg-gradient-to-r from-gray-300 to-gray-500', border: 'border-gray-400', text: 'text-gray-900' },
+      // 3rd - Bronze
+      { bg: 'bg-gradient-to-r from-orange-400 to-orange-600', border: 'border-orange-500', text: 'text-orange-900' },
+      // 4th - Purple
+      { bg: 'bg-gradient-to-r from-purple-400 to-purple-600', border: 'border-purple-500', text: 'text-white' },
+      // 5th - Pink
+      { bg: 'bg-gradient-to-r from-pink-400 to-pink-600', border: 'border-pink-500', text: 'text-white' },
+      // 6th - Indigo
+      { bg: 'bg-gradient-to-r from-indigo-400 to-indigo-600', border: 'border-indigo-500', text: 'text-white' },
+      // 7th - Green
+      { bg: 'bg-gradient-to-r from-green-400 to-green-600', border: 'border-green-500', text: 'text-white' },
+      // 8th - Teal
+      { bg: 'bg-gradient-to-r from-teal-400 to-teal-600', border: 'border-teal-500', text: 'text-white' },
+      // 9th - Cyan
+      { bg: 'bg-gradient-to-r from-cyan-400 to-cyan-600', border: 'border-cyan-500', text: 'text-white' },
+      // 10th - Rose
+      { bg: 'bg-gradient-to-r from-rose-400 to-rose-600', border: 'border-rose-500', text: 'text-white' }
+    ];
+    
+    return colors[rank] || { bg: 'bg-gradient-to-r from-[#19adff] to-[#28374d]', border: 'border-[#19adff]', text: 'text-white' };
+  };
 
   if (loading) {
     return (
@@ -215,7 +334,7 @@ export default function Leaderboard() {
          </div>
          <div className="grid grid-cols-2 gap-4">
            <div className="text-center">
-             <p className="text-2xl font-bold text-[#19adff]">{leaderboard.length}</p>
+             <p className="text-2xl font-bold text-[#19adff]">{totalPlayers}</p>
              <p className="text-sm text-[#28374d]">Total Players</p>
            </div>
            <div className="text-center">
@@ -227,21 +346,28 @@ export default function Leaderboard() {
          </div>
        </div>
         
-        {leaderboard.length === 0 ? (
+        {leaderboard.length === 0 && !loading ? (
           <div className="text-center py-8">
             <div className="text-4xl mb-3">🎮</div>
             <p className="text-gray-500 font-medium">No scores yet. Be the first to play!</p>
           </div>
         ) : (
           <div className="space-y-3">
-            {leaderboard.map((entry, index) => (
-              <div key={index} className="flex items-center p-4 bg-gradient-to-r from-[#19adff] to-[#28374d] rounded-xl border border-[#19adff]">
+            {leaderboard.map((entry, index) => {
+              const rankColors = index < 10 && entry.nftCount && entry.nftCount > 0 
+                ? getRankColors(index) 
+                : getRankColors(99); // Default colors for non-top-10
+              
+              return (
+              <div key={index} className={`flex items-center p-4 rounded-xl border ${rankColors.bg} ${rankColors.border}`}>
                 {/* Rank */}
               
 
                                  {/* Profile Picture with Rank Badge */}
-                 <div className="flex items-center space-x-3 flex-1">
-                   <div className="relative">
+                 <div className="flex items-center space-x-3 flex-1 cursor-pointer" onClick={async()=>{
+                    await actions?.viewProfile({fid:entry.fid});
+                   }}>
+                   <div className="relative" >
                      <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-[#19adff]">
                        <img 
                          src={entry.pfpUrl} 
@@ -280,22 +406,29 @@ export default function Leaderboard() {
                   
                   {/* Player Info */}
                   <div className="flex-1">
-                    <p className="font-bold text-white">
+                    <p className={`font-bold ${rankColors.text}`}>
                       {entry.username || `${entry.fid}`}
                     </p>
-                    <p className="text-sm text-white opacity-80">
-                      Level {entry.level}
-                    </p>
-                    <p className="text-sm text-white opacity-80">
+                    <p className={`text-sm ${rankColors.text} opacity-80`}>
                       {new Date(entry.timestamp).toLocaleDateString('en-US', {
                         year: 'numeric',
                         month: 'short',
                         day: 'numeric'
                       })}
                     </p>
-                    {entry.nftCount && entry.nftCount > 0 && (
-                      <p className="text-xs text-yellow-300 font-medium">
+                    {entry.nftCount && entry.nftCount > 0 ? (
+                      <p className={`text-xs ${index < 10 && entry.nftCount > 0 ? 'text-yellow-300' : rankColors.text} font-medium`}>
                         🎨 {entry.nftCount} NFT{entry.nftCount > 1 ? 's' : ''}
+                      </p>
+                    ) : (
+                      <p className={`text-xs ${rankColors.text} font-medium opacity-60`}>
+                        🚫 No NFTs
+                      </p>
+                    )}
+                    {/* Reward Amount for Top 10 NFT Holders */}
+                    {index < 10 && entry.nftCount && entry.nftCount > 0 && (
+                      <p className={`text-xs ${index < 3 ? 'text-green-800' : 'text-green-300'} font-bold`}>
+                        💰 {formatReward(getRewardAmount(index))} PEPE
                       </p>
                     )}
                   </div>
@@ -303,11 +436,34 @@ export default function Leaderboard() {
 
                 {/* Score */}
                 <div className="text-right">
-                  <p className="text-2xl font-bold text-white">{entry.score.toLocaleString()}</p>
-                  <p className="text-xs text-white opacity-80">points</p>
+                  <p className={`text-2xl font-bold ${rankColors.text}`}>{entry.score.toLocaleString()}</p>
+                  <p className={`text-xs ${rankColors.text} opacity-80`}>points</p>
+                  <p className={`text-sm ${rankColors.text} opacity-80`}>
+                    Level {entry.level}
+                  </p>
                 </div>
               </div>
-            ))}
+              );
+            })}
+            
+            {/* Loading more indicator */}
+            {loadingMore && (
+              <div className="flex items-center justify-center py-8">
+                <div className="flex items-center space-x-3">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#19adff]"></div>
+                  <span className="text-[#19adff] font-medium">Loading more players...</span>
+                </div>
+              </div>
+            )}
+            
+            {/* End of list indicator */}
+            {!hasMore && leaderboard.length > 0 && (
+              <div className="text-center py-6">
+                <div className="text-2xl mb-2">🏁</div>
+                <p className="text-gray-500 font-medium">You've reached the end!</p>
+                <p className="text-sm text-gray-400">Total players: {totalPlayers}</p>
+              </div>
+            )}
           </div>
         )}
       </div>

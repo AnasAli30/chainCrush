@@ -327,4 +327,57 @@ export async function getLeaderboardWithNfts(limit: number = 50): Promise<GameSc
     .toArray();
   
   return leaderboard as unknown as GameScore[];
+}
+
+export async function getMixedLeaderboard(limit: number = 50, offset: number = 0): Promise<GameScore[]> {
+  const client = await clientPromise;
+  const db = client.db('chaincrush');
+  
+  // Get ALL players sorted by score (no duplicates since we're getting unique fids)
+  const allPlayers = await db.collection('gameScores')
+    .find({})
+    .sort({ score: -1 })
+    .toArray();
+  
+  // Remove duplicates by fid (keep highest score for each user)
+  const uniquePlayers = new Map();
+  allPlayers.forEach(player => {
+    const existing = uniquePlayers.get(player.fid);
+    if (!existing || player.score > existing.score) {
+      uniquePlayers.set(player.fid, player);
+    }
+  });
+  
+  const uniquePlayersList = Array.from(uniquePlayers.values()).sort((a, b) => b.score - a.score);
+  
+  // Separate NFT holders and non-NFT holders
+  const nftHolders = uniquePlayersList.filter(player => player.hasNft === true && player.nftCount > 0);
+  const nonNftHolders = uniquePlayersList.filter(player => !player.hasNft || !player.nftCount || player.nftCount === 0);
+  
+  // Ensure top 10 are NFT holders, then add others
+  const top10NftHolders = nftHolders.slice(0, 10);
+  const remainingNftHolders = nftHolders.slice(10);
+  
+  // Combine remaining players and sort by score
+  const othersPool = [...remainingNftHolders, ...nonNftHolders].sort((a, b) => b.score - a.score);
+  
+  // Final leaderboard: top 10 NFT holders + others
+  const finalLeaderboard = [
+    ...top10NftHolders,
+    ...othersPool
+  ];
+  
+  // Apply pagination (offset and limit)
+  const paginatedResult = finalLeaderboard.slice(offset, offset + limit);
+  
+  return paginatedResult as unknown as GameScore[];
+}
+
+export async function getTotalPlayersCount(): Promise<number> {
+  const client = await clientPromise;
+  const db = client.db('chaincrush');
+  
+  // Get unique player count by counting distinct fids
+  const totalPlayers = await db.collection('gameScores').distinct('fid');
+  return totalPlayers.length;
 } 

@@ -2140,16 +2140,17 @@ Come for my spot or stay mid 😏🏆${improvementText}`;
               }}>
                
 
-                {/* Supply and Daily Limit Info */}
-                <div style={{ 
-                  // background: 'linear-gradient(135deg, rgba(255, 105, 180, 0.15) 0%, rgba(138, 43, 226, 0.15) 100%)', 
-                  padding: '16px', 
-                  borderRadius: '12px', 
-                  // marginBottom: '20px',
-                  fontSize: '16px',
-                  // border: '1px solid rgba(255, 105, 180, 0.3)',
-                  boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.1)'
-                }}>
+                {/* Supply and Daily Limit Info - Only show if daily limit not reached */}
+                {canMintToday !== false && (
+                  <div style={{ 
+                    // background: 'linear-gradient(135deg, rgba(255, 105, 180, 0.15) 0%, rgba(138, 43, 226, 0.15) 100%)', 
+                    padding: '16px', 
+                    borderRadius: '12px', 
+                    // marginBottom: '20px',
+                    fontSize: '16px',
+                    // border: '1px solid rgba(255, 105, 180, 0.3)',
+                    boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.1)'
+                  }}>
                   <div style={{ 
                     display: 'grid', 
                     gridTemplateColumns: '1fr 1fr', 
@@ -2214,24 +2215,42 @@ Come for my spot or stay mid 😏🏆${improvementText}`;
                   )}
                   </div>
                   
-                  {canMintToday === false && (
-                    <div style={{ 
-                      marginTop: '12px',
-                      background: 'rgba(239, 68, 68, 0.2)', 
-                      color: '#ff6b6b', 
-                      fontWeight: 'bold', 
-                      fontSize: '14px',
-                      padding: '8px 12px',
-                      borderRadius: '8px',
-                      border: '1px solid rgba(239, 68, 68, 0.3)'
-                    }}>
-                      ❌ Daily mint limit reached! Try again tomorrow.
-                    </div>
-                  )}
+                    {/* Countdown Timer - Always Show */}
                   
-                  {/* Countdown Timer - Always Show */}
+                  </div>
+                )}
                 
-                </div>
+                {/* Daily Limit Reached - Show countdown timer */}
+                {canMintToday === false && 
+                  
+                  
+                    timeUntilReset && (
+                      <div style={{ 
+                        background: 'rgba(255, 255, 255, 0.1)', 
+                        padding: '12px', 
+                        borderRadius: '8px',
+                        fontSize: '15px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px'
+                      }}>
+                        <span style={{ fontWeight: 'bold', color: '#ffff00' }}>
+                          Can mint next nft in:
+                        </span>
+                        <div style={{ 
+                          fontSize: '18px', 
+                          fontFamily: 'monospace',
+                          fontWeight: 'bold',
+                          color: '#ffffff',
+                          textShadow: '0 0 10px rgba(99, 102, 241, 0.5)'
+                        }}>
+                          {timeUntilReset}
+                        </div>
+                      </div>
+                    )
+                }
                 
                 {/* Mint Status Popup */}
                 {showMintPopup && mintStatus !== 'idle' && (
