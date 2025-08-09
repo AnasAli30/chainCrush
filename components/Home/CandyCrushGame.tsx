@@ -49,6 +49,10 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
   const [timeUntilReset, setTimeUntilReset] = useState('');
   const [dailyLimitReached, setDailyLimitReached] = useState(false);
 
+  // Game time tracking
+  const [gameStartTime, setGameStartTime] = useState<number | null>(null);
+  const [gameDuration, setGameDuration] = useState<number>(0);
+
   // Score counting animation
   useEffect(() => {
     if (score > 0 && gameOver) {
@@ -137,6 +141,16 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
     if (onBack) onBack();
   };
 
+  // Calculate and set game duration
+  const calculateGameDuration = () => {
+    if (gameStartTime) {
+      const duration = Math.floor((Date.now() - gameStartTime) / 1000); // Duration in seconds
+      setGameDuration(duration);
+      return duration;
+    }
+    return 0;
+  };
+
   // Handle no moves popup actions
   const handleContinueSearching = () => {
     setShowNoMovesPopup(false);
@@ -145,6 +159,9 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
 
   const handleEndGameFromNoMoves = () => {
     setShowNoMovesPopup(false);
+    // Calculate game duration
+    const duration = calculateGameDuration();
+    
     // Force end the game
     setGameOver(true);
     setGameOverState(true);
@@ -158,9 +175,9 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
       localStorage.setItem('candyBestScore', score.toString());
     }
     
-    // Submit score to database
+    // Submit score to database with duration
     if (context?.user?.fid && context?.user?.pfpUrl) {
-      submitScoreToDatabase(context.user.fid, context.user.pfpUrl, context?.user?.username || 'Anonymous', score, level);
+      submitScoreToDatabase(context.user.fid, context.user.pfpUrl, context?.user?.username || 'Anonymous', score, level, duration);
     }
   };
 
@@ -171,6 +188,9 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
   useEffect(() => {
     if (gameRef.current) {
       setGameInitialized(false);
+      // Start tracking game time
+      setGameStartTime(Date.now());
+      setGameDuration(0);
       // Reset mint status for new game
       setMintStatus('idle');
       setMintError('');
@@ -1016,9 +1036,13 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
           setGameOver(true);
           setGameOverState(true); // Set blur state
           
+          // Calculate game duration
+          const duration = gameStartTime ? Math.floor((Date.now() - gameStartTime) / 1000) : 0;
+          setGameDuration(duration);
+          
           // Submit score to database
           if (context?.user?.fid && context?.user?.pfpUrl) {
-            submitScoreToDatabase(context.user.fid, context.user.pfpUrl, context?.user?.username || 'Anonymous', gameScore, level);
+            submitScoreToDatabase(context.user.fid, context.user.pfpUrl, context?.user?.username || 'Anonymous', gameScore, level, duration);
           }
           
         } else {
@@ -1670,9 +1694,12 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
   // On game over, show NFT minting option
   useEffect(() => {
     if (gameOver && address) {
+      // Calculate final game duration
+      const finalDuration = gameStartTime ? Math.floor((Date.now() - gameStartTime) / 1000) : gameDuration;
+      
       // Submit score to database if we have valid user data
       if (context?.user?.fid && context?.user?.pfpUrl) {
-        submitScoreToDatabase(context.user.fid, context.user.pfpUrl, context.user.username || 'Anonymous', score, level, address);
+        submitScoreToDatabase(context.user.fid, context.user.pfpUrl, context.user.username || 'Anonymous', score, level, finalDuration, address);
       } else {
         console.log('Cannot submit score: Missing FID or pfpUrl', {
           fid: context?.user?.fid,
@@ -1680,10 +1707,10 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
         });
       }
     }
-  }, [gameOver, address]);
+  }, [gameOver, address, gameStartTime, gameDuration]);
 
   // Handle NFT minting
-  const submitScoreToDatabase = async (fid: number, pfpUrl: string, username: string, gameScore: number, gameLevel: number, userAddress?: string) => {
+  const submitScoreToDatabase = async (fid: number, pfpUrl: string, username: string, gameScore: number, gameLevel: number, gameDurationSeconds?: number, userAddress?: string) => {
     try {
       const { authenticatedFetch } = await import('@/lib/auth');
       const response = await authenticatedFetch('/api/submit-score', {
@@ -1694,6 +1721,7 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
           username,
           score: gameScore,
           level: gameLevel,
+          duration: gameDurationSeconds || 0,
           userAddress
         })
       });

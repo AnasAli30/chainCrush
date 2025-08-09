@@ -15,6 +15,7 @@ interface LeaderboardEntry {
   score: number;
   level: number;
   timestamp: number;
+  duration?: number; // Game duration in seconds
   nftMinted?: boolean;
   nftName?: string;
   nftCount?: number;
@@ -217,6 +218,19 @@ export default function Leaderboard() {
     return amount.toLocaleString();
   };
 
+  // Format duration for display
+  const formatDuration = (seconds?: number): string => {
+    if (!seconds) return '0s';
+    
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    
+    if (minutes > 0) {
+      return `${minutes}m ${remainingSeconds}s`;
+    }
+    return `${remainingSeconds}s`;
+  };
+
   // Share user's leaderboard position
   const handleShareUserInfo = async () => {
     if (!userInfo || !userRank) return;
@@ -228,7 +242,7 @@ export default function Leaderboard() {
       : '';
     
     await actions?.composeCast({
-      text: `🥇 Just locked in Rank #${userRank} on ChainCrush  😎\n\n🎯 Score: ${userInfo.score.toLocaleString()}\n⚡ Level: ${userInfo.level}${rewardText}\n\nThink you can smoke me? Pull up and prove it 🕹️🔥`,
+      text: `🥇 Just locked in Rank #${userRank} on ChainCrush  😎\n\n🎯 Score: ${userInfo.score.toLocaleString()}\n⚡ Level: ${userInfo.level}\n⏱️ Time: ${formatDuration(userInfo.duration)}${rewardText}\n\nThink you can smoke me? Pull up and prove it 🕹️🔥`,
       embeds: [APP_URL || ""]
     });
     
@@ -414,7 +428,7 @@ export default function Leaderboard() {
                    {userInfo.nftCount && userInfo.nftCount > 0 ? (
                      <span className="text-[#19adff] font-medium">🎨 {userInfo.nftCount} NFT{userInfo.nftCount > 1 ? 's' : ''}</span>
                    ) : (
-                     <span className="text-gray-400">🚫 No NFTs</span>
+                     ""
                    )}
                  </div>
                </div>
@@ -423,6 +437,7 @@ export default function Leaderboard() {
                <div className="text-right">
                  <p className="text-lg font-bold text-[#19adff]">{userInfo.score.toLocaleString()}</p>
                  <p className="text-xs text-gray-600">Level {userInfo.level}</p>
+              {userInfo.duration && userInfo.duration != 0 &&   <p className="text-xs text-gray-500">⏱️ {formatDuration(userInfo.duration)}</p>}
                </div>
              </div>
              
@@ -526,21 +541,19 @@ export default function Leaderboard() {
                     <p className={`font-bold mb-3 text-lg ${rankColors.text}`}>
                       {entry.username || `${entry.fid}`}
                     </p>
-                    {/* <p className={`text-sm ${rankColors.text} opacity-80`}>
+                    <p className={`text-sm ${rankColors.text} opacity-80`}>
                       {new Date(entry.timestamp).toLocaleDateString('en-US', {
-                        year: 'numeric',
+
                         month: 'short',
                         day: 'numeric'
                       })}
-                    </p> */}
+                    </p>
                     {entry.nftCount && entry.nftCount > 0 ? (
                       <p className={`text-xs ${index < 10 && entry.nftCount > 0 ? 'text-yellow-300' : rankColors.text} font-medium`}>
                         🎨 {entry.nftCount} NFT{entry.nftCount > 1 ? 's' : ''}
                       </p>
                     ) : (
-                      <p className={`text-xs ${rankColors.text} font-medium opacity-60`}>
-                        🚫 No NFTs
-                      </p>
+                      ""
                     )}
                     {/* Reward Amount for Top 10 NFT Holders */}
                     {index < 10 && entry.nftCount && entry.nftCount > 0 && (
@@ -554,10 +567,14 @@ export default function Leaderboard() {
                 {/* Score */}
                 <div className="text-right">
                   <p className={`text-2xl font-bold ${rankColors.text}`}>{entry.score.toLocaleString()}</p>
-                  <p className={`text-xs ${rankColors.text} opacity-80`}>points</p>
+                  {/* <p className={`text-xs ${rankColors.text} opacity-80`}>points</p> */}
                   <p className={`text-sm ${rankColors.text} opacity-80`}>
                     Level {entry.level}
                   </p>
+
+                  { entry.duration  &&  <p className={`text-xs ${rankColors.text} opacity-60`}>
+                        ⏱️ {formatDuration(entry.duration)}
+                      </p>}
                 </div>
               </div>
               );

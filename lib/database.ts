@@ -24,6 +24,7 @@ export interface GameScore {
   level: number;
   userAddress?: string;
   timestamp: number;
+  duration?: number; // Game duration in seconds
   nftMinted?: boolean;
   nftName?: string;
   nftCount?: number; // Added for NFT tracking
@@ -208,6 +209,7 @@ export async function saveGameScore(gameScore: GameScore): Promise<void> {
             username: gameScore.username,
             score: gameScore.score,
             level: gameScore.level,
+            duration: gameScore.duration,
             userAddress: gameScore.userAddress,
             timestamp: gameScore.timestamp,
             updatedAt: new Date()
