@@ -118,7 +118,7 @@ export function Demo() {
         <div className="p-4">
           <UserStats />
         </div>
-        <BottomNavbar activeTab="stats" onTabChange={setActiveTab} onShowGame={setShowGame} onShowNFTs={setShowNFTs} onShowStats={setShowStats} onShowLeaderboard={setShowLeaderboard} />
+        <BottomNavbar activeTab={activeTab} onTabChange={setActiveTab} onShowGame={setShowGame} onShowNFTs={setShowNFTs} onShowStats={setShowStats} onShowLeaderboard={setShowLeaderboard} />
       </div>
     )
   }
@@ -129,7 +129,7 @@ export function Demo() {
         <div className="p-4">
           <Leaderboard />
         </div>
-        <BottomNavbar activeTab="leaderboard" onTabChange={setActiveTab} onShowGame={setShowGame} onShowNFTs={setShowNFTs} onShowStats={setShowStats} onShowLeaderboard={setShowLeaderboard} />
+        <BottomNavbar activeTab={activeTab} onTabChange={setActiveTab} onShowGame={setShowGame} onShowNFTs={setShowNFTs} onShowStats={setShowStats} onShowLeaderboard={setShowLeaderboard} />
       </div>
     )
   }
@@ -392,7 +392,7 @@ export function Demo() {
       )}
       
       <BottomNavbar
-        activeTab="home" 
+        activeTab={activeTab} 
         onTabChange={setActiveTab} 
         onShowGame={setShowGame} 
         onShowNFTs={setShowNFTs} 
