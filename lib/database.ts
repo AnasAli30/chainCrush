@@ -22,6 +22,7 @@ export interface GameScore {
   username?: string;
   score: number;
   level: number;
+  userAddress?: string;
   timestamp: number;
   nftMinted?: boolean;
   nftName?: string;
@@ -207,14 +208,36 @@ export async function saveGameScore(gameScore: GameScore): Promise<void> {
             username: gameScore.username,
             score: gameScore.score,
             level: gameScore.level,
+            userAddress: gameScore.userAddress,
             timestamp: gameScore.timestamp,
             updatedAt: new Date()
           }
         }
       );
-      console.log(`Updated player ${gameScore.fid} with new best score: ${gameScore.score}`);
+      console.log(`Updated player ${gameScore.fid} with new best score: ${gameScore.score}, level: ${gameScore.level}`);
     } else {
-      console.log(`Player ${gameScore.fid} score ${gameScore.score} not higher than existing ${existingPlayer.score}`);
+      // Even if score isn't higher, update level and userAddress if provided
+      const updateFields: any = {
+        pfpUrl: gameScore.pfpUrl,
+        username: gameScore.username,
+        updatedAt: new Date()
+      };
+      
+      // Update level if it's higher than existing
+      if (gameScore.level > existingPlayer.level) {
+        updateFields.level = gameScore.level;
+      }
+      
+      // Always update userAddress if provided
+      if (gameScore.userAddress) {
+        updateFields.userAddress = gameScore.userAddress;
+      }
+      
+      await db.collection('gameScores').updateOne(
+        { fid: gameScore.fid },
+        { $set: updateFields }
+      );
+      console.log(`Updated player ${gameScore.fid} profile info - level: ${gameScore.level}, address: ${gameScore.userAddress}`);
     }
   } else {
     // Create new player record

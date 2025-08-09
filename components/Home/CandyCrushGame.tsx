@@ -1577,7 +1577,7 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
     if (gameOver && address) {
       // Submit score to database if we have valid user data
       if (context?.user?.fid && context?.user?.pfpUrl) {
-        submitScoreToDatabase(context.user.fid, context.user.pfpUrl, context.user.username || 'Anonymous', score, level);
+        submitScoreToDatabase(context.user.fid, context.user.pfpUrl, context.user.username || 'Anonymous', score, level, address);
       } else {
         console.log('Cannot submit score: Missing FID or pfpUrl', {
           fid: context?.user?.fid,
@@ -1588,7 +1588,7 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
   }, [gameOver, address]);
 
   // Handle NFT minting
-  const submitScoreToDatabase = async (fid: number, pfpUrl: string, username: string, gameScore: number, gameLevel: number) => {
+  const submitScoreToDatabase = async (fid: number, pfpUrl: string, username: string, gameScore: number, gameLevel: number, userAddress?: string) => {
     try {
       const { authenticatedFetch } = await import('@/lib/auth');
       const response = await authenticatedFetch('/api/submit-score', {
@@ -1598,7 +1598,8 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
           pfpUrl,
           username,
           score: gameScore,
-          level: gameLevel
+          level: gameLevel,
+          userAddress
         })
       });
 
