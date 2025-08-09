@@ -341,29 +341,25 @@ export function Demo() {
                 <h3 style={{ fontSize: '20px', fontWeight: 'bold', marginBottom: '15px' }}>
                   🎁 Top 10 Players Get Rewards
                 </h3>
-                <div style={{ textAlign: 'left', fontSize: '13px', lineHeight: '1.4' }}>
-                  <div style={{ marginBottom: '6px' }}>
-                    <strong>🥇 1st Place (25%)</strong><br />
+                  <div style={{ textAlign: 'left', fontSize: '13px', lineHeight: '1.4' }}>
+                  <div style={{ marginBottom: '6px' ,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+                    <strong>🥇 1st Place (25%)</strong>
                     <span style={{ opacity: 0.9 }}>1,113,408 PEPE</span>
                   </div>
-                  <div style={{ marginBottom: '6px' }}>
-                    <strong>🥈 2nd Place (18%)</strong><br />
+                  <div style={{ marginBottom: '6px' ,display:"flex",alignItems:"center",justifyContent:"space-between"}}>                    <strong>🥈 2nd Place (18%)</strong>
                     <span style={{ opacity: 0.9 }}>801,653 PEPE</span>
                   </div>
-                  <div style={{ marginBottom: '6px' }}>
-                    <strong>🥉 3rd Place (13%)</strong><br />
+                  <div style={{ marginBottom: '6px' ,display:"flex",alignItems:"center",justifyContent:"space-between"}}>                    <strong>🥉 3rd Place (13%)</strong>
                     <span style={{ opacity: 0.9 }}>578,972 PEPE</span>
                   </div>
-                  <div style={{ marginBottom: '6px' }}>
-                    <strong>4th–6th Place (8% each)</strong><br />
+                  <div style={{ marginBottom: '6px' ,display:"flex",alignItems:"center",justifyContent:"space-between"}}>                    <strong>4th–6th Place</strong>
                     <span style={{ opacity: 0.9 }}>356,290 PEPE each</span>
                   </div>
-                  <div style={{ marginBottom: '6px' }}>
-                    <strong>7th–8th Place (6% each)</strong><br />
+                  <div style={{ marginBottom: '6px' ,display:"flex",alignItems:"center",justifyContent:"space-between"}}>                    <strong>7th–8th Place</strong>
                     <span style={{ opacity: 0.9 }}>267,218 PEPE each</span>
                   </div>
-                  <div>
-                    <strong>9th–10th Place (4% each)</strong><br />
+                  <div style={{ marginBottom: '6px' ,display:"flex",alignItems:"center",justifyContent:"space-between"}}>                   
+                    <strong>9th–10th Place</strong>
                     <span style={{ opacity: 0.9 }}>178,145 PEPE each</span>
                   </div>
                 </div>

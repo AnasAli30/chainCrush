@@ -82,11 +82,20 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
   useEffect(() => {
     const updateCountdown = () => {
       const now = new Date();
-      const tomorrow = new Date(now);
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      tomorrow.setHours(0, 0, 0, 0); // Reset to midnight
       
-      const timeLeft = tomorrow.getTime() - now.getTime();
+      // Calculate next 5:30 AM IST
+      // Create today's reset time: 5:30 AM IST = 00:00 UTC (midnight UTC)
+      const todayResetUTC = new Date();
+      todayResetUTC.setUTCHours(0, 0, 0, 0); // 00:00 UTC = 5:30 AM IST
+      
+      // Create tomorrow's reset time
+      const tomorrowResetUTC = new Date(todayResetUTC);
+      tomorrowResetUTC.setUTCDate(tomorrowResetUTC.getUTCDate() + 1);
+      
+      // Choose the next reset time
+      const nextResetUTC = now < todayResetUTC ? todayResetUTC : tomorrowResetUTC;
+      
+      const timeLeft = nextResetUTC.getTime() - now.getTime();
       
       if (timeLeft > 0) {
         const hours = Math.floor(timeLeft / (1000 * 60 * 60));
