@@ -476,7 +476,7 @@ export default function Leaderboard() {
                 : getRankColors(99); // Default colors for non-top-10
               
               return (
-              <div key={index} className={`flex items-center p-4 rounded-xl border ${rankColors.bg} ${rankColors.border}`}>
+              <div key={index} className={`flex items-center px-4 py-2 rounded-xl border ${rankColors.bg} ${rankColors.border}`}>
                 {/* Rank */}
               
 
