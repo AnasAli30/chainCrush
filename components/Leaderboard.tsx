@@ -319,7 +319,7 @@ export default function Leaderboard() {
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-xl font-bold flex items-center space-x-2" style={{ color: '#e5e7eb' }}>
                 <FontAwesomeIcon icon={faCoins} className="text-yellow-400" />
-                <span>Daily Rewards</span>
+                <span>Weekly Rewards</span>
               </h3>
               <button
                 onClick={() => setShowRewardInfo(false)}
