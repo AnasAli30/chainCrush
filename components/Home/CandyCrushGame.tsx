@@ -10,6 +10,15 @@ import { useContractWrite, useContractRead, useAccount, useWaitForTransactionRec
 import { parseEther } from 'viem';
 import { CONTRACT_ADDRESSES, CHAINCRUSH_NFT_ABI } from '@/lib/contracts';
 import ConfirmEndGameModal from '../ConfirmEndGameModal';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { 
+  faCoins, 
+  faCheckCircle, 
+  faExclamationTriangle, 
+  faSpinner,
+  faTimes,
+  faGift
+} from '@fortawesome/free-solid-svg-icons';
 
 interface CandyCrushGameProps {
   onBack?: () => void;
@@ -1657,6 +1666,16 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
 
   const { address } = useAccount();
 
+  // Faucet state
+  const [faucetStatus, setFaucetStatus] = useState<'idle' | 'checking' | 'claiming' | 'success' | 'error'>('idle');
+  const [faucetError, setFaucetError] = useState<string>('');
+  const [faucetClaimed, setFaucetClaimed] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('faucetClaimed') === 'true';
+    }
+    return false;
+  });
+
   const [mintStatus, setMintStatus] = useState<'idle' | 'minting' | 'success' | 'error'>('idle');
   const [showMintPopup, setShowMintPopup] = useState(false);
   const [nftRecorded, setNftRecorded] = useState(false);
@@ -1700,7 +1719,7 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
     query: { enabled: !!address }
   });
 
-  // On game over, show NFT minting option
+  // On game over, show NFT minting option and check for faucet
   useEffect(() => {
     if (gameOver && address) {
       // Calculate final game duration
@@ -1715,8 +1734,87 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
           pfpUrl: context?.user?.pfpUrl
         });
       }
+
+      // Check for faucet eligibility
+      checkFaucetEligibility();
     }
   }, [gameOver, address, gameStartTime, gameDuration]);
+
+  // Check if user is eligible for faucet
+  const checkFaucetEligibility = async () => {
+    if (!address || faucetClaimed) return;
+
+    // setFaucetStatus('checking');
+    setFaucetError('');
+
+    try {
+      // Check wallet balance using ethers.js
+      const { ethers } = await import('ethers');
+      const provider = new ethers.JsonRpcProvider(process.env.NEXT_PUBLIC_RPC_URL);
+      const balance = await provider.getBalance(address);
+      
+      console.log("Wallet balance:", ethers.formatEther(balance), "ETH");
+      
+      // Only proceed if balance is 0
+      if (balance > BigInt(0)) {
+        setFaucetStatus('idle');
+        return; // User has balance, no need for faucet
+      }
+
+      // Set status to claiming since balance is 0
+      setFaucetStatus('claiming');
+
+      // Check if user has already claimed faucet from database
+      const { authenticatedFetch } = await import('@/lib/auth');
+      const response = await authenticatedFetch('/api/faucet', {
+        method: 'POST',
+        body: JSON.stringify({ userAddress: address })
+      });
+
+      const result = await response.json();
+      
+      if (result.success) {
+        // Faucet claimed successfully
+        setFaucetStatus('success');
+        setFaucetClaimed(true);
+        localStorage.setItem('faucetClaimed', 'true');
+        
+        // Update gameScores to mark faucet as claimed
+        if (context?.user?.fid) {
+          const scoreResponse = await authenticatedFetch('/api/submit-score', {
+            method: 'POST',
+            body: JSON.stringify({
+              fid: context.user.fid,
+              pfpUrl: context.user.pfpUrl,
+              username: context.user.username || 'Anonymous',
+              score: score,
+              level: level,
+              duration: gameStartTime ? Math.floor((Date.now() - gameStartTime) / 1000) : gameDuration,
+              userAddress: address,
+              faucetClaimed: true
+            })
+          });
+        }
+      } else {
+        // Check if it's a 409 status (already claimed)
+        if (response.status === 409) {
+          setFaucetClaimed(true);
+          localStorage.setItem('faucetClaimed', 'true');
+          setFaucetStatus('idle');
+          return;
+        }
+        
+        setFaucetStatus('error');
+        setFaucetError(result.error || 'Failed to claim faucet');
+      }
+          } catch (error: any) {
+        console.error('Error checking faucet eligibility:', error);
+        
+        // Handle network errors or other issues
+        setFaucetStatus('error');
+        setFaucetError('Failed to check faucet eligibility. Please try again.');
+      }
+  };
 
   // Handle NFT minting
   const submitScoreToDatabase = async (fid: number, pfpUrl: string, username: string, gameScore: number, gameLevel: number, gameDurationSeconds?: number, userAddress?: string) => {
@@ -2177,6 +2275,171 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
             }}>
               GAME OVER
             </h1>
+
+            {/* Faucet Notification */}
+            {address && faucetStatus !== 'idle' && (
+              <div style={{
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                width: '100vw',
+                height: '100vh',
+                backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                zIndex: 3000,
+                pointerEvents: 'auto'
+              }}>
+                <div style={{
+                  backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                  backdropFilter: 'blur(20px)',
+                  border: '2px solid',
+                  borderColor: faucetStatus === 'success' ? '#10b981' : 
+                             faucetStatus === 'error' ? '#ef4444' : '#f59e0b',
+                  borderRadius: '20px',
+                  padding: '30px',
+                  maxWidth: '400px',
+                  width: '90%',
+                  textAlign: 'center',
+                  color: 'white',
+                  boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.8)',
+                  animation: 'fadeInScale 0.3s ease-out',
+                  position: 'relative'
+                }}>
+                  {/* Close button for error state */}
+                  {faucetStatus === 'error' && (
+                    <button
+                      onClick={() => setFaucetStatus('idle')}
+                      style={{
+                        position: 'absolute',
+                        top: '15px',
+                        right: '15px',
+                        background: 'none',
+                        border: 'none',
+                        color: '#9ca3af',
+                        fontSize: '20px',
+                        cursor: 'pointer',
+                        padding: '5px',
+                        borderRadius: '50%',
+                        width: '30px',
+                        height: '30px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        transition: 'all 0.2s ease'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.2)';
+                        e.currentTarget.style.color = '#ef4444';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = 'transparent';
+                        e.currentTarget.style.color = '#9ca3af';
+                      }}
+                    >
+                      <FontAwesomeIcon icon={faTimes} />
+                    </button>
+                  )}
+
+                  {/* Icon */}
+                  <div style={{
+                    fontSize: '60px',
+                    marginBottom: '20px',
+                    color: faucetStatus === 'success' ? '#10b981' : 
+                           faucetStatus === 'error' ? '#ef4444' : '#f59e0b'
+                  }}>
+                    {faucetStatus === 'checking' && <FontAwesomeIcon icon={faSpinner} spin />}
+                    {faucetStatus === 'claiming' && <FontAwesomeIcon icon={faGift} />}
+                    {faucetStatus === 'success' && <FontAwesomeIcon icon={faCheckCircle} />}
+                    {faucetStatus === 'error' && <FontAwesomeIcon icon={faExclamationTriangle} />}
+                  </div>
+
+                  {/* Title */}
+                  <h3 style={{
+                    fontSize: '24px',
+                    fontWeight: 'bold',
+                    marginBottom: '15px',
+                    color: faucetStatus === 'success' ? '#10b981' : 
+                           faucetStatus === 'error' ? '#ef4444' : '#f59e0b'
+                  }}>
+                    {faucetStatus === 'checking' && 'Checking Wallet Balance'}
+                    {faucetStatus === 'claiming' && 'Claiming Free ETH!'}
+                    {faucetStatus === 'success' && 'Success!'}
+                    {faucetStatus === 'error' && 'Oops!'}
+                  </h3>
+
+                  {/* Message */}
+                  <p style={{
+                    fontSize: '16px',
+                    lineHeight: '1.5',
+                    marginBottom: '20px',
+                    color: '#d1d5db'
+                  }}>
+                    {faucetStatus === 'checking' && 'Verifying your wallet balance...'}
+                    {faucetStatus === 'claiming' && 'Sending $0.05 ETH to your wallet...'}
+                    {faucetStatus === 'success' && 'Successfully claimed $0.05 ETH !\n\n Now you can mint your NFT.'}
+                    {faucetStatus === 'error' && faucetError}
+                  </p>
+
+                  {/* Progress bar for claiming */}
+                  {faucetStatus === 'claiming' && (
+                    <div style={{
+                      width: '100%',
+                      height: '6px',
+                      backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                      borderRadius: '3px',
+                      overflow: 'hidden',
+                      marginBottom: '20px'
+                    }}>
+                      <div style={{
+                        width: '100%',
+                        height: '100%',
+                        backgroundColor: '#f59e0b',
+                        borderRadius: '3px',
+                        animation: 'pulse 2s ease-in-out infinite'
+                      }}></div>
+                    </div>
+                  )}
+
+                  {/* Action button for success */}
+                  {faucetStatus === 'success' && (
+                    <button
+                      onClick={() => setFaucetStatus('idle')}
+                      style={{
+                        backgroundColor: '#10b981',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '12px',
+                        padding: '12px 24px',
+                        fontSize: '16px',
+                        fontWeight: 'bold',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        margin: '0 auto'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = '#059669';
+                        e.currentTarget.style.transform = 'scale(1.05)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = '#10b981';
+                        e.currentTarget.style.transform = 'scale(1)';
+                      }}
+                    >
+                      <FontAwesomeIcon icon={faCoins} />
+                      Continue to Mint NFT
+                    </button>
+                  )}
+
+                  {/* ETH amount display */}
+                 </div>
+              </div>
+            )}
+
             {/* Mint NFT Section - Embedded in Game Over */}
             
             {/* Current Score */}

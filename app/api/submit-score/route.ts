@@ -3,7 +3,7 @@ import { saveGameScore } from "@/lib/database";
 
 export async function POST(request: NextRequest) {
   try {
-    const { fid, pfpUrl, username, score, level, duration, userAddress } = await request.json();
+    const { fid, pfpUrl, username, score, level, duration, userAddress, faucetClaimed } = await request.json();
 
     console.log(username)
     if (!fid || !pfpUrl || score === undefined || level === undefined) {
@@ -37,7 +37,8 @@ export async function POST(request: NextRequest) {
       level,
       userAddress,
       duration: duration || 0,
-      timestamp: Date.now()
+      timestamp: Date.now(),
+      faucetClaimed: faucetClaimed || false
     });
 
     return Response.json({

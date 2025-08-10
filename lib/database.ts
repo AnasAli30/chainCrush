@@ -30,6 +30,16 @@ export interface GameScore {
   nftCount?: number; // Added for NFT tracking
   lastNftMint?: number; // Added for NFT tracking
   hasNft?: boolean; // Added for NFT tracking
+  faucetClaimed?: boolean; // Added for faucet tracking
+}
+
+export interface FaucetClaim {
+  userAddress: string;
+  amount: string;
+  transactionHash: string;
+  timestamp: number;
+  blockNumber: number;
+  walletIndex?: number; // Which wallet was used (1-5)
 }
 
 export interface UsedAuthKey {
@@ -382,4 +392,74 @@ export async function getTotalPlayersCount(): Promise<number> {
   // Get unique player count by counting distinct fids
   const totalPlayers = await db.collection('gameScores').distinct('fid');
   return totalPlayers.length;
+}
+
+// Faucet functions
+export async function saveFaucetClaim(faucetData: FaucetClaim): Promise<void> {
+  const client = await clientPromise;
+  const db = client.db('chaincrush');
+  
+  // Save to faucet claims collection
+  await db.collection('faucetClaims').insertOne({
+    ...faucetData,
+    createdAt: new Date()
+  });
+  
+  // Also mark in gameScores that this user has claimed faucet
+  await db.collection('gameScores').updateMany(
+    { userAddress: faucetData.userAddress },
+    { $set: { faucetClaimed: true } }
+  );
+}
+
+export async function hasUserClaimedFaucet(userAddress: string): Promise<boolean> {
+  const client = await clientPromise;
+  const db = client.db('chaincrush');
+  
+  // Check in faucet claims collection
+  const faucetClaim = await db.collection('faucetClaims').findOne({ userAddress });
+  if (faucetClaim) {
+    return true;
+  }
+  
+  // Also check in gameScores collection
+  const gameScore = await db.collection('gameScores').findOne({ 
+    userAddress, 
+    faucetClaimed: true 
+  });
+  
+  return !!gameScore;
+}
+
+export async function getUserFaucetClaim(userAddress: string): Promise<FaucetClaim | null> {
+  const client = await clientPromise;
+  const db = client.db('chaincrush');
+  
+  const faucetClaim = await db.collection('faucetClaims').findOne({ userAddress });
+  return faucetClaim as FaucetClaim | null;
+}
+
+export async function getWalletUsageStats(): Promise<Array<{ walletIndex: number; usageCount: number; totalAmount: string }>> {
+  const client = await clientPromise;
+  const db = client.db('chaincrush');
+  
+  const stats = await db.collection('faucetClaims').aggregate([
+    {
+      $group: {
+        _id: '$walletIndex',
+        usageCount: { $sum: 1 },
+        totalAmount: { $sum: { $toDouble: '$amount' } }
+      }
+    },
+    {
+      $project: {
+        walletIndex: '$_id',
+        usageCount: 1,
+        totalAmount: { $toString: '$totalAmount' }
+      }
+    },
+    { $sort: { walletIndex: 1 } }
+  ]).toArray();
+  
+  return stats as Array<{ walletIndex: number; usageCount: number; totalAmount: string }>;
 } 
