@@ -1915,37 +1915,44 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
 
   // Handle mint success/error
   useEffect(() => {
+    console.log('Mint status check:', { mintSuccess, isMinting, nftRecorded, mintStatus });
+    
     // Only set success when transaction is confirmed (not loading) and successful
     if (mintSuccess && !isMinting && !nftRecorded) {
-      setMintStatus('success');
-      setNftRecorded(true); // Prevent duplicate calls
+      console.log('Setting mint status to success');
       
-      // Refresh mint eligibility data after successful mint
-      if (address) {
-        checkFaucetEligibility();
-      }
-      
-      // Record NFT minting in database
-      const recordNftMint = async () => {
-        try {
-          const { authenticatedFetch } = await import('@/lib/auth');
-          const nftName = `ChainCrush NFT #${score}`;
-          
-          await authenticatedFetch('/api/nft-minted', {
-            method: 'POST',
-            body: JSON.stringify({
-              fid: context.user.fid,
-              nftName
-            })
-          });
-          
-          console.log('NFT minting recorded successfully');
-        } catch (error) {
-          console.error('Failed to record NFT minting:', error);
+      // Add a small delay to ensure minting popup shows for at least 2 seconds
+      setTimeout(() => {
+        setMintStatus('success');
+        setNftRecorded(true); // Prevent duplicate calls
+        
+        // Refresh mint eligibility data after successful mint
+        if (address) {
+          checkFaucetEligibility();
         }
-      };
-      
-      recordNftMint();
+        
+        // Record NFT minting in database
+        const recordNftMint = async () => {
+          try {
+            const { authenticatedFetch } = await import('@/lib/auth');
+            const nftName = `ChainCrush NFT #${score}`;
+            
+            await authenticatedFetch('/api/nft-minted', {
+              method: 'POST',
+              body: JSON.stringify({
+                fid: context.user.fid,
+                nftName
+              })
+            });
+            
+            console.log('NFT minting recorded successfully');
+          } catch (error) {
+            console.error('Failed to record NFT minting:', error);
+          }
+        };
+        
+        recordNftMint();
+      }, 2000);
     } else if (isMintError && !isMinting) {
       setMintStatus('error');
       setMintError(mintErrorObj?.message || 'Minting failed');
