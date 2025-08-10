@@ -2325,7 +2325,7 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
                 {score > previousBestScore && previousBestScore > 0 && (
                   <div style={{
                     fontSize: '12px',
-                    color: '#4ade80',
+                    color: 'lightyellow',
                     fontWeight: '600',
                     background: 'rgba(74, 222, 128, 0.1)',
                     padding: '4px 8px',
