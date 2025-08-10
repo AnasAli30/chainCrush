@@ -135,6 +135,18 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
     // Increment games played counter
     incrementGamesPlayed();
     
+    // Reset mint status FIRST to immediately hide success popup
+    setMintStatus('idle');
+    setMintError('');
+    setNftRecorded(false); // Reset NFT recording flag
+    setShowMintPopup(false); // Hide any open mint popup
+    
+    // Force hide popup after a small delay to ensure it's gone
+    setTimeout(() => {
+      setShowMintPopup(false);
+      setMintStatus('idle'); // Double-check status is reset
+    }, 100);
+    
     setGameInitialized(false);
     setGameOver(false);
     setGameOverState(false); // Reset blur state
@@ -149,10 +161,10 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
     setGameKey((k: number) => k + 1); // Increment gameKey to remount game container
     setShowNoMovesPopup(false); // Reset no moves popup
     
-    // Reset mint status to show "Mint NFT" button again
-    setMintStatus('idle');
-    setMintError('');
-    setNftRecorded(false); // Reset NFT recording flag
+    // Refresh mint eligibility data
+    if (address) {
+      checkFaucetEligibility();
+    }
     
     if (gameRef.current) {
       const existingGame = gameRef.current.querySelector('canvas');
@@ -254,6 +266,11 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
       setMintStatus('idle');
       setMintError('');
       setNftRecorded(false); // Reset NFT recording flag
+      
+      // Refresh mint eligibility data for new game
+      if (address) {
+        checkFaucetEligibility();
+      }
       
       startLoading();
     }
@@ -1666,8 +1683,20 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
 
   // Open popup whenever mint status changes away from idle
   useEffect(() => {
-    if (mintStatus !== 'idle') setShowMintPopup(true);
+    if (mintStatus !== 'idle') {
+      setShowMintPopup(true);
+    } else {
+      setShowMintPopup(false);
+    }
   }, [mintStatus]);
+
+  // Force hide popup when game restarts
+  useEffect(() => {
+    if (!gameOver && mintStatus === 'success') {
+      setMintStatus('idle');
+      setShowMintPopup(false);
+    }
+  }, [gameOver, mintStatus]);
   const [mintError, setMintError] = useState<string>('');
   const { writeContract: mintNFT, data: mintData, isError: isMintError, error: mintErrorObj } = useContractWrite();
   const { isLoading: isMinting, isSuccess: mintSuccess } = useWaitForTransactionReceipt({ hash: mintData });
@@ -1889,6 +1918,11 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
     if (mintSuccess && !nftRecorded) {
       setMintStatus('success');
       setNftRecorded(true); // Prevent duplicate calls
+      
+      // Refresh mint eligibility data after successful mint
+      if (address) {
+        checkFaucetEligibility();
+      }
       
       // Record NFT minting in database
       const recordNftMint = async () => {
@@ -2676,7 +2710,7 @@ Come for my spot or stay mid 😏🏆${improvementText}`;
           </div>
           
           {/* Mint Button - Bottom Center (replaces Play Again) */}
-          {mintStatus !== 'success' && address && canMintToday !== false && contractRemainingSupply !== BigInt(0) && (
+          {(mintStatus === 'idle' || mintStatus === 'minting') && address && canMintToday !== false && contractRemainingSupply !== BigInt(0) && (
             <button
               onClick={handleMintNFT}
               style={{ 
@@ -2709,7 +2743,7 @@ Come for my spot or stay mid 😏🏆${improvementText}`;
           )}
 
           {/* Play Again Button - Show after successful mint OR when daily limit reached OR no wallet */}
-          {(mintStatus === 'success' || !address || (address && (canMintToday === false || contractRemainingSupply === BigInt(0)))) && (
+          {(mintStatus === 'success' || mintStatus === 'error' || !address || (address && (canMintToday === false || contractRemainingSupply === BigInt(0)))) && (
             <button
               style={{ 
                 position: 'fixed', 
