@@ -1874,7 +1874,7 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
   };
 
   const handleMintNFT = async () => {
-    if (!address) return;
+    if (!address || mintStatus === 'minting') return; // Prevent multiple clicks
 
     setMintStatus('minting');
     setMintError('');
@@ -1915,7 +1915,8 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
 
   // Handle mint success/error
   useEffect(() => {
-    if (mintSuccess && !nftRecorded) {
+    // Only set success when transaction is confirmed (not loading) and successful
+    if (mintSuccess && !isMinting && !nftRecorded) {
       setMintStatus('success');
       setNftRecorded(true); // Prevent duplicate calls
       
@@ -1945,11 +1946,11 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
       };
       
       recordNftMint();
-    } else if (isMintError) {
+    } else if (isMintError && !isMinting) {
       setMintStatus('error');
       setMintError(mintErrorObj?.message || 'Minting failed');
     }
-  }, [mintSuccess, isMintError, mintErrorObj, nftRecorded]);
+  }, [mintSuccess, isMinting, isMintError, mintErrorObj, nftRecorded]);
 
 
 
@@ -2710,7 +2711,7 @@ Come for my spot or stay mid 😏🏆${improvementText}`;
           </div>
           
           {/* Mint Button - Bottom Center (replaces Play Again) */}
-          {(mintStatus === 'idle' || mintStatus === 'minting') && address && canMintToday !== false && contractRemainingSupply !== BigInt(0) && (
+          {mintStatus === 'idle' && address && canMintToday !== false && contractRemainingSupply !== BigInt(0) && (
             <button
               onClick={handleMintNFT}
               style={{ 
@@ -2729,7 +2730,7 @@ Come for my spot or stay mid 😏🏆${improvementText}`;
                 boxShadow: '0 4px 8px rgba(0,0,0,0.3)',
                 transition: 'all 0.5s ease',
                 pointerEvents: 'auto',
-                cursor: mintStatus === 'minting' ? 'not-allowed' : 'pointer'
+                cursor: 'pointer'
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.transform = 'translateX(-50%) scale(1.05)';
@@ -2738,7 +2739,7 @@ Come for my spot or stay mid 😏🏆${improvementText}`;
                 e.currentTarget.style.transform = 'translateX(-50%) scale(1)';
               }}
             >
-              {mintStatus === 'minting' ? '⏳ Minting...' : '🎴 Mint NFT'}
+              🎴 Mint NFT
             </button>
           )}
 
