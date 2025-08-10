@@ -10,6 +10,9 @@ const inter = Inter({ subsets: ['latin'] })
 export const metadata: Metadata = {
   title: 'Chain Crush',
   description: 'A fun Game on arbitrum',
+  icons: {
+    icon: '/images/icon.png',
+  },
 }
 
 export default function RootLayout({
