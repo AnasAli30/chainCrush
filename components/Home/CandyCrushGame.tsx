@@ -2294,9 +2294,9 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
             }}>
               {/* Score Card */}
               <div style={{
-                background: 'rgba(255, 255, 255, 0.15)',
-                backdropFilter: 'blur(20px)',
-                border: '1px solid rgba(255, 255, 255, 0.2)',
+                background: 'rgba(0, 0, 0, 0.3)',
+                backdropFilter: 'blur(10px)',
+                // border: '1px solid rgba(255, 255, 255, 0.2)',
                 borderRadius: '20px',
                 padding: '24px 32px',
                 textAlign: 'center',
@@ -2504,7 +2504,7 @@ Come for my spot or stay mid 😏🏆${improvementText}`;
                   
                     timeUntilReset && (
                   <div style={{ 
-                        background: 'rgba(255, 255, 255, 0.1)', 
+                        background: 'rgba(0, 0, 0, 0.1)', 
                         padding: '12px', 
                         borderRadius: '8px',
                         fontSize: '15px',
