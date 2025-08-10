@@ -1619,92 +1619,20 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
     reshuffleGridRef.current = reshuffleGrid;
   };
 
-  // Memoized background animation data for stable animation
-  const sparkleData = useMemo(() =>
-    Array.from({ length: 12 }, (_, i) => {
-      const size = Math.random() * 6 + 3;
-      const candyColors = ['#ff4444', '#44ff44', '#4444ff', '#ffff44', '#ff44ff', '#ff8844'];
-      const sparkleColor = candyColors[Math.floor(Math.random() * candyColors.length)];
-      return {
-        size,
-        color: sparkleColor,
-        left: `${Math.random() * 100}%`,
-        top: `${Math.random() * 100}%`,
-        animation: `candySparkle ${Math.random() * 4 + 3}s ease-in-out infinite`,
-        animationDelay: `${Math.random() * 6}s`,
-        opacity: Math.random() * 0.7 + 0.3,
-        textShadow: `0 0 ${size}px ${sparkleColor}`,
-      };
-    }),
-    []
-  );
-  const heartData = useMemo(() =>
+  // Simplified background animation data for better performance
+  const backgroundElements = useMemo(() =>
     Array.from({ length: 8 }, (_, i) => {
-      const size = Math.random() * 8 + 4;
-      const pinkColors = ['#ff69b4', '#ff1493', '#ffc0cb', '#ff44ff'];
-      const heartColor = pinkColors[Math.floor(Math.random() * pinkColors.length)];
-      return {
-        size,
-        color: heartColor,
-        left: `${Math.random() * 100}%`,
-        top: `${Math.random() * 100}%`,
-        animation: `candyFloat ${Math.random() * 5 + 4}s ease-in-out infinite`,
-        animationDelay: `${Math.random() * 8}s`,
-        opacity: Math.random() * 0.6 + 0.4,
-        textShadow: `0 0 ${size/2}px ${heartColor}`,
-      };
-    }),
-    []
-  );
-  const starData = useMemo(() =>
-    Array.from({ length: 10 }, (_, i) => {
-      const size = Math.random() * 7 + 5;
       const candyColors = ['#ff4444', '#44ff44', '#4444ff', '#ffff44', '#ff44ff', '#ff8844'];
-      const starColor = candyColors[Math.floor(Math.random() * candyColors.length)];
+      const elements = ['✨', '♥', '★', '○'];
       return {
-        size,
-        color: starColor,
+        id: i,
+        element: elements[i % elements.length],
+        color: candyColors[Math.floor(Math.random() * candyColors.length)],
         left: `${Math.random() * 100}%`,
         top: `${Math.random() * 100}%`,
-        animation: `candyTwinkle ${Math.random() * 3 + 2}s ease-in-out infinite`,
-        animationDelay: `${Math.random() * 7}s`,
-        opacity: Math.random() * 0.8 + 0.2,
-        textShadow: `0 0 ${size/2}px ${starColor}`,
-      };
-    }),
-    []
-  );
-  const bubbleData = useMemo(() =>
-    Array.from({ length: 6 }, (_, i) => {
-      const size = Math.random() * 10 + 6;
-      const bubbleColors = ['#ff69b4', '#ffc0cb', '#ffffff', '#f0f8ff'];
-      const bubbleColor = bubbleColors[Math.floor(Math.random() * bubbleColors.length)];
-      return {
-        size,
-        color: bubbleColor,
-        left: `${Math.random() * 100}%`,
-        top: `${Math.random() * 100}%`,
-        animation: `candyBubble ${Math.random() * 6 + 5}s ease-in-out infinite`,
-        animationDelay: `${Math.random() * 10}s`,
+        animationDelay: `${Math.random() * 4}s`,
         opacity: Math.random() * 0.4 + 0.2,
-        textShadow: `0 0 ${size/3}px ${bubbleColor}`,
-      };
-    }),
-    []
-  );
-  const candyFloatData = useMemo(() =>
-    Array.from({ length: 4 }, (_, i) => {
-      const size = Math.random() * 6 + 8;
-      const candyEmojis = ['🍭', '🍬', '🍫', '🧁'];
-      const candyEmoji = candyEmojis[Math.floor(Math.random() * candyEmojis.length)];
-      return {
-        size,
-        emoji: candyEmoji,
-        left: `${Math.random() * 100}%`,
-        top: `${Math.random() * 100}%`,
-        animation: `candyDrift ${Math.random() * 8 + 6}s ease-in-out infinite`,
-        animationDelay: `${Math.random() * 12}s`,
-        opacity: Math.random() * 0.6 + 0.3,
+        size: Math.random() * 4 + 6,
       };
     }),
     []
@@ -1991,161 +1919,63 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      background: gameInitialized ? 'radial-gradient(circle at center, #19adff 0%, #ffffff 100%)' : 'linear-gradient(135deg, #19adff 0%, #28374d 50%, #ffffff 100%)'
+      background: gameInitialized 
+        ? 'linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%)'
+        : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
     }}>
       
-      {/* Candy Wonderland Animated Background */}
+      {/* Minimal Elegant Background */}
       {gameInitialized && (
         <div
-          className={gameOver ? 'candy-bg-paused' : ''}
+          className={gameOver ? 'bg-paused' : ''}
           style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          width: '100%',
-          height: '100%',
-          overflow: 'hidden',
-            zIndex: '1',
-          pointerEvents: 'none'
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            overflow: 'hidden',
+            zIndex: 1,
+            pointerEvents: 'none'
           }}
         >
-          {/* Sparkles ✨ */}
-          {sparkleData.map((sparkle, i) => (
-              <div
-                key={`sparkle-${i}`}
-                className="sparkle"
-                style={{
-                  position: 'absolute',
-                left: sparkle.left,
-                top: sparkle.top,
-                width: `${sparkle.size}px`,
-                height: `${sparkle.size}px`,
-                color: sparkle.color,
-                fontSize: `${sparkle.size}px`,
-                  lineHeight: '1',
-                animation: sparkle.animation,
-                animationDelay: sparkle.animationDelay,
-                opacity: sparkle.opacity,
-                textShadow: sparkle.textShadow,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  pointerEvents: 'none'
-                }}
-              >
-                ✨
-              </div>
+          {/* Simplified floating elements */}
+          {backgroundElements.map((element) => (
+            <div
+              key={`bg-${element.id}`}
+              className="float-element"
+              style={{
+                position: 'absolute',
+                left: element.left,
+                top: element.top,
+                color: element.color,
+                fontSize: `${element.size}px`,
+                opacity: element.opacity,
+                animationDelay: element.animationDelay,
+                pointerEvents: 'none',
+                willChange: 'transform',
+              }}
+            >
+              {element.element}
+            </div>
           ))}
-          {/* Hearts ♥ */}
-          {heartData.map((heart, i) => (
-              <div
-                key={`heart-${i}`}
-                className="heart"
-                style={{
-                  position: 'absolute',
-                left: heart.left,
-                top: heart.top,
-                width: `${heart.size}px`,
-                height: `${heart.size}px`,
-                color: heart.color,
-                fontSize: `${heart.size}px`,
-                  lineHeight: '1',
-                animation: heart.animation,
-                animationDelay: heart.animationDelay,
-                opacity: heart.opacity,
-                textShadow: heart.textShadow,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  pointerEvents: 'none'
-                }}
-              >
-                ♥
-              </div>
-          ))}
-          {/* Stars ★ */}
-          {starData.map((star, i) => (
-              <div
-                key={`star-${i}`}
-                className="star"
-                style={{
-                  position: 'absolute',
-                left: star.left,
-                top: star.top,
-                width: `${star.size}px`,
-                height: `${star.size}px`,
-                color: star.color,
-                fontSize: `${star.size}px`,
-                  lineHeight: '1',
-                animation: star.animation,
-                animationDelay: star.animationDelay,
-                opacity: star.opacity,
-                textShadow: star.textShadow,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  pointerEvents: 'none'
-                }}
-              >
-                ★
-              </div>
-          ))}
-          {/* Bubbles ○ */}
-          {bubbleData.map((bubble, i) => (
-              <div
-                key={`bubble-${i}`}
-                className="bubble"
-                style={{
-                  position: 'absolute',
-                left: bubble.left,
-                top: bubble.top,
-                width: `${bubble.size}px`,
-                height: `${bubble.size}px`,
-                color: bubble.color,
-                fontSize: `${bubble.size}px`,
-                  lineHeight: '1',
-                animation: bubble.animation,
-                animationDelay: bubble.animationDelay,
-                opacity: bubble.opacity,
-                textShadow: bubble.textShadow,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  pointerEvents: 'none'
-                }}
-              >
-                ○
-              </div>
-          ))}
-          {/* Floating Candy Emojis */}
-          {candyFloatData.map((candy, i) => (
-              <div
-                key={`candy-${i}`}
-                className="candy-float"
-                style={{
-                  position: 'absolute',
-                left: candy.left,
-                top: candy.top,
-                width: `${candy.size}px`,
-                height: `${candy.size}px`,
-                fontSize: `${candy.size}px`,
-                  lineHeight: '1',
-                animation: candy.animation,
-                animationDelay: candy.animationDelay,
-                opacity: candy.opacity,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  pointerEvents: 'none'
-                }}
-              >
-              {candy.emoji}
-              </div>
-          ))}
+          
+          {/* Subtle gradient overlay for depth */}
+          <div
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+              background: 'radial-gradient(circle at 20% 80%, rgba(255,255,255,0.1) 0%, transparent 50%)',
+              pointerEvents: 'none'
+            }}
+          />
         </div>
       )}
       
-      {/* Internal Loading Bar - Show only when loading */}
+      {/* Modern Loading Screen */}
       {showInternalLoader && (
         <div style={{
           position: 'fixed',
@@ -2156,50 +1986,59 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: 'rgba(0, 0, 0, 0.8)', 
-          zIndex: 4000,
-          pointerEvents: 'none'
+          zIndex: 2000,
+          pointerEvents: 'none',
+          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%)'
         }}>
           <div style={{
             textAlign: 'center',
             color: 'white',
-       
+            padding: '40px',
+            borderRadius: '20px',
+            background: 'rgba(255, 255, 255, 0.1)',
+            backdropFilter: 'blur(20px)',
+            border: '1px solid rgba(255, 255, 255, 0.2)',
+            boxShadow: '0 20px 40px rgba(0, 0, 0, 0.1)'
           }}>
+            {/* Logo or Icon */}
+            
+            
             <div style={{
-              fontSize: '24px',
-              fontWeight: 'bold',
-              marginBottom: '20px',
-              textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
-             
+              fontSize: '20px',
+              fontWeight: '600',
+              marginBottom: '30px',
+              color: 'rgba(255, 255, 255, 0.95)',
+              letterSpacing: '0.5px'
             }}>
-              Loading ChainCrush...
+              Loading Chain Crush
             </div>
             
-            {/* Progress Bar */}
+            {/* Modern Progress Bar */}
             <div style={{
-              width: '300px',
-              height: '8px',
-              backgroundColor: 'rgba(255,255,255,0.2)',
-              borderRadius: '4px',
+              width: '280px',
+              height: '6px',
+              backgroundColor: 'rgba(255, 255, 255, 0.2)',
+              borderRadius: '3px',
               overflow: 'hidden',
               position: 'relative'
             }}>
               <div style={{
                 width: `${loadingProgress}%`,
                 height: '100%',
-                background: 'linear-gradient(90deg, #19adff, #ffffff, #19adff)',
-                borderRadius: '4px',
-                transition: 'width 0.3s ease-out',
-                boxShadow: '0 0 10px rgba(25, 173, 255, 0.5)'
+                background: 'linear-gradient(90deg, #ffffff, #f093fb)',
+                borderRadius: '3px',
+                transition: 'width 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                boxShadow: '0 0 8px rgba(255, 255, 255, 0.3)'
               }}></div>
             </div>
             
             {/* Progress Percentage */}
             <div style={{
-              fontSize: '16px',
-              marginTop: '10px',
-              opacity: 0.8,
-              textShadow: '1px 1px 2px rgba(0,0,0,0.8)'
+              fontSize: '14px',
+              marginTop: '16px',
+              color: 'rgba(255, 255, 255, 0.8)',
+              fontWeight: '500',
+              letterSpacing: '1px'
             }}>
               {loadingProgress}%
             </div>
@@ -2227,7 +2066,7 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
               padding: '8px 16px',
               fontSize: '20px',
               fontWeight: 'bold',
-              color: 'black',
+              color: 'white',
               border: 'none',
               borderRadius: '6px',
               cursor: 'pointer',
@@ -2247,7 +2086,7 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
           {/* Game Over Content */}
           <div style={{
             position: 'fixed',
-            top: 0,
+            top: -25,
             left: 0,
             width: '100vw',
             height: '100vh',
@@ -2258,17 +2097,24 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
             zIndex: 2000,
             pointerEvents: 'none' // Allow clicks to pass through except for button
           }}>
-            {/* Game Over Text */}
-            <h1 style={{
-              fontSize: '50px',
-              fontWeight: 'bold',
-              color: '#ffffff',
-              textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
-              margin: '0 0 5px 0',
-              textAlign: 'center'
+            {/* Modern Game Over Text */}
+            <div style={{
+              textAlign: 'center',
+              marginBottom: '20px'
             }}>
-              GAME OVER
-            </h1>
+             
+              <h1 style={{
+                fontSize: '32px',
+                fontWeight: '700',
+                color: '#ffffff',
+                margin: '0',
+                textAlign: 'center',
+                letterSpacing: '1px',
+                textShadow: '0 4px 8px rgba(0,0,0,0.3)'
+              }}>
+                GAME OVER!
+              </h1>
+            </div>
 
             {/* Faucet Notification */}
             {address && faucetStatus !== 'idle' && (
@@ -2436,95 +2282,136 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
 
             {/* Mint NFT Section - Embedded in Game Over */}
             
-            {/* Current Score */}
-            <button style={{
-              fontSize: '40px',
-              fontWeight: 'bold',
-              border: '2px solid #ffffff',
-              padding: '15px 25px',
-              borderRadius: '10px',
-              color: '#ffffff',
-              backgroundColor: 'rgba(0,0,0,0.5)',
-              textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
-              margin: '0 0 15px 0',
-              cursor: 'pointer',
-              zIndex: 2001,
-              pointerEvents: 'auto'
-            }} onClick={async () => {
-              try {
-                const improvementText = score > previousBestScore && previousBestScore > 0 
-                  ? `\n\n🔥 That's +${Math.round(((score - previousBestScore) / previousBestScore) * 100)}% improvement from my Highest Score!`
-                  : '';
-                
-                const shareText = `🍭 Pulled a ${score} in ChainCrush, now sitting pretty at level ${level} 💥
-Come for my spot or stay mid 😏🏆${improvementText}`;
-                
-                const playerData = getPlayerData(context);
-                
-                // Create dynamic share URL with score data
-                const shareParams = new URLSearchParams({
-                  score: score.toString(),
-                  level: level.toString(),
-                  moves: moves.toString(),
-                  gameType: 'candy-crush',
-                  ...(playerData.username && { username: playerData.username }),
-                  ...(playerData.pfpUrl && { userImg: playerData.pfpUrl }),
-                });
-                
-                const shareUrl = `${APP_URL}`;
-                
-                if (actions && actions.composeCast) {
-                  await actions.composeCast({
-                    text: shareText,
-                    embeds: [shareUrl],
-                  });
-
-                  
-                } 
-              } catch (error) {
-                console.error('Error sharing score:', error);
-              }
+            {/* Modern Score Display */}
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '16px',
+              marginBottom: '24px'
             }}>
-              <div style={{fontSize: '14px', marginBottom: '5px', display: 'flex', alignItems: 'center', gap: '6px',textAlign:"center",justifyContent:"center"}}>
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 256 256" fill="none" style={{display: 'inline-block', verticalAlign: 'middle'}}><rect width="256" height="256" rx="56" fill="#7C65C1"></rect><path d="M183.296 71.68H211.968L207.872 94.208H200.704V180.224L201.02 180.232C204.266 180.396 206.848 183.081 206.848 186.368V191.488L207.164 191.496C210.41 191.66 212.992 194.345 212.992 197.632V202.752H155.648V197.632C155.648 194.345 158.229 191.66 161.476 191.496L161.792 191.488V186.368C161.792 183.081 164.373 180.396 167.62 180.232L167.936 180.224V138.24C167.936 116.184 150.056 98.304 128 98.304C105.944 98.304 88.0638 116.184 88.0638 138.24V180.224L88.3798 180.232C91.6262 180.396 94.2078 183.081 94.2078 186.368V191.488L94.5238 191.496C97.7702 191.66 100.352 194.345 100.352 197.632V202.752H43.0078V197.632C43.0078 194.345 45.5894 191.66 48.8358 191.496L49.1518 191.488V186.368C49.1518 183.081 51.7334 180.396 54.9798 180.232L55.2958 180.224V94.208H48.1278L44.0318 71.68H72.7038V54.272H183.296V71.68Z" fill="white"></path></svg>
-                Share my score 
-               
-              </div>
-              <div>{animatedScore}</div>
-              {score > previousBestScore && previousBestScore > 0 && (
-                <div style={{
-                  fontSize: '11px',
-                  color: '#00ff00',
-                  fontWeight: 'bold',
-                  marginTop: '3px'
-                }}>
-                  +{Math.round(((score - previousBestScore) / previousBestScore) * 100)}% from best
-                </div>
-              )}
+              {/* Score Card */}
               <div style={{
-                width: '100%',
-                height: '1px',
-                backgroundColor: '#ffffff',
-                margin: '8px 0'
-              }}></div>
-              <div style={{fontSize: '12px'}}>
-                Level {level}
+                background: 'rgba(255, 255, 255, 0.15)',
+                backdropFilter: 'blur(20px)',
+                border: '1px solid rgba(255, 255, 255, 0.2)',
+                borderRadius: '20px',
+                padding: '24px 32px',
+                textAlign: 'center',
+                color: 'white',
+                minWidth: '200px',
+                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)'
+              }}>
+                <div style={{
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  opacity: 0.8,
+                  marginBottom: '8px',
+                  textTransform: 'uppercase',
+                  letterSpacing: '1px'
+                }}>
+                  Final Score
+                </div>
+                <div style={{
+                  fontSize: '48px',
+                  fontWeight: '700',
+                  lineHeight: '1',
+                  marginBottom: '8px'
+                }}>
+                  {animatedScore.toLocaleString()}
+                </div>
+                {score > previousBestScore && previousBestScore > 0 && (
+                  <div style={{
+                    fontSize: '12px',
+                    color: '#4ade80',
+                    fontWeight: '600',
+                    background: 'rgba(74, 222, 128, 0.1)',
+                    padding: '4px 8px',
+                    borderRadius: '12px',
+                    border: '1px solid rgba(74, 222, 128, 0.2)'
+                  }}>
+                    🔥 +{Math.round(((score - previousBestScore) / previousBestScore) * 100)}% Personal Best
+                  </div>
+                )}
+                <div style={{
+                  fontSize: '14px',
+                  opacity: 0.7,
+                  marginTop: '8px'
+                }}>
+                  Level {level}
+                </div>
               </div>
-            </button>
+              
+              {/* Share Button */}
+              <button 
+                onClick={async () => {
+                  try {
+                    const improvementText = score > previousBestScore && previousBestScore > 0 
+                      ? `\n\n🔥 That's +${Math.round(((score - previousBestScore) / previousBestScore) * 100)}% improvement from my Highest Score!`
+                      : '';
+                    
+                    const shareText = `🍭 Pulled a ${score} in ChainCrush, now sitting pretty at level ${level} 💥
+Come for my spot or stay mid 😏🏆${improvementText}`;
+                    
+                    const playerData = getPlayerData(context);
+                    const shareUrl = `${APP_URL}`;
+                    
+                    if (actions && actions.composeCast) {
+                      await actions.composeCast({
+                        text: shareText,
+                        embeds: [shareUrl],
+                      });
+                    } 
+                  } catch (error) {
+                    console.error('Error sharing score:', error);
+                  }
+                }}
+                style={{
+                  background: 'linear-gradient(135deg, #664eea 0%, #764ba2 100%)',
+                  border: 'none',
+                  borderRadius: '16px',
+                  padding: '12px 24px',
+                  color: 'white',
+                  fontSize: '16px',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  transition: 'all 0.3s ease',
+                  boxShadow: '0 4px 16px rgba(102, 126, 234, 0.3)',
+                  pointerEvents: 'auto'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                  e.currentTarget.style.boxShadow = '0 8px 24px rgba(102, 126, 234, 0.4)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = '0 4px 16px rgba(102, 126, 234, 0.3)';
+                }}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 256 256" fill="none">
+                  <rect width="256" height="256" rx="56" fill="#7C65C1"></rect>
+                  <path d="M183.296 71.68H211.968L207.872 94.208H200.704V180.224L201.02 180.232C204.266 180.396 206.848 183.081 206.848 186.368V191.488L207.164 191.496C210.41 191.66 212.992 194.345 212.992 197.632V202.752H155.648V197.632C155.648 194.345 158.229 191.66 161.476 191.496L161.792 191.488V186.368C161.792 183.081 164.373 180.396 167.62 180.232L167.936 180.224V138.24C167.936 116.184 150.056 98.304 128 98.304C105.944 98.304 88.0638 116.184 88.0638 138.24V180.224L88.3798 180.232C91.6262 180.396 94.2078 183.081 94.2078 186.368V191.488L94.5238 191.496C97.7702 191.66 100.352 194.345 100.352 197.632V202.752H43.0078V197.632C43.0078 194.345 45.5894 191.66 48.8358 191.496L49.1518 191.488V186.368C49.1518 183.081 51.7334 180.396 54.9798 180.232L55.2958 180.224V94.208H48.1278L44.0318 71.68H72.7038V54.272H183.296V71.68Z" fill="white"></path>
+                </svg>
+                Share Achievement
+              </button>
+            </div>
 
             {address && (
               <div style={{
-                backgroundColor: 'rgba(0,0,0,0.5)',
-                padding: '10px',
-                borderRadius: '16px',
-                width:"80%",
-                margin: '20px 0',
+                background: 'rgba(255, 255, 255, 0.1)',
+                backdropFilter: 'blur(20px)',
+                border: '1px solid rgba(255, 255, 255, 0.2)',
+                borderRadius: '24px',
+                padding: '20px',
+                width: '90%',
+                maxWidth: '400px',
+                margin: '0 auto',
                 textAlign: 'center',
                 color: 'white',
-                // border: '3px solid',
-                borderImage: 'linear-gradient(45deg, #19adff, #28374d, #ffffff) 1',
-                                  boxShadow: '0 8px 32px rgba(25, 173, 255, 0.3), inset 0 1px 0 rgba(255,255,255,0.1)',
-                backdropFilter: 'blur(10px)',
+                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
                 pointerEvents: 'auto'
               }}>
                
@@ -2831,8 +2718,8 @@ Come for my spot or stay mid 😏🏆${improvementText}`;
                 padding: '10px 20px',
                 fontSize: '20px',
                 fontWeight: 'bold',
-                backgroundColor: '#19adff',
-                color: 'white',
+                backgroundColor: 'lightgreen',
+                color: 'black',
                 border: 'none',
                 borderRadius: '8px',
                 cursor: 'pointer',
@@ -2840,14 +2727,14 @@ Come for my spot or stay mid 😏🏆${improvementText}`;
                 transition: 'all 0.5s ease',
                 pointerEvents: 'auto'
               }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = '#1589cc';
-                e.currentTarget.style.transform = 'translateX(-50%) scale(1.05)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = '#19adff';
-                e.currentTarget.style.transform = 'translateX(-50%) scale(1)';
-              }}
+              // onMouseEnter={(e) => {
+              //   e.currentTarget.style.backgroundColor = '#1589cc';
+              //   e.currentTarget.style.transform = 'translateX(-50%) scale(1.05)';
+              // }}
+              // onMouseLeave={(e) => {
+              //   e.currentTarget.style.backgroundColor = '#19adff';
+              //   e.currentTarget.style.transform = 'translateX(-50%) scale(1)';
+              // }}
               onClick={handleRestart}
             >
               ▶ Play Again 
@@ -2858,129 +2745,82 @@ Come for my spot or stay mid 😏🏆${improvementText}`;
       
       {/* Add CSS animations */}
       <style jsx>{`
-        @keyframes fall-spin {
-          0% {
-            top: -120px;
-            transform: rotate(0deg);
-          }
-          100% {
-            top: 100vh;
-            transform: rotate(360deg);
-          }
-        }
         @keyframes spin {
           0% { transform: rotate(0deg); }
           100% { transform: rotate(360deg); }
         }
         
-        @keyframes candySparkle {
+        @keyframes pulse {
           0%, 100% { 
+            transform: scale(1);
+            opacity: 1;
+          }
+          50% { 
+            transform: scale(1.05);
+            opacity: 0.8;
+          }
+        }
+        
+        @keyframes float {
+          0%, 100% { 
+            transform: translateY(0px) rotate(0deg);
             opacity: 0.3;
-            transform: scale(0.8) rotate(0deg);
-          }
-          25% { 
-            opacity: 0.8;
-            transform: scale(1.2) rotate(90deg);
           }
           50% { 
-            opacity: 1;
-            transform: scale(1.5) rotate(180deg);
-          }
-          75% { 
-            opacity: 0.8;
-            transform: scale(1.2) rotate(270deg);
-          }
-        }
-        
-        @keyframes candyFloat {
-          0%, 100% { 
-            opacity: 0.4;
-            transform: translateY(0px) scale(1);
-          }
-          25% { 
-            opacity: 0.7;
-            transform: translateY(-8px) scale(1.1);
-          }
-          50% { 
-            opacity: 1;
-            transform: translateY(-12px) scale(1.2);
-          }
-          75% { 
-            opacity: 0.7;
-            transform: translateY(-8px) scale(1.1);
-          }
-        }
-        
-        @keyframes candyTwinkle {
-          0%, 100% { 
-            opacity: 0.2;
-            transform: scale(1) rotate(0deg);
-          }
-          50% { 
-            opacity: 1;
-            transform: scale(1.3) rotate(180deg);
-          }
-        }
-        
-        @keyframes candyBubble {
-          0%, 100% { 
-            opacity: 0.2;
-            transform: translateY(0px) scale(1);
-          }
-          33% { 
-            opacity: 0.4;
-            transform: translateY(-15px) scale(1.1);
-          }
-          66% { 
+            transform: translateY(-10px) rotate(180deg);
             opacity: 0.6;
-            transform: translateY(-25px) scale(1.2);
           }
         }
         
-        @keyframes candyDrift {
-          0%, 100% { 
-            opacity: 0.3;
-            transform: translateX(0px) translateY(0px) rotate(0deg);
-          }
-          25% { 
-            opacity: 0.6;
-            transform: translateX(10px) translateY(-5px) rotate(90deg);
-          }
-          50% { 
-            opacity: 0.8;
-            transform: translateX(15px) translateY(-10px) rotate(180deg);
-          }
-          75% { 
-            opacity: 0.6;
-            transform: translateX(10px) translateY(-5px) rotate(270deg);
-          }
+        .float-element {
+          animation: float 6s ease-in-out infinite;
         }
-        .candy-bg-paused .sparkle,
-        .candy-bg-paused .heart,
-        .candy-bg-paused .star,
-        .candy-bg-paused .bubble,
-        .candy-bg-paused .candy-float {
+        
+        .bg-paused .float-element {
           animation-play-state: paused !important;
+        }
+        
+        @keyframes fadeInScale {
+          0% {
+            opacity: 0;
+            transform: scale(0.9);
+          }
+          100% {
+            opacity: 1;
+            transform: scale(1);
+          }
         }
       `}</style>
 
       { gameInitialized && !gameOver && (
-        <div style={{ position: 'absolute', top: 0, left: 0, zIndex: 2001 }}>
+        <div style={{ position: 'absolute', top: 10, left: 16, zIndex: 2001 }}>
           <button
             style={{
-              // background: 'rgba(255,255,255,0.9)',
-              color: '#e11d48',
-              fontWeight: 700,
-              border: 'none',
-              borderRadius: 8,
-              padding: '8px 18px',
-              fontSize: 18,
+              background: 'rgba(255, 255, 255, 0.2)',
+              backdropFilter: 'blur(10px)',
+              // border: '1px solid rgba(255, 255, 255, 0.3)',
+              color: 'white',
+              fontWeight: '600',
+              borderRadius: '12px',
+              padding: '6px 16px',
+              fontSize: '14px',
               cursor: 'pointer',
-              // boxShadow: '0 2px 8px #e11d4822',
+              transition: 'all 0.2s ease',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)';
+              e.currentTarget.style.transform = 'translateY(-1px)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
+              e.currentTarget.style.transform = 'translateY(0)';
             }}
             onClick={() => setShowConfirmEnd(true)}
           >
-            ◀ HOME
+            ← Home
           </button>
         </div>
       )}
@@ -3105,9 +2945,9 @@ Come for my spot or stay mid 😏🏆${improvementText}`;
           </div>
         </div>
       )}
-      {/* Only show reshuffle button when game is initialized, not over, and reshuffles available */}
+      {/* Modern Reshuffle Button */}
       {gameInitialized && !gameOver && reshuffles > 0 && (
-        <div style={{ position: 'fixed', bottom: 20, left: 0, width: '100vw', display: 'flex', justifyContent: 'center', zIndex: 2002 }}>
+        <div style={{ position: 'fixed', bottom: 24, left: 0, width: '100vw', display: 'flex', justifyContent: 'center', zIndex: 2002 }}>
           <button
             onClick={() => {
               if (reshuffleGridRef.current) {
@@ -3116,20 +2956,33 @@ Come for my spot or stay mid 😏🏆${improvementText}`;
               }
             }}
             style={{
-              background: 'radial-gradient(circle at center, #19adff 0%, #ffffff 100%)',
-              color: '#fff',
-              fontWeight: 'bold',
-              fontSize: 16,
-              border: 'none',
-              borderRadius: 10,
-              padding: '12px 36px',
-              margin: '0 auto',
-              boxShadow: '0 2px 8px #ff69b422',
+              background: 'rgba(255, 255, 255, 0.2)',
+              backdropFilter: 'blur(20px)',
+              border: '1px solid rgba(255, 255, 255, 0.3)',
+              color: 'white',
+              fontWeight: '600',
+              fontSize: '14px',
+              borderRadius: '16px',
+              padding: '12px 20px',
               cursor: 'pointer',
-              transition: 'all 0.2s',
+              transition: 'all 0.3s ease',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              boxShadow: '0 4px 16px rgba(0, 0, 0, 0.1)'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)';
+              e.currentTarget.style.transform = 'translateY(-2px)';
+              e.currentTarget.style.boxShadow = '0 8px 24px rgba(0, 0, 0, 0.15)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = '0 4px 16px rgba(0, 0, 0, 0.1)';
             }}
           >
-             🫨Re-shuffle ({reshuffles})
+            🔄 Reshuffle ({reshuffles})
           </button>
         </div>
       )}
