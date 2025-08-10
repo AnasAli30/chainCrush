@@ -152,14 +152,7 @@ export default function LoadingSpinner({ progress = 0 }: LoadingSpinnerProps) {
         </motion.div>
 
         {/* Loading Status */}
-        <motion.p
-          className="text-white/70 text-lg mb-8"
-          animate={{ opacity: [0.5, 1, 0.5] }}
-          transition={{ duration: 2, repeat: Infinity }}
-        >
-          {getSubMessage(progress)}
-        </motion.p>
-
+      
         {/* Animated Dots */}
         <div className="flex space-x-2">
           {[0, 1, 2].map((i) => (

@@ -429,11 +429,11 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
       const centerX = screenWidth / 2;
       const progressBarWidth = Math.min(screenWidth - 40, 300); // Responsive progress bar width
       
-      scoreText = this.add.text(centerX -60, 10, 'Score:0', { fontSize: '20px', color: 'black', fontStyle: 'bold' });
-      movesText = this.add.text(screenWidth - 20, 10, 'Moves:10', { fontSize: '20px', color: 'black', fontStyle: 'bold' }).setOrigin(1, 0);
+      scoreText = this.add.text(centerX -60, 10, 'Score:0', { fontSize: '20px', color: 'white', fontStyle: 'bold' });
+      movesText = this.add.text(screenWidth - 20, 10, 'Moves:10', { fontSize: '20px', color: 'white', fontStyle: 'bold' }).setOrigin(1, 0);
       
       // Level text above progress bar
-      levelText = this.add.text(centerX, 40, 'Level: 1', { fontSize: '20px', color: 'black', fontStyle: 'bold' }).setOrigin(0.5, 0);
+      levelText = this.add.text(centerX, 40, 'Level: 1', { fontSize: '20px', color: 'white', fontStyle: 'bold' }).setOrigin(0.5, 0);
       
       // Challenge display centered
      
@@ -450,7 +450,7 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
             // Challenge text below progress bar
         challengeIcon = this.add.sprite(centerX - 40, 102, 'candy-' + gameChallengeCandy);
        challengeIcon.setDisplaySize(35,35); // Small icon size
-        challengeText = this.add.text(centerX + 10, 100, '(0/10)', { fontSize: '17px', color: 'black', fontStyle: 'bold' }).setOrigin(0.5, 0);
+        challengeText = this.add.text(centerX + 10, 100, '(0/10)', { fontSize: '17px', color: 'white', fontStyle: 'bold' }).setOrigin(0.5, 0);
       
     
       
@@ -487,7 +487,7 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
         } else if (gameChallengeProgress >= gameChallengeTarget * 0.7) {
           challengeText.setColor('#ffaa00'); // Bright orange when close
         } else {
-          challengeText.setColor('#000000'); // White otherwise
+          challengeText.setColor('#ffffff'); // White otherwise
         }
       }
       
@@ -2005,10 +2005,10 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
             color: 'white',
             padding: '40px',
             borderRadius: '20px',
-            background: 'rgba(255, 255, 255, 0.1)',
-            backdropFilter: 'blur(20px)',
-            border: '1px solid rgba(255, 255, 255, 0.2)',
-            boxShadow: '0 20px 40px rgba(0, 0, 0, 0.1)'
+            // background: 'rgba(255, 255, 255, 0.1)',
+            // backdropFilter: 'blur(20px)',
+            // border: '1px solid rgba(255, 255, 255, 0.2)',
+            // boxShadow: '0 20px 40px rgba(0, 0, 0, 0.1)'
           }}>
             {/* Logo or Icon */}
             
@@ -2019,7 +2019,7 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
             <div style={{
               width: '280px',
               height: '6px',
-              backgroundColor: 'rgba(255, 255, 255, 0.2)',
+              // backgroundColor: 'rgba(255, 255, 255, 0.2)',
               borderRadius: '3px',
               overflow: 'hidden',
               position: 'relative'
@@ -2030,7 +2030,7 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
                 background: 'linear-gradient(90deg, #ffffff, #f093fb)',
                 borderRadius: '3px',
                 transition: 'width 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-                boxShadow: '0 0 8px rgba(255, 255, 255, 0.3)'
+                // boxShadow: '0 0 8px rgba(255, 255, 255, 0.3)'
               }}></div>
             </div>
             
