@@ -15,12 +15,15 @@ import {
   faChartLine,
   faCheckCircle,
   faExternalLinkAlt,
-  faRefresh
+  faRefresh,
+  faShare
 } from '@fortawesome/free-solid-svg-icons';
 import { useMiniAppContext } from '@/hooks/use-miniapp-context';
 import { useNFTSupply } from '@/hooks/use-nft-supply';
 import { getAverageScore, getBestScore, getTotalGamesFromScores } from '@/lib/game-counter';
+import { APP_URL } from '@/lib/constants';
 import { motion } from 'framer-motion';
+
 
 interface UserStats {
   userAddress: string;
@@ -51,7 +54,7 @@ interface UserStats {
 
 export default function UserStats() {
   const { address } = useAccount();
-  const { context } = useMiniAppContext();
+  const { context, actions } = useMiniAppContext();
   const { formattedCurrentSupply, refetchAll } = useNFTSupply();
   const [stats, setStats] = useState<UserStats | null>(null);
   const [loading, setLoading] = useState(false);
@@ -66,6 +69,7 @@ export default function UserStats() {
   const [localAverageScore, setLocalAverageScore] = useState<number>(0);
   const [localBestFromScores, setLocalBestFromScores] = useState<number>(0);
   const [totalGamesFromScores, setTotalGamesFromScores] = useState<number>(0);
+  const [sharing, setSharing] = useState(false);
 
   // Get best score from localStorage
   const getBestScoreFromStorage = () => {
@@ -102,6 +106,62 @@ export default function UserStats() {
     setLocalAverageScore(getAverageScore());
     setLocalBestFromScores(getBestScore());
     setTotalGamesFromScores(getTotalGamesFromScores());
+  };
+
+  // Share stats function using Farcaster ComposerCast
+  const shareStats = async () => {
+    if (!actions) {
+      console.error('Farcaster actions not available');
+      return;
+    }
+
+    setSharing(true);
+    try {
+      // Build the stats message
+      const stats = [];
+      
+      // Add NFT count
+      if (nftBalance > 0) {
+        stats.push(`🎨 ${nftBalance} NFTs`);
+      }
+      
+      // Add games played
+      if (localGamesPlayed > 0) {
+        stats.push(`🎮 ${localGamesPlayed} Games`);
+      }
+      
+      // Add best score
+      const bestScore = Math.max(localBestScore || 0, localBestFromScores);
+      if (bestScore > 0) {
+        stats.push(`🏆 ${bestScore.toLocaleString()} Best Score`);
+      }
+      
+      // Add average score
+      if (localAverageScore > 0) {
+        stats.push(`📊 ${localAverageScore.toLocaleString()} Avg Score`);
+      }
+      
+      // Add ETH balance
+      if (ethBalance !== '0.00' && ethBalance !== 'Error') {
+        stats.push(`💰 ${ethBalance} ETH`);
+      }
+
+      // Create the share message
+      const statsText = stats.length > 0 ? stats.join(' • ') : 'Just started playing!';
+      const username = context?.user?.username || 'ChainCrush Player';
+      
+      const shareMessage =  `just CRUSHED it on ChainCrush! 💪\n\n${statsText}\n\n🔥 Y'all think you can beat these stats? I'm waiting... 👀\n Drop your best score below and let's see who's really built different!\n\n#ChainCrush`;
+      
+      await actions.composeCast({
+        text: shareMessage,
+        embeds: [APP_URL || "https://chain-crush-black.vercel.app/"]
+      });
+      
+    } catch (error) {
+      console.error('Failed to share stats:', error);
+    } finally {
+      setSharing(false);
+    }
   };
 
 
@@ -394,19 +454,23 @@ export default function UserStats() {
               <FontAwesomeIcon icon={faUser} className="text-2xl text-white" />
             </div>
           )}
-          <div>
-            <h1 className="text-3xl font-bold text-white">
-              {context?.user?.username || 'Player'}
-            </h1>
-            <button
-              onClick={refreshData}
-              disabled={refreshing}
-              className="flex items-center space-x-2 text-[#19adff] bg-white px-3 py-1 rounded-full text-sm font-medium hover:bg-gray-100 transition-colors mt-2"
-            >
-              <FontAwesomeIcon icon={faRefresh} className={refreshing ? 'animate-spin' : ''} />
-              <span>{refreshing ? 'Refreshing...' : 'Refresh'}</span>
-            </button>
-          </div>
+                      <div>
+              <h1 className="text-3xl font-bold text-white">
+                {context?.user?.username || 'Player'}
+              </h1>
+              <div className="flex items-center space-x-2 mt-2">
+                <button
+                  onClick={refreshData}
+                  disabled={refreshing}
+                  className="flex items-center space-x-2 text-[#19adff] bg-white px-3 py-1 rounded-full text-sm font-medium hover:bg-gray-100 transition-colors"
+                >
+                  <FontAwesomeIcon icon={faRefresh} className={refreshing ? 'animate-spin' : ''} />
+                  <span>{refreshing ? 'Refreshing...' : 'Refresh'}</span>
+                </button>
+                
+              
+              </div>
+            </div>
         </div>
         
         {/* Wallet Address & Balance */}
@@ -521,7 +585,19 @@ export default function UserStats() {
           </motion.div>
         )}
       </div>
-
+<div className='rounded-[13px]' style={{width:"100%",border:"4px #7c65c1 solid"}}>
+      <button
+                  onClick={shareStats}
+                  disabled={sharing}
+                  className="flex items-center justify-center space-x-2 text-purple-600 bg-white px-3 py-3  rounded-[10px] text-sm font-medium hover:bg-gray-100 transition-colors disabled:opacity-50 w-full text-center"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 256 256" fill="none">
+                  <rect width="256" height="256" rx="56" fill="#7C65C1"></rect>
+                  <path d="M183.296 71.68H211.968L207.872 94.208H200.704V180.224L201.02 180.232C204.266 180.396 206.848 183.081 206.848 186.368V191.488L207.164 191.496C210.41 191.66 212.992 194.345 212.992 197.632V202.752H155.648V197.632C155.648 194.345 158.229 191.66 161.476 191.496L161.792 191.488V186.368C161.792 183.081 164.373 180.396 167.62 180.232L167.936 180.224V138.24C167.936 116.184 150.056 98.304 128 98.304C105.944 98.304 88.0638 116.184 88.0638 138.24V180.224L88.3798 180.232C91.6262 180.396 94.2078 183.081 94.2078 186.368V191.488L94.5238 191.496C97.7702 191.66 100.352 194.345 100.352 197.632V202.752H43.0078V197.632C43.0078 194.345 45.5894 191.66 48.8358 191.496L49.1518 191.488V186.368C49.1518 183.081 51.7334 180.396 54.9798 180.232L55.2958 180.224V94.208H48.1278L44.0318 71.68H72.7038V54.272H183.296V71.68Z" fill="white"></path>
+                </svg>
+                  <span>{sharing ? 'Sharing...' : 'Share Stats'}</span>
+        </button>
+        </div>
       {/* Daily Mint Status */}
       <motion.div 
         className="bg-gradient-to-r from-[#19adff] to-[#28374d] p-6 rounded-2xl text-white shadow-lg"
