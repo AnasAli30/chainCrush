@@ -9,6 +9,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons'
 import { useMiniAppContext } from '@/hooks/use-miniapp-context';
 import { useNFTSupply } from '@/hooks/use-nft-supply';
+import { incrementGamesPlayed } from '@/lib/game-counter';
 
 import { FarcasterActions } from '@/components/Home/FarcasterActions'
 import { User } from '@/components/Home/User'
@@ -154,7 +155,10 @@ export function Demo() {
               </div>
               
               <motion.button
-                onClick={() => setActiveTab('home')}
+                onClick={() => {
+                  incrementGamesPlayed();
+                  setShowGame(true);
+                }}
                 className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-bold py-4 px-8 rounded-2xl shadow-xl transition-all duration-300"
                 whileHover={{ scale: 1.05, y: -2 }}
                 whileTap={{ scale: 0.95 }}
@@ -269,7 +273,10 @@ export function Demo() {
             transition={{ delay: 1, duration: 0.8, type: "spring" }}
           >
             <motion.button
-              onClick={() => setShowGame(true)}
+              onClick={() => {
+                incrementGamesPlayed();
+                setShowGame(true);
+              }}
               className="relative group overflow-hidden gaming-gradient text-white font-black py-6 px-12 rounded-3xl text-xl shadow-lg border border-cyan-500/20 backdrop-blur-sm"
               whileHover={{ 
                 scale: 1.03,
@@ -665,14 +672,14 @@ function BottomNavbar({ activeTab, onTabChange, onShowGame, onShowNFTs, onShowSt
         {/* Enhanced background glow */}
         <div className="absolute inset-0 bg-gradient-to-r from-cyan-400/08 via-purple-500/08 to-green-400/08 blur-xl" />
         
-        <div className="relative z-10 flex justify-around items-center py-3 px-2">
+        <div className="relative z-10 flex justify-around items-center py-2">
           {tabs.map((tab) => {
             const isActive = activeTab === tab.id;
             return (
               <motion.button
                 key={tab.id}
                 onClick={() => handleTabClick(tab.id as any)}
-                className="relative flex flex-col items-center justify-center p-3 rounded-2xl transition-all duration-300"
+                className="relative flex flex-col items-center justify-center px-5 py-2 rounded-2xl transition-all duration-300"
                 whileHover={{ scale: 1.05, y: -2 }}
                 whileTap={{ scale: 0.95 }}
                 animate={{

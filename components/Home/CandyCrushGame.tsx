@@ -6,6 +6,7 @@ import Phaser from 'phaser';
 import { APP_URL } from '@/lib/constants';
 import { useMiniAppContext } from '@/hooks/use-miniapp-context';
 import { getPlayerData } from '@/lib/leaderboard';
+import { incrementGamesPlayed, addGameScore } from '@/lib/game-counter';
 import { useContractWrite, useContractRead, useAccount, useWaitForTransactionReceipt } from 'wagmi';
 import { parseEther } from 'viem';
 import { CONTRACT_ADDRESSES, CHAINCRUSH_NFT_ABI } from '@/lib/contracts';
@@ -131,6 +132,9 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
   }, []);
 
   const handleRestart = () => {
+    // Increment games played counter
+    incrementGamesPlayed();
+    
     setGameInitialized(false);
     setGameOver(false);
     setGameOverState(false); // Reset blur state
@@ -196,6 +200,9 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
     if (score > currentBest) {
       localStorage.setItem('candyBestScore', score.toString());
     }
+    
+    // Add score to the scores array for average calculation
+    addGameScore(score);
     
     // Submit score to database with duration
     if (context?.user?.fid && context?.user?.pfpUrl) {
@@ -1096,6 +1103,9 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
           if (gameScore > currentBest) {
             localStorage.setItem('candyBestScore', gameScore.toString());
           }
+          
+          // Add score to the scores array for average calculation
+          addGameScore(gameScore);
           
           setGameOver(true);
           setGameOverState(true); // Set blur state
@@ -2003,15 +2013,7 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
             {/* Logo or Icon */}
             
             
-            <div style={{
-              fontSize: '20px',
-              fontWeight: '600',
-              marginBottom: '30px',
-              color: 'rgba(255, 255, 255, 0.95)',
-              letterSpacing: '0.5px'
-            }}>
-              Loading Chain Crush
-            </div>
+           
             
             {/* Modern Progress Bar */}
             <div style={{
@@ -2718,8 +2720,8 @@ Come for my spot or stay mid 😏🏆${improvementText}`;
                 padding: '10px 20px',
                 fontSize: '20px',
                 fontWeight: 'bold',
-                backgroundColor: 'lightgreen',
-                color: 'black',
+                backgroundColor: '#4caf50',
+                color: 'white',
                 border: 'none',
                 borderRadius: '8px',
                 cursor: 'pointer',
@@ -2727,14 +2729,14 @@ Come for my spot or stay mid 😏🏆${improvementText}`;
                 transition: 'all 0.5s ease',
                 pointerEvents: 'auto'
               }}
-              // onMouseEnter={(e) => {
-              //   e.currentTarget.style.backgroundColor = '#1589cc';
-              //   e.currentTarget.style.transform = 'translateX(-50%) scale(1.05)';
-              // }}
-              // onMouseLeave={(e) => {
-              //   e.currentTarget.style.backgroundColor = '#19adff';
-              //   e.currentTarget.style.transform = 'translateX(-50%) scale(1)';
-              // }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = '#4caf50';
+                e.currentTarget.style.transform = 'translateX(-50%) scale(1.05)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = '#4caf50';
+                e.currentTarget.style.transform = 'translateX(-50%) scale(1)';
+              }}
               onClick={handleRestart}
             >
               ▶ Play Again 

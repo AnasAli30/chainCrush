@@ -2,6 +2,25 @@
 
 import { useState, useEffect } from 'react';
 import { useAccount } from 'wagmi';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { 
+  faWallet, 
+  faCopy, 
+  faUser, 
+  faGem, 
+  faCoins, 
+  faCalendarDay,
+  faTrophy,
+  faHistory,
+  faChartLine,
+  faCheckCircle,
+  faExternalLinkAlt,
+  faRefresh
+} from '@fortawesome/free-solid-svg-icons';
+import { useMiniAppContext } from '@/hooks/use-miniapp-context';
+import { useNFTSupply } from '@/hooks/use-nft-supply';
+import { getAverageScore, getBestScore, getTotalGamesFromScores } from '@/lib/game-counter';
+import { motion } from 'framer-motion';
 
 interface UserStats {
   userAddress: string;
@@ -10,6 +29,7 @@ interface UserStats {
     score: number;
     timestamp: number;
     trait?: string;
+    tokenId?: number;
   }>;
   topScores: Array<{
     userAddress: string;
@@ -17,34 +37,206 @@ interface UserStats {
     timestamp: number;
   }>;
   dailyMintsRemaining: number;
+  totalGamesPlayed?: number;
+  averageScore?: number;
+  bestScore?: number;
+  totalNFTsMinted?: number;
+  nftsByTrait?: {
+    common: number;
+    epic: number;
+    rare: number;
+    legendary: number;
+  };
 }
 
 export default function UserStats() {
   const { address } = useAccount();
+  const { context } = useMiniAppContext();
+  const { formattedCurrentSupply, refetchAll } = useNFTSupply();
   const [stats, setStats] = useState<UserStats | null>(null);
   const [loading, setLoading] = useState(false);
+  const [copiedAddress, setCopiedAddress] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [ethBalance, setEthBalance] = useState<string>('0.00');
+  const [balanceLoading, setBalanceLoading] = useState(false);
+  const [nftBalance, setNftBalance] = useState<number>(0);
+  const [nftBalanceLoading, setNftBalanceLoading] = useState(false);
+  const [localBestScore, setLocalBestScore] = useState<number | null>(null);
+  const [localGamesPlayed, setLocalGamesPlayed] = useState<number>(0);
+  const [localAverageScore, setLocalAverageScore] = useState<number>(0);
+  const [localBestFromScores, setLocalBestFromScores] = useState<number>(0);
+  const [totalGamesFromScores, setTotalGamesFromScores] = useState<number>(0);
+
+  // Get best score from localStorage
+  const getBestScoreFromStorage = () => {
+    if (typeof window !== 'undefined') {
+      const storedScore = localStorage.getItem('candyBestScore');
+      if (storedScore) {
+        const score = parseInt(storedScore, 10);
+        if (!isNaN(score) && score > 0) {
+          setLocalBestScore(score);
+          return;
+        }
+      }
+    }
+    setLocalBestScore(null);
+  };
+
+  // Get games played count from localStorage
+  const getGamesPlayedFromStorage = () => {
+    if (typeof window !== 'undefined') {
+      const storedCount = localStorage.getItem('candyGamesPlayed');
+      if (storedCount) {
+        const count = parseInt(storedCount, 10);
+        if (!isNaN(count) && count >= 0) {
+          setLocalGamesPlayed(count);
+          return;
+        }
+      }
+    }
+    setLocalGamesPlayed(0);
+  };
+
+  // Get calculated stats from scores
+  const getCalculatedStats = () => {
+    setLocalAverageScore(getAverageScore());
+    setLocalBestFromScores(getBestScore());
+    setTotalGamesFromScores(getTotalGamesFromScores());
+  };
+
+
+
+  // Helper function to copy address to clipboard
+  const copyAddress = async () => {
+    if (!address) return;
+    try {
+      await navigator.clipboard.writeText(address);
+      setCopiedAddress(true);
+      setTimeout(() => setCopiedAddress(false), 2000);
+    } catch (error) {
+      console.error('Failed to copy address:', error);
+    }
+  };
+
+  // Fetch ETH balance using ethers.js
+  const fetchEthBalance = async () => {
+    if (!address) return;
+    setBalanceLoading(true);
+    try {
+      const { ethers } = await import('ethers');
+      const provider = new ethers.JsonRpcProvider(process.env.NEXT_PUBLIC_RPC_URL);
+      const balance = await provider.getBalance(address);
+      const formattedBalance = ethers.formatEther(balance);
+      // Format to 4 decimal places
+      const roundedBalance = parseFloat(formattedBalance).toFixed(4);
+      setEthBalance(roundedBalance);
+    } catch (error) {
+      console.error('Error fetching ETH balance:', error);
+      setEthBalance('Error');
+    } finally {
+      setBalanceLoading(false);
+    }
+  };
+
+  // Fetch NFT balance using contract balanceOf function
+  const fetchNftBalance = async () => {
+    if (!address) return;
+    setNftBalanceLoading(true);
+    try {
+      const { ethers } = await import('ethers');
+      const { CONTRACT_ADDRESSES, CHAINCRUSH_NFT_ABI } = await import('@/lib/contracts');
+      
+      const provider = new ethers.JsonRpcProvider(process.env.NEXT_PUBLIC_RPC_URL);
+      const contract = new ethers.Contract(CONTRACT_ADDRESSES.CHAINCRUSH_NFT, CHAINCRUSH_NFT_ABI, provider);
+      
+      const balance = await contract.balanceOf(address);
+      setNftBalance(Number(balance));
+    } catch (error) {
+      console.error('Error fetching NFT balance:', error);
+      setNftBalance(0);
+    } finally {
+      setNftBalanceLoading(false);
+    }
+  };
+
+  // Fetch user stats function
+  const fetchStats = async () => {
+    if (!address) return;
+    setLoading(true);
+    try {
+      const response = await fetch(`/api/user-stats?userAddress=${address}`);
+      const result = await response.json();
+      
+      if (result.success) {
+        // Fix the remaining value calculation
+        const data = result.data;
+        const correctedRemaining = Math.max(0, 5 - (data.dailyMintCount || 0));
+        setStats({
+          ...data,
+          dailyMintsRemaining: correctedRemaining
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching user stats:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Helper function to refresh data
+  const refreshData = async () => {
+    setRefreshing(true);
+    await Promise.all([
+      fetchStats(),
+      refetchAll(),
+      fetchEthBalance(),
+      fetchNftBalance()
+    ]);
+    getBestScoreFromStorage(); // This is synchronous, so no need to await
+    getGamesPlayedFromStorage(); // This is synchronous, so no need to await
+    getCalculatedStats(); // This is synchronous, so no need to await
+    setRefreshing(false);
+  };
 
   useEffect(() => {
-    if (!address) return;
+    if (address) {
+      fetchStats();
+      fetchEthBalance();
+      fetchNftBalance();
+    }
+    // Always get best score and games played from localStorage regardless of wallet connection
+    getBestScoreFromStorage();
+    getGamesPlayedFromStorage();
+    getCalculatedStats();
+  }, [address]);
 
-    const fetchStats = async () => {
-      setLoading(true);
-      try {
-        const response = await fetch(`/api/user-stats?userAddress=${address}`);
-        const result = await response.json();
-        
-        if (result.success) {
-          setStats(result.data);
-        }
-      } catch (error) {
-        console.error('Error fetching user stats:', error);
-      } finally {
-        setLoading(false);
+  // Listen for localStorage changes to update best score and games played in real-time
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'candyBestScore') {
+        getBestScoreFromStorage();
+      } else if (e.key === 'candyGamesPlayed') {
+        getGamesPlayedFromStorage();
+      } else if (e.key === 'candyGameScores') {
+        getCalculatedStats();
       }
     };
 
-    fetchStats();
-  }, [address]);
+    // Listen for storage events from other tabs
+    window.addEventListener('storage', handleStorageChange);
+
+    // Also check periodically in case the values are updated in the same tab
+    const interval = setInterval(() => {
+      getBestScoreFromStorage();
+      getGamesPlayedFromStorage();
+      getCalculatedStats();
+    }, 5000);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      clearInterval(interval);
+    };
+  }, []);
 
   if (!address) {
     return (
@@ -62,11 +254,45 @@ export default function UserStats() {
     return (
       <div className="min-h-screen p-4 space-y-6">
         {/* Header Skeleton */}
-        <div className="text-center space-y-2 mb-8">
-          <div className="w-48 h-10 bg-gray-200 rounded mx-auto mb-2 animate-pulse"></div>
-          <div className="w-64 h-4 bg-gray-200 rounded mx-auto animate-pulse"></div>
+        <div className="text-center space-y-4 mb-8">
+          <div className="flex items-center justify-center space-x-4 mb-4">
+            <div className="w-16 h-16 bg-gray-200 rounded-full animate-pulse"></div>
+            <div>
+              <div className="w-48 h-8 bg-gray-200 rounded mb-2 animate-pulse"></div>
+              <div className="w-24 h-6 bg-gray-200 rounded animate-pulse"></div>
+            </div>
+          </div>
+          
+          {/* Wallet Address & Balance Skeleton */}
+          <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 space-y-3">
+            <div className="flex items-center justify-center space-x-3">
+              <div className="w-4 h-4 bg-white/20 rounded animate-pulse"></div>
+              <div className="w-32 h-4 bg-white/20 rounded animate-pulse"></div>
+              <div className="w-4 h-4 bg-white/20 rounded animate-pulse"></div>
+            </div>
+            <div className="flex items-center justify-center space-x-2">
+              <div className="w-4 h-4 bg-white/20 rounded animate-pulse"></div>
+              <div className="w-16 h-4 bg-white/20 rounded animate-pulse"></div>
+              <div className="w-16 h-4 bg-white/20 rounded animate-pulse"></div>
+            </div>
+          </div>
         </div>
         
+        {/* Stats Overview Cards Skeleton */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          {[...Array(4)].map((_, index) => (
+            <div key={index} className="bg-gradient-to-r from-gray-200 to-gray-300 p-4 rounded-2xl shadow-lg">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="w-16 h-4 bg-gray-300 rounded mb-2 animate-pulse"></div>
+                  <div className="w-12 h-6 bg-gray-300 rounded animate-pulse"></div>
+                </div>
+                <div className="w-6 h-6 bg-gray-300 rounded animate-pulse"></div>
+              </div>
+            </div>
+          ))}
+        </div>
+
         {/* Daily Mint Status Skeleton */}
         <div className="bg-gradient-to-r from-[#19adff] to-[#28374d] p-6 rounded-2xl text-white shadow-lg">
           <div className="flex items-center justify-between mb-4">
@@ -148,17 +374,166 @@ export default function UserStats() {
   }
 
   return (
-    <div className="min-h-screen p-4 space-y-6 ">
-      {/* Header */}
-      <div className="text-center space-y-2 mb-8">
-        <h1 className="text-4xl font-bold text-white">📊 Your Stats</h1>
-        <p className="text-white">Track your ChainCrush performance</p>
+    <div className="min-h-screen p-4 space-y-6">
+      {/* Header with User Profile */}
+      <motion.div 
+        className="text-center space-y-4 mb-8"
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+      >
+        <div className="flex items-center justify-center space-x-4 mb-4">
+          {context?.user?.pfpUrl ? (
+            <img 
+              src={context.user.pfpUrl} 
+              alt="Profile" 
+              className="w-16 h-16 rounded-full border-4 border-[#19adff] shadow-lg"
+            />
+          ) : (
+            <div className="w-16 h-16 rounded-full bg-gradient-to-r from-[#19adff] to-[#28374d] flex items-center justify-center border-4 border-white shadow-lg">
+              <FontAwesomeIcon icon={faUser} className="text-2xl text-white" />
+            </div>
+          )}
+          <div>
+            <h1 className="text-3xl font-bold text-white">
+              {context?.user?.username || 'Player'}
+            </h1>
+            <button
+              onClick={refreshData}
+              disabled={refreshing}
+              className="flex items-center space-x-2 text-[#19adff] bg-white px-3 py-1 rounded-full text-sm font-medium hover:bg-gray-100 transition-colors mt-2"
+            >
+              <FontAwesomeIcon icon={faRefresh} className={refreshing ? 'animate-spin' : ''} />
+              <span>{refreshing ? 'Refreshing...' : 'Refresh'}</span>
+            </button>
+          </div>
+        </div>
+        
+        {/* Wallet Address & Balance */}
+        <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 space-y-3">
+          <div className="flex items-center justify-center space-x-3">
+            <FontAwesomeIcon icon={faWallet} className="text-[#19adff]" />
+            <span className="text-white font-mono text-sm">
+              {address?.slice(0, 8)}...{address?.slice(-8)}
+            </span>
+            <button
+              onClick={copyAddress}
+              className="text-[#19adff] hover:text-[#1590d4] transition-colors"
+            >
+              <FontAwesomeIcon 
+                icon={copiedAddress ? faCheckCircle : faCopy} 
+                className={copiedAddress ? 'text-green-400' : ''} 
+              />
+            </button>
+          </div>
+          
+          {/* ETH Balance */}
+          <div className="flex items-center justify-center space-x-2 text-white/80">
+       
+            <FontAwesomeIcon icon={faCoins} className="text-yellow-400" />
+            <span className="text-sm">Balance:</span>
+            {balanceLoading ? (
+              <div className="flex items-center space-x-1">
+                <div className="w-3 h-3 bg-white/40 rounded animate-pulse"></div>
+                <div className="w-8 h-3 bg-white/40 rounded animate-pulse"></div>
+              </div>
+            ) : (
+              <span className="font-bold text-yellow-400">
+                {ethBalance}   <img src="/candy/arb.png" alt="" style={{width: '20px', height: '20px',display:"inline-block",margin:"0px 5px"}}/> ETH
+              </span>
+            )}
+          </div>
+        </div>
+      </motion.div>
+
+      {/* Stats Overview Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-6">
+        {/* Total NFTs */}
+        <motion.div 
+          className="bg-gradient-to-r from-purple-500 to-pink-500 p-4 rounded-2xl text-white shadow-lg"
+          whileHover={{ scale: 1.02 }}
+          transition={{ type: "spring", stiffness: 300 }}
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm opacity-90">Total NFTs</p>
+              {nftBalanceLoading ? (
+                <div className="flex items-center space-x-1">
+                  <div className="w-8 h-6 bg-white/20 rounded animate-pulse"></div>
+                </div>
+              ) : (
+                <p className="text-2xl font-bold">{nftBalance}</p>
+              )}
+            </div>
+            <FontAwesomeIcon icon={faGem} className="text-2xl opacity-80" />
+          </div>
+        </motion.div>
+
+        {/* Best Score - Show the highest between localStorage and calculated scores */}
+        {(localBestScore !== null || localBestFromScores > 0) && (
+          <motion.div 
+            className="bg-gradient-to-r from-yellow-500 to-orange-500 p-4 rounded-2xl text-white shadow-lg"
+            whileHover={{ scale: 1.02 }}
+            transition={{ type: "spring", stiffness: 300 }}
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm opacity-90">Best Score</p>
+                <p className="text-2xl font-bold">
+                  {Math.max(localBestScore || 0, localBestFromScores).toLocaleString()}
+                </p>
+              </div>
+              <FontAwesomeIcon icon={faTrophy} className="text-2xl opacity-80" />
+            </div>
+          </motion.div>
+        )}
+
+        {/* Games Played */}
+        <motion.div 
+          className="bg-gradient-to-r from-green-500 to-teal-500 p-4 rounded-2xl text-white shadow-lg"
+          whileHover={{ scale: 1.02 }}
+          transition={{ type: "spring", stiffness: 300 }}
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm opacity-90">Games Played</p>
+              <p className="text-2xl font-bold">{localGamesPlayed}</p>
+             
+            </div>
+            <FontAwesomeIcon icon={faChartLine} className="text-2xl opacity-80" />
+          </div>
+        </motion.div>
+
+        {/* Average Score - Only show if there are games played */}
+        {localAverageScore > 0 && (
+          <motion.div 
+            className="bg-gradient-to-r from-blue-500 to-indigo-500 p-4 rounded-2xl text-white shadow-lg"
+            whileHover={{ scale: 1.02 }}
+            transition={{ type: "spring", stiffness: 300 }}
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm opacity-90">Average Score</p>
+                <p className="text-2xl font-bold">{localAverageScore.toLocaleString()}</p>
+              </div>
+              <FontAwesomeIcon icon={faChartLine} className="text-2xl opacity-80" />
+            </div>
+          </motion.div>
+        )}
       </div>
-      
+
       {/* Daily Mint Status */}
-      <div className="bg-gradient-to-r from-[#19adff] to-[#28374d] p-6 rounded-2xl text-white shadow-lg">
+      <motion.div 
+        className="bg-gradient-to-r from-[#19adff] to-[#28374d] p-6 rounded-2xl text-white shadow-lg"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2, duration: 0.6 }}
+      >
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-xl font-bold">🎴 Daily Mint Status</h3>
+          <h3 className="text-xl font-bold flex items-center space-x-2">
+            <FontAwesomeIcon icon={faCalendarDay} />
+            <span>Daily Mint Status</span>
+          </h3>
           <div className="text-3xl">🎯</div>
         </div>
         <div className="grid grid-cols-2 gap-6">
@@ -171,12 +546,68 @@ export default function UserStats() {
             <p className="text-3xl font-bold">{stats.dailyMintsRemaining}</p>
           </div>
         </div>
-      </div>
+        
+        {/* Progress Bar */}
+        <div className="mt-4">
+          <div className="bg-white/20 rounded-full h-2">
+            <div 
+              className="bg-white rounded-full h-2 transition-all duration-500"
+              style={{ maxWidth: `${((stats.dailyMintCount || 0) / 5) * 50}%` }}
+            />
+          </div>
+        </div>
+      </motion.div>
+
+      {/* NFT Collection Overview */}
+      {stats.nftsByTrait && (
+        <motion.div 
+          className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3, duration: 0.6 }}
+        >
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-xl font-bold text-gray-800 flex items-center space-x-2">
+              <FontAwesomeIcon icon={faGem} className="text-[#19adff]" />
+              <span>NFT Collection</span>
+            </h3>
+            <span className="text-sm text-gray-500">Total Supply: {formattedCurrentSupply}</span>
+          </div>
+          
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="text-center p-4 bg-gray-100 rounded-xl">
+              <div className="text-2xl mb-2">⚪</div>
+              <p className="text-sm text-gray-600">Common</p>
+              <p className="text-xl font-bold text-gray-800">{stats.nftsByTrait.common || 0}</p>
+            </div>
+            <div className="text-center p-4 bg-purple-100 rounded-xl">
+              <div className="text-2xl mb-2">🟣</div>
+              <p className="text-sm text-purple-600">Epic</p>
+              <p className="text-xl font-bold text-purple-800">{stats.nftsByTrait.epic || 0}</p>
+            </div>
+            <div className="text-center p-4 bg-yellow-100 rounded-xl">
+              <div className="text-2xl mb-2">🟡</div>
+              <p className="text-sm text-yellow-600">Rare</p>
+              <p className="text-xl font-bold text-yellow-800">{stats.nftsByTrait.rare || 0}</p>
+            </div>
+            <div className="text-center p-4 bg-red-100 rounded-xl">
+              <div className="text-2xl mb-2">🔴</div>
+              <p className="text-sm text-red-600">Legendary</p>
+              <p className="text-xl font-bold text-red-800">{stats.nftsByTrait.legendary || 0}</p>
+            </div>
+          </div>
+        </motion.div>
+      )}
 
       {/* Recent Mints */}
-      <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
+      <motion.div 
+        className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.4, duration: 0.6 }}
+      >
         <div className="flex items-center space-x-3 mb-4">
-          <div className="text-2xl">🎴</div>
+          <FontAwesomeIcon icon={faHistory} className="text-[#19adff] text-xl" />
           <h3 className="text-xl font-bold text-gray-800">Recent Mints</h3>
         </div>
         {stats.mintHistory.length === 0 ? (
@@ -187,7 +618,12 @@ export default function UserStats() {
         ) : (
           <div className="space-y-3">
             {stats.mintHistory.slice(0, 5).map((mint, index) => (
-              <div key={index} className="flex justify-between items-center p-4 bg-gradient-to-r from-[#19adff] to-[#28374d] rounded-xl border border-[#19adff]">
+              <motion.div 
+                key={index} 
+                className="flex justify-between items-center p-4 bg-gradient-to-r from-[#19adff] to-[#28374d] rounded-xl border border-[#19adff]"
+                whileHover={{ scale: 1.02 }}
+                transition={{ type: "spring", stiffness: 300 }}
+              >
                 <div className="flex items-center space-x-3">
                   <div className="text-2xl">🏆</div>
                   <div>
@@ -201,6 +637,9 @@ export default function UserStats() {
                         minute: '2-digit'
                       })}
                     </p>
+                    {mint.tokenId && (
+                      <p className="text-xs text-white opacity-70">Token #{mint.tokenId}</p>
+                    )}
                   </div>
                 </div>
                 {mint.trait && (
@@ -208,46 +647,56 @@ export default function UserStats() {
                     {mint.trait}
                   </span>
                 )}
-              </div>
+              </motion.div>
             ))}
           </div>
         )}
-      </div>
+      </motion.div>
 
       {/* Top Scores */}
-      <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
+      <motion.div 
+        className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.5, duration: 0.6 }}
+      >
         <div className="flex items-center space-x-3 mb-4">
-          <div className="text-2xl">🏆</div>
-          <h3 className="text-xl font-bold text-gray-800">Top Scores</h3>
+          <FontAwesomeIcon icon={faTrophy} className="text-[#19adff] text-xl" />
+          <h3 className="text-xl font-bold text-gray-800">Personal Best Scores</h3>
         </div>
         <div className="space-y-3">
-                      {stats.topScores.map((score, index) => (
-              <div key={index} className="flex justify-between items-center p-4 bg-gradient-to-r from-[#19adff] to-[#28374d] rounded-xl border border-[#19adff]">
-                <div className="flex items-center space-x-3">
-                  <div className="flex items-center justify-center w-8 h-8 bg-white text-[#19adff] font-bold text-sm rounded-full">
-                    {index + 1}
-                  </div>
-                  <div>
-                    <p className="font-bold text-white">
-                      {score.userAddress === address ? 'You' : `${score.userAddress.slice(0, 6)}...${score.userAddress.slice(-4)}`}
-                    </p>
-                    <p className="text-sm text-white opacity-80">
-                      {new Date(score.timestamp * 1000).toLocaleDateString('en-US', {
-                        year: 'numeric',
-                        month: 'short',
-                        day: 'numeric'
-                      })}
-                    </p>
-                  </div>
+          {stats.topScores.map((score, index) => (
+            <motion.div 
+              key={index} 
+              className="flex justify-between items-center p-4 bg-gradient-to-r from-[#19adff] to-[#28374d] rounded-xl border border-[#19adff]"
+              whileHover={{ scale: 1.02 }}
+              transition={{ type: "spring", stiffness: 300 }}
+            >
+              <div className="flex items-center space-x-3">
+                <div className="flex items-center justify-center w-8 h-8 bg-white text-[#19adff] font-bold text-sm rounded-full">
+                  {index + 1}
                 </div>
-                <div className="text-right">
-                  <p className="text-2xl font-bold text-white">{(score.score || 0).toLocaleString()}</p>
-                  <p className="text-xs text-white opacity-80">points</p>
+                <div>
+                  <p className="font-bold text-white">
+                    {score.userAddress === address ? 'You' : `${score.userAddress.slice(0, 6)}...${score.userAddress.slice(-4)}`}
+                  </p>
+                  <p className="text-sm text-white opacity-80">
+                    {new Date(score.timestamp * 1000).toLocaleDateString('en-US', {
+                      year: 'numeric',
+                      month: 'short',
+                      day: 'numeric'
+                    })}
+                  </p>
                 </div>
               </div>
-            ))}
+              <div className="text-right">
+                <p className="text-2xl font-bold text-white">{(score.score || 0).toLocaleString()}</p>
+                <p className="text-xs text-white opacity-80">points</p>
+              </div>
+            </motion.div>
+          ))}
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 } 
