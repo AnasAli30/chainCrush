@@ -210,6 +210,7 @@ export default function Leaderboard() {
 
   // Format reward amount for display
   const formatReward = (amount: number) => {
+    if (!amount || isNaN(amount)) return '0';
     if (amount >= 1000000) {
       return `${(amount / 1000000).toFixed(1)}M`;
     } else if (amount >= 1000) {
@@ -242,7 +243,7 @@ export default function Leaderboard() {
       : '';
     
     await actions?.composeCast({
-      text: `🥇 Just locked in Rank #${userRank} on ChainCrush  😎\n\n🎯 Score: ${userInfo.score.toLocaleString()}\n⚡ Level: ${userInfo.level}\n⏱️ Time: ${formatDuration(userInfo.duration)}${rewardText}\n\nThink you can smoke me? Pull up and prove it 🕹️🔥`,
+      text: `🥇 Just locked in Rank #${userRank} on ChainCrush  😎\n\n🎯 Score: ${(userInfo.score || 0).toLocaleString()}\n⚡ Level: ${userInfo.level || 0}\n⏱️ Time: ${formatDuration(userInfo.duration)}${rewardText}\n\nThink you can smoke me? Pull up and prove it 🕹️🔥`,
       embeds: [APP_URL || ""]
     });
     
@@ -435,7 +436,7 @@ export default function Leaderboard() {
                
                {/* Score & Level */}
                <div className="text-right">
-                 <p className="text-lg font-bold text-[#19adff]">{userInfo.score.toLocaleString()}</p>
+                 <p className="text-lg font-bold text-[#19adff]">{(userInfo.score || 0).toLocaleString()}</p>
                  <p className="text-xs text-gray-600">Level {userInfo.level}</p>
               {userInfo.duration && userInfo.duration != 0 &&   <p className="text-xs text-gray-500">⏱️ {formatDuration(userInfo.duration)}</p>}
                </div>
@@ -471,7 +472,7 @@ export default function Leaderboard() {
            </div>
            <div className="text-center">
              <p className="text-2xl font-bold text-[#19adff]">
-               {leaderboard.length > 0 ? leaderboard[0].score.toLocaleString() : '0'}
+                               {leaderboard.length > 0 ? (leaderboard[0].score || 0).toLocaleString() : '0'}
              </p>
              <p className="text-sm text-[#28374d]">Highest Score</p>
            </div>
@@ -566,7 +567,7 @@ export default function Leaderboard() {
 
                 {/* Score */}
                 <div className="text-right">
-                  <p className={`text-2xl font-bold ${rankColors.text}`}>{entry.score.toLocaleString()}</p>
+                  <p className={`text-2xl font-bold ${rankColors.text}`}>{(entry.score || 0).toLocaleString()}</p>
                   {/* <p className={`text-xs ${rankColors.text} opacity-80`}>points</p> */}
                   <p className={`text-sm ${rankColors.text} opacity-80`}>
                     Level {entry.level}

@@ -191,7 +191,7 @@ export default function UserStats() {
                 <div className="flex items-center space-x-3">
                   <div className="text-2xl">🏆</div>
                   <div>
-                    <p className="font-bold text-white">Score: {mint.score.toLocaleString()}</p>
+                    <p className="font-bold text-white">Score: {(mint.score || 0).toLocaleString()}</p>
                     <p className="text-sm text-white opacity-80">
                       {new Date(mint.timestamp * 1000).toLocaleDateString('en-US', {
                         year: 'numeric',
@@ -241,7 +241,7 @@ export default function UserStats() {
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="text-2xl font-bold text-white">{score.score.toLocaleString()}</p>
+                  <p className="text-2xl font-bold text-white">{(score.score || 0).toLocaleString()}</p>
                   <p className="text-xs text-white opacity-80">points</p>
                 </div>
               </div>
