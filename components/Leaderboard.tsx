@@ -282,7 +282,7 @@ export default function Leaderboard() {
 
   if (loading) {
     return (
-      <div className="">
+      <div className="" style={{scale:"1.1",marginTop:"80px"}}>
         {/* Reward Countdown Skeleton */}
         <div className="mb-6">
           <div
@@ -305,10 +305,10 @@ export default function Leaderboard() {
                 <div className="w-32 h-3 bg-gray-300 rounded animate-pulse"></div>
               </div>
             </div>
-            <div className="text-right">
+            {/* <div className="text-right">
               <div className="w-16 h-3 bg-gray-300 rounded animate-pulse mb-1"></div>
               <div className="w-20 h-4 bg-gray-300 rounded animate-pulse"></div>
-            </div>
+            </div> */}
           </div>
         </div>
 
