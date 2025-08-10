@@ -628,7 +628,7 @@ export default function UserStats() {
           <div className="bg-white/20 rounded-full h-2">
             <div 
               className="bg-white rounded-full h-2 transition-all duration-500"
-              style={{ maxWidth: `${((stats.dailyMintCount || 0) / 5) * 50}%` }}
+              style={{ maxWidth: `${((stats.dailyMintCount || 0) / 5) * 100}%` }}
             />
           </div>
         </div>
