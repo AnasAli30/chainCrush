@@ -343,8 +343,9 @@ export default function Leaderboard() {
             backdropFilter: 'blur(20px)',
             borderRadius: '16px',
             padding: '12px 20px',
-            width: '110%',
-            marginLeft: '-5%',
+            width: '100%',
+            marginTop:"15px",
+            // marginLeft: '-5%',
             border: '2px solid rgba(59, 130, 246, 0.3)'
           }}
           className="flex items-center justify-between"
@@ -456,7 +457,7 @@ export default function Leaderboard() {
       )}
 
       {/* Leaderboard */}
-      <div className="bg-white rounded-2xl p-2  shadow-lg border border-gray-100" style={{width:"105%",marginLeft:"-3%"}}>
+      <div className=" rounded-2xl p-2  shadow-lg " style={{width:"105%",marginLeft:"-3%"}}>
        
 
               {/* Stats */}

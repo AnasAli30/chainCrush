@@ -38,6 +38,10 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
   const [previousBestScore, setPreviousBestScore] = useState(() => parseInt(localStorage.getItem('candyCrushMaxScore') || '0'));
   const [gameKey, setGameKey] = useState<number>(0);
   
+  // Internal loading state
+  const [loadingProgress, setLoadingProgress] = useState(0);
+  const [showInternalLoader, setShowInternalLoader] = useState(true);
+  
   // Challenge system state
   const [challengeCandyType, setChallengeCandyType] = useState('1');
   const [challengeTarget, setChallengeTarget] = useState(10);
@@ -206,6 +210,36 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
   useEffect(() => {
     if (gameRef.current) {
       setGameInitialized(false);
+      setShowInternalLoader(true);
+      setLoadingProgress(0);
+      
+      // Start internal loading animation
+      const startLoading = async () => {
+        // Step 1: Initialize Phaser (20%)
+        setLoadingProgress(20);
+        await new Promise(resolve => setTimeout(resolve, 200));
+        
+        // Step 2: Load assets (40%)
+        setLoadingProgress(40);
+        await new Promise(resolve => setTimeout(resolve, 300));
+        
+        // Step 3: Create game objects (60%)
+        setLoadingProgress(60);
+        await new Promise(resolve => setTimeout(resolve, 200));
+        
+        // Step 4: Initialize grid (80%)
+        setLoadingProgress(80);
+        await new Promise(resolve => setTimeout(resolve, 200));
+        
+        // Step 5: Final setup (100%)
+        setLoadingProgress(100);
+        await new Promise(resolve => setTimeout(resolve, 300));
+        
+        // Hide loader and start game
+        setShowInternalLoader(false);
+        initGame();
+      };
+      
       // Start tracking game time
       setGameStartTime(Date.now());
       setGameDuration(0);
@@ -213,7 +247,8 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
       setMintStatus('idle');
       setMintError('');
       setNftRecorded(false); // Reset NFT recording flag
-      initGame();
+      
+      startLoading();
     }
     return () => {
       if (gameRef.current) {
@@ -564,7 +599,18 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
       updateUI();
       
       // Mark game as fully initialized
-      setTimeout(() => setGameInitialized(true), 100); // Small delay to ensure rendering
+      setTimeout(() => {
+        setGameInitialized(true)
+        
+        // Dispatch event to notify that game is ready AFTER the background is rendered
+        // Use a longer delay to ensure smooth transition
+        setTimeout(() => {
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('gameInitialized'))
+            window.dispatchEvent(new CustomEvent('phaserGameReady'))
+          }
+        }, 200); // Additional delay for visual elements to render
+      }, 100); // Small delay to ensure rendering
     }
 
     // Touch/drag variables
@@ -1947,6 +1993,7 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
       justifyContent: 'center',
       background: gameInitialized ? 'radial-gradient(circle at center, #19adff 0%, #ffffff 100%)' : 'linear-gradient(135deg, #19adff 0%, #28374d 50%, #ffffff 100%)'
     }}>
+      
       {/* Candy Wonderland Animated Background */}
       {gameInitialized && (
         <div
@@ -2098,118 +2145,65 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
         </div>
       )}
       
-      {/* Loading Screen */}
-      {!gameInitialized && (
+      {/* Internal Loading Bar - Show only when loading */}
+      {showInternalLoader && (
         <div style={{
           position: 'fixed',
           top: 0,
           left: 0,
           width: '100vw',
           height: '100vh',
-          background: 'radial-gradient(circle at center, #19adff 0%, #ffffff 100%)',
           display: 'flex',
-          flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          zIndex: 2000,
-          overflow: 'hidden'
+          background: 'rgba(0, 0, 0, 0.8)', 
+          zIndex: 4000,
+          pointerEvents: 'none'
         }}>
-          {/* Loading Title */}
           <div style={{
-            fontSize: '48px',
-            fontWeight: 'bold',
-            color: '#ffffff',
-            textShadow: '0 4px 8px rgba(0,0,0,0.3)',
-            marginBottom: '40px',
             textAlign: 'center',
-            animation: 'pulse 2s ease-in-out infinite'
+            color: 'white',
+       
           }}>
-            Chain Crush
-          </div>
-          
-          {/* Progress Bar Container */}
-          <div style={{
-            width: '300px',
-            height: '8px',
-            backgroundColor: 'rgba(255,255,255,0.2)',
-            borderRadius: '4px',
-            overflow: 'hidden',
-            position: 'relative',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
-          }}>
-            {/* Animated Progress Bar */}
             <div style={{
-              width: '100%',
-              height: '100%',
-              background: 'linear-gradient(90deg, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4, #feca57)',
+              fontSize: '24px',
+              fontWeight: 'bold',
+              marginBottom: '20px',
+              textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
+             
+            }}>
+              Loading ChainCrush...
+            </div>
+            
+            {/* Progress Bar */}
+            <div style={{
+              width: '300px',
+              height: '8px',
+              backgroundColor: 'rgba(255,255,255,0.2)',
               borderRadius: '4px',
-              animation: 'progressAnimation 3s ease-in-out infinite',
-              backgroundSize: '200% 100%',
-              boxShadow: '0 0 10px rgba(255,255,255,0.5)'
-            }} />
+              overflow: 'hidden',
+              position: 'relative'
+            }}>
+              <div style={{
+                width: `${loadingProgress}%`,
+                height: '100%',
+                background: 'linear-gradient(90deg, #19adff, #ffffff, #19adff)',
+                borderRadius: '4px',
+                transition: 'width 0.3s ease-out',
+                boxShadow: '0 0 10px rgba(25, 173, 255, 0.5)'
+              }}></div>
+            </div>
+            
+            {/* Progress Percentage */}
+            <div style={{
+              fontSize: '16px',
+              marginTop: '10px',
+              opacity: 0.8,
+              textShadow: '1px 1px 2px rgba(0,0,0,0.8)'
+            }}>
+              {loadingProgress}%
+            </div>
           </div>
-          
-          {/* Loading Text */}
-          <div style={{
-            fontSize: '18px',
-            color: '#ffffff',
-            marginTop: '20px',
-            textAlign: 'center',
-            opacity: 0.8,
-            animation: 'fadeInOut 2s ease-in-out infinite'
-          }}>
-            Loading Game...
-          </div>
-          
-          {/* Animated Dots */}
-          <div style={{
-            display: 'flex',
-            gap: '8px',
-            marginTop: '15px'
-          }}>
-            {[0, 1, 2].map((i) => (
-              <div key={i} style={{
-                width: '8px',
-                height: '8px',
-                backgroundColor: '#ffffff',
-                borderRadius: '50%',
-                animation: `bounce 1.4s ease-in-out infinite`,
-                animationDelay: `${i * 0.16}s`
-              }} />
-            ))}
-          </div>
-          
-          {/* CSS Animations */}
-          <style dangerouslySetInnerHTML={{
-            __html: `
-              @keyframes progressAnimation {
-                0% { background-position: 0% 50%; }
-                50% { background-position: 100% 50%; }
-                100% { background-position: 0% 50%; }
-              }
-              
-              @keyframes pulse {
-                0%, 100% { transform: scale(1); opacity: 1; }
-                50% { transform: scale(1.05); opacity: 0.9; }
-              }
-              
-              @keyframes fadeInOut {
-                0%, 100% { opacity: 0.6; }
-                50% { opacity: 1; }
-              }
-              
-              @keyframes bounce {
-                0%, 80%, 100% { 
-                  transform: scale(0);
-                  opacity: 0.5;
-                }
-                40% { 
-                  transform: scale(1);
-                  opacity: 1;
-                }
-              }
-            `
-          }} />
         </div>
       )}
       
