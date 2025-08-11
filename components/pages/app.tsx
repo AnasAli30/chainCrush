@@ -16,7 +16,17 @@ export default function Home() {
     return (
       <SafeAreaContainer insets={context?.client.safeAreaInsets}>
         <div className="flex min-h-screen flex-col items-center justify-center p-4 space-y-8">
-          <h1 className="text-3xl font-bold text-center">Loading...</h1>
+          <div className="relative">
+            {/* Centered icon with scaling animation */}
+            <div className="w-32 h-32 flex items-center justify-center">
+              <img 
+                src="/images/icon.png" 
+                alt="Chain Crush" 
+                className="w-24 h-24 rounded-[20px] animate-[iconScale_2s_ease-in-out_infinite]"
+              />
+            </div>
+          </div>
+        
         </div>
       </SafeAreaContainer>
     )
