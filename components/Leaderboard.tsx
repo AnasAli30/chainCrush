@@ -424,10 +424,10 @@ export default function Leaderboard() {
             </div>
           </div>
 
-          <div className="text-right">
+          {/* <div className="text-right">
             <div style={{ color: '#ffffff', fontSize: '12px', opacity: 0.8 }}>Ends in</div>
             <div style={{ color: '#ffffff', fontFamily: 'monospace', fontSize: '16px', fontWeight: 700 }}>{displayTime}</div>
-          </div>
+          </div> */}
         </div>
       </div>
 
