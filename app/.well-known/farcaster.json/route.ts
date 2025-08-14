@@ -32,6 +32,9 @@ export async function GET() {
       heroImageUrl: `${APP_URL}/images/feed.png`,
       requiredChains: ["eip155:42161"],
     },
+    "baseBuilder": {
+      "allowedAddresses": ["0xE7503b8d192DcE2895327878ECE5a0a401821a66"]
+    }
   };
 
   return NextResponse.json(farcasterConfig);
