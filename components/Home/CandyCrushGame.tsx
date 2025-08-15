@@ -1941,7 +1941,8 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
               method: 'POST',
               body: JSON.stringify({
                 fid: context.user.fid,
-                nftName
+                nftName,
+                userAddress: address
               })
             });
             
