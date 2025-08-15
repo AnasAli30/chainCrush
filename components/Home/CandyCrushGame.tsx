@@ -1937,6 +1937,12 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
             const { authenticatedFetch } = await import('@/lib/auth');
             const nftName = `ChainCrush NFT #${score}`;
             
+            console.log('Recording NFT mint with data:', {
+              fid: context.user.fid,
+              nftName,
+              userAddress: address
+            });
+            
             await authenticatedFetch('/api/nft-minted', {
               method: 'POST',
               body: JSON.stringify({
@@ -1949,6 +1955,7 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
             console.log('NFT minting recorded successfully');
           } catch (error) {
             console.error('Failed to record NFT minting:', error);
+            console.error('Error details:', error.message || error);
           }
         };
         
