@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { resetDailyMintStatus } from "@/lib/database";
 
 // Vercel cron job configuration
-export const runtime = 'edge';
+export const runtime = 'nodejs';
 
 // This endpoint will be called automatically by Vercel cron
 export async function GET(request: NextRequest) {
