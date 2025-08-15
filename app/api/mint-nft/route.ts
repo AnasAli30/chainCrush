@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { ethers } from "ethers";
-import { canUserMint, incrementDailyMintCount, saveUserMint, getUserDailyMintCount, updateUserDailyMintStatus } from "@/lib/database";
+import { canUserMint, incrementDailyMintCount, saveUserMint, getUserDailyMintCount } from "@/lib/database";
 
 const PRIVATE_KEY = process.env.SERVER_PRIVATE_KEY;
 const CHAINCRUSH_NFT_ADDRESS = process.env.CHAINCRUSH_NFT_ADDRESS || "0x0000000000000000000000000000000000000000";
@@ -50,9 +50,6 @@ export async function POST(request: NextRequest) {
 
     // Increment daily mint count
     await incrementDailyMintCount(userAddress);
-
-    // Update user's daily mint status for leaderboard
-    await updateUserDailyMintStatus(userAddress, true);
 
     // Save mint record to database
     await saveUserMint({

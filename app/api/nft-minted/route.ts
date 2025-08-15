@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { incrementUserNftCount, updateUserNftInfo } from '@/lib/database';
+import { incrementUserNftCount, updateUserNftInfo, updateUserDailyMintStatus } from '@/lib/database';
 
 export async function POST(request: NextRequest) {
   try {
-    const { fid, nftName } = await request.json();
+    const { fid, nftName, userAddress } = await request.json();
 
-    if (!fid || !nftName) {
+    if (!fid || !nftName || !userAddress) {
       return NextResponse.json(
         { success: false, error: 'Missing required fields' },
         { status: 400 }
@@ -17,6 +17,9 @@ export async function POST(request: NextRequest) {
     
     // Update NFT info
     await updateUserNftInfo(fid, nftName);
+
+    // Update user's daily mint status for leaderboard (only when NFT is successfully minted)
+    await updateUserDailyMintStatus(userAddress, true);
 
     return NextResponse.json({
       success: true,
