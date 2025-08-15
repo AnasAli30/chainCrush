@@ -413,7 +413,21 @@ export async function getMixedLeaderboard(limit: number = 50, offset: number = 0
   // Apply pagination (offset and limit)
   const paginatedResult = finalLeaderboard.slice(offset, offset + limit);
   
-  return paginatedResult as unknown as GameScore[];
+  // Additional deduplication check to ensure no duplicates in the result
+  const seenFids = new Set();
+  const deduplicatedResult = paginatedResult.filter(player => {
+    if (seenFids.has(player.fid)) {
+      console.log(`Duplicate FID found and removed: ${player.fid} (${player.username || 'Unknown'})`);
+      return false;
+    }
+    seenFids.add(player.fid);
+    return true;
+  });
+  
+  // Log pagination info for debugging
+  console.log(`getMixedLeaderboard: offset=${offset}, limit=${limit}, total=${finalLeaderboard.length}, returned=${deduplicatedResult.length}`);
+  
+  return deduplicatedResult as unknown as GameScore[];
 }
 
 export async function getTotalPlayersCount(): Promise<number> {

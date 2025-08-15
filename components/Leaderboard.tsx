@@ -74,7 +74,18 @@ export default function Leaderboard() {
         if (isInitial) {
           setLeaderboard(newData);
         } else {
-          setLeaderboard(prev => [...prev, ...newData]);
+          // Deduplicate by fid when adding new data to prevent duplicates
+          setLeaderboard(prev => {
+            const existingFids = new Set(prev.map(entry => entry.fid));
+            const uniqueNewData = newData.filter((entry: LeaderboardEntry) => !existingFids.has(entry.fid));
+            
+            // Debug logging
+            if (newData.length !== uniqueNewData.length) {
+              console.log(`Frontend deduplication: removed ${newData.length - uniqueNewData.length} duplicates`);
+            }
+            
+            return [...prev, ...uniqueNewData];
+          });
         }
         
         setHasMore(result.data.hasMore);
@@ -543,7 +554,7 @@ export default function Leaderboard() {
                 : getRankColors(99); // Default colors for non-top-10
               
               return (
-              <div key={index} className={`flex items-center px-4 py-2 rounded-xl border ${rankColors.bg} ${rankColors.border}`}>
+              <div key={entry.fid} className={`flex items-center px-4 py-2 rounded-xl border ${rankColors.bg} ${rankColors.border}`}>
                 {/* Rank */}
               
 
