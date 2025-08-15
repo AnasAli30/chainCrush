@@ -41,7 +41,7 @@ export function Demo() {
   // Check if user has seen the reward popup before
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const hasSeenRewardPopup = localStorage.getItem('hasSeenRewardPopup')
+      const hasSeenRewardPopup = localStorage.getItem('hasSeenRewardnewPopup')
       if (!hasSeenRewardPopup) {
         // Show popup after a short delay for better UX
         const timer = setTimeout(() => {
@@ -55,7 +55,7 @@ export function Demo() {
   const handleCloseRewardPopup = () => {
     setShowRewardPopup(false)
     if (typeof window !== 'undefined') {
-      localStorage.setItem('hasSeenRewardPopup', 'true')
+      localStorage.setItem('hasSeenRewardnewPopup', 'true')
     }
   }
 
@@ -339,21 +339,21 @@ export function Demo() {
             <StatsCard 
               icon={faUsers} 
               title="Active Players" 
-              value="1.1K" 
+              value="1.6K" 
               trend="+23%" 
               color="from-cyan-400 via-blue-500 to-purple-600"
             />
             <StatsCard 
               icon={faCoins} 
               title="Rewards Pool" 
-              value="4.4M PEPE" 
+              value="1.6M BOOP" 
               trend="LIVE" 
               color="from-purple-500 via-cyan-400 to-green-400"
             />
             <StatsCard 
               icon={faFire} 
               title="Games Today" 
-              value="847" 
+              value="1.1K" 
               trend="+12%" 
               color="from-pink-500 via-purple-500 to-cyan-400"
             />
@@ -464,8 +464,8 @@ export function Demo() {
               <p style={{ fontSize: '16px', opacity: 0.9, marginBottom: '5px', lineHeight: '1.5' }}>
                 Get ready for the sweetest rewards! Play daily 
               </p>
-              <img src="/candy/2.png" alt="" style={{width:"50px",height:"50px"}} />
-              <p style={{fontSize:"16px",opacity:0.9,marginBottom:"5px",lineHeight:"1.5"}}> compete for PEPE coins.</p>
+              <img src="/candy/1.png" alt="" style={{width:"50px",height:"50px"}} />
+              <p style={{fontSize:"16px",opacity:0.9,marginBottom:"5px",lineHeight:"1.5"}}> compete for $BOOP coins.</p>
               {/* Reward Info */}
               <div style={{ 
                 background: 'rgba(255,255,255,0.1)', 
@@ -478,24 +478,24 @@ export function Demo() {
                 </h3>
                   <div style={{ textAlign: 'left', fontSize: '13px', lineHeight: '1.4' }}>
                   <div style={{ marginBottom: '6px' ,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-                    <strong>🥇 1st Place (25%)</strong>
-                    <span style={{ opacity: 0.9 }}>1,113,408 PEPE</span>
+                    <strong>🥇 1st Place (20%)</strong>
+                    <span style={{ opacity: 0.9 }}>310,360 $BOOP</span>
                   </div>
                   <div style={{ marginBottom: '6px' ,display:"flex",alignItems:"center",justifyContent:"space-between"}}>                    <strong>🥈 2nd Place (18%)</strong>
-                    <span style={{ opacity: 0.9 }}>801,653 PEPE</span>
+                    <span style={{ opacity: 0.9 }}>279,324 $BOOP</span>
                   </div>
-                  <div style={{ marginBottom: '6px' ,display:"flex",alignItems:"center",justifyContent:"space-between"}}>                    <strong>🥉 3rd Place (13%)</strong>
-                    <span style={{ opacity: 0.9 }}>578,972 PEPE</span>
+                  <div style={{ marginBottom: '6px' ,display:"flex",alignItems:"center",justifyContent:"space-between"}}>                    <strong>🥉 3rd Place (15%)</strong>
+                    <span style={{ opacity: 0.9 }}>232,770 $BOOP</span>
                   </div>
                   <div style={{ marginBottom: '6px' ,display:"flex",alignItems:"center",justifyContent:"space-between"}}>                    <strong>4th–6th Place</strong>
-                    <span style={{ opacity: 0.9 }}>356,290 PEPE each</span>
+                    <span style={{ opacity: 0.9 }}>139,662 $BOOP each</span>
                   </div>
                   <div style={{ marginBottom: '6px' ,display:"flex",alignItems:"center",justifyContent:"space-between"}}>                    <strong>7th–8th Place</strong>
-                    <span style={{ opacity: 0.9 }}>267,218 PEPE each</span>
+                    <span style={{ opacity: 0.9 }}>93,108 $BOOP each</span>
                   </div>
                   <div style={{ marginBottom: '6px' ,display:"flex",alignItems:"center",justifyContent:"space-between"}}>                   
                     <strong>9th–10th Place</strong>
-                    <span style={{ opacity: 0.9 }}>178,145 PEPE each</span>
+                    <span style={{ opacity: 0.9 }}>62,072 $BOOP each</span>
                   </div>
                 </div>
               </div>

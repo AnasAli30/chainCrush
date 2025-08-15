@@ -44,6 +44,10 @@ interface UserStats {
   averageScore?: number;
   bestScore?: number;
   totalNFTsMinted?: number;
+  currentSeasonScore?: number | null;
+  ath?: number | null;
+  level?: number | null;
+  hasMintedToday?: boolean;
   nftsByTrait?: {
     common: number;
     epic: number;
@@ -141,10 +145,8 @@ export default function UserStats() {
         stats.push(`📊 ${localAverageScore.toLocaleString()} Avg Score`);
       }
       
-      // Add ETH balance
-      if (ethBalance !== '0.00' && ethBalance !== 'Error') {
-        stats.push(`💰 ${ethBalance} ETH`);
-      }
+   
+       
 
       // Create the share message
       const statsText = stats.length > 0 ? stats.join(' • ') : 'Just started playing!';
@@ -533,8 +535,46 @@ export default function UserStats() {
           </div>
         </motion.div>
 
-        {/* Best Score - Show the highest between localStorage and calculated scores */}
-        {(localBestScore !== null || localBestFromScores > 0) && (
+        {/* Current Season Score - Show when available */}
+        {stats?.currentSeasonScore && (
+          <motion.div 
+            className="bg-gradient-to-r from-green-500 to-emerald-500 p-4 rounded-2xl text-white shadow-lg"
+            whileHover={{ scale: 1.02 }}
+            transition={{ type: "spring", stiffness: 300 }}
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm opacity-90">Current Season</p>
+                <p className="text-2xl font-bold">
+                  {stats.currentSeasonScore.toLocaleString()}
+                </p>
+              </div>
+              <FontAwesomeIcon icon={faTrophy} className="text-2xl opacity-80" />
+            </div>
+          </motion.div>
+        )}
+
+        {/* All-Time High - Show when available */}
+        {stats?.bestScore && (
+          <motion.div 
+            className="bg-gradient-to-r from-yellow-500 to-orange-500 p-4 rounded-2xl text-white shadow-lg"
+            whileHover={{ scale: 1.02 }}
+            transition={{ type: "spring", stiffness: 300 }}
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm opacity-90">All-Time High</p>
+                <p className="text-2xl font-bold">
+                  {stats.bestScore.toLocaleString()}
+                </p>
+              </div>
+              <FontAwesomeIcon icon={faTrophy} className="text-2xl opacity-80" />
+            </div>
+          </motion.div>
+        )}
+
+        {/* Best Score - Show the highest between localStorage and calculated scores (fallback) */}
+        {!stats?.currentSeasonScore && !stats?.ath && (localBestScore !== null || localBestFromScores > 0) && (
           <motion.div 
             className="bg-gradient-to-r from-yellow-500 to-orange-500 p-4 rounded-2xl text-white shadow-lg"
             whileHover={{ scale: 1.02 }}
@@ -631,6 +671,21 @@ export default function UserStats() {
               style={{ maxWidth: `${((stats.dailyMintCount || 0) / 5) * 100}%` }}
             />
           </div>
+        </div>
+        
+        {/* Daily Mint Status Indicator */}
+        <div className="mt-4 text-center">
+          {stats.hasMintedToday ? (
+            <div className="inline-flex items-center space-x-2 bg-green-500/20 px-3 py-2 rounded-full">
+              <FontAwesomeIcon icon={faCheckCircle} className="text-green-400" />
+              <span className="text-sm font-medium text-green-300">✅ Minted Today - Visible in Leaderboard</span>
+            </div>
+          ) : (
+            <div className="inline-flex items-center space-x-2 bg-yellow-500/20 px-3 py-2 rounded-full">
+              <FontAwesomeIcon icon={faHistory} className="text-yellow-400" />
+              <span className="text-sm font-medium text-yellow-300">⚠️ Not Minted Today - Hidden from Leaderboard</span>
+            </div>
+          )}
         </div>
       </motion.div>
 

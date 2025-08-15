@@ -20,7 +20,8 @@ export interface GameScore {
   fid: number;
   pfpUrl: string;
   username?: string;
-  score: number;
+  score: number; // All-time high (ATH) - only updated when beaten
+  currentSeasonScore?: number; // Current season score - updated every game
   level: number;
   userAddress?: string;
   timestamp: number;
@@ -31,6 +32,8 @@ export interface GameScore {
   lastNftMint?: number; // Added for NFT tracking
   hasNft?: boolean; // Added for NFT tracking
   faucetClaimed?: boolean; // Added for faucet tracking
+  hasMintedToday?: boolean; // Track if user has minted today
+  lastMintDate?: string; // YYYY-MM-DD format of last mint date
 }
 
 export interface FaucetClaim {
@@ -209,54 +212,70 @@ export async function saveGameScore(gameScore: GameScore): Promise<void> {
   const existingPlayer = await db.collection('gameScores').findOne({ fid: gameScore.fid });
   
   if (existingPlayer) {
-    // Update player's best score if current score is higher
-    if (gameScore.score > existingPlayer.score) {
-      await db.collection('gameScores').updateOne(
-        { fid: gameScore.fid },
-        {
-          $set: {
-            pfpUrl: gameScore.pfpUrl,
-            username: gameScore.username,
-            score: gameScore.score,
-            level: gameScore.level,
-            duration: gameScore.duration,
-            userAddress: gameScore.userAddress,
-            timestamp: gameScore.timestamp,
-            updatedAt: new Date()
-          }
-        }
-      );
-      console.log(`Updated player ${gameScore.fid} with new best score: ${gameScore.score}, level: ${gameScore.level}`);
+    const newScore = gameScore.score;
+    
+    // Check if this is a new all-time high (score field)
+    const currentAth = existingPlayer.score || 0;
+    const newAth = Math.max(currentAth, newScore);
+    
+    // Check if this is a new current season high
+    const currentSeasonScore = existingPlayer.currentSeasonScore || 0;
+    const newCurrentSeasonScore = Math.max(currentSeasonScore, newScore);
+    
+    // Prepare update fields
+    const updateFields: any = {
+      pfpUrl: gameScore.pfpUrl,
+      username: gameScore.username,
+      timestamp: gameScore.timestamp,
+      updatedAt: new Date()
+    };
+    
+    // Only update currentSeasonScore if it's a new season high
+    if (newScore > currentSeasonScore) {
+      updateFields.currentSeasonScore = newScore;
+    }
+    
+    // Only update score (ATH) if it's a new all-time high
+    if (newScore > currentAth) {
+      updateFields.score = newScore;
+    }
+    
+    // Update level if it's higher than existing
+    if (gameScore.level > (existingPlayer.level || 0)) {
+      updateFields.level = gameScore.level;
+    }
+    
+    // Always update userAddress if provided
+    if (gameScore.userAddress) {
+      updateFields.userAddress = gameScore.userAddress;
+    }
+    
+    // Update duration if provided
+    if (gameScore.duration !== undefined) {
+      updateFields.duration = gameScore.duration;
+    }
+    
+    await db.collection('gameScores').updateOne(
+      { fid: gameScore.fid },
+      { $set: updateFields }
+    );
+    
+    if (newScore > currentAth) {
+      console.log(`Updated player ${gameScore.fid} with new ATH: ${newScore}, level: ${gameScore.level}`);
+    } else if (newScore > currentSeasonScore) {
+      console.log(`Updated player ${gameScore.fid} with new current season score: ${newScore}, level: ${gameScore.level}`);
     } else {
-      // Even if score isn't higher, update level and userAddress if provided
-      const updateFields: any = {
-        pfpUrl: gameScore.pfpUrl,
-        username: gameScore.username,
-        updatedAt: new Date()
-      };
-      
-      // Update level if it's higher than existing
-      if (gameScore.level > existingPlayer.level) {
-        updateFields.level = gameScore.level;
-      }
-      
-      // Always update userAddress if provided
-      if (gameScore.userAddress) {
-        updateFields.userAddress = gameScore.userAddress;
-      }
-      
-      await db.collection('gameScores').updateOne(
-        { fid: gameScore.fid },
-        { $set: updateFields }
-      );
-      console.log(`Updated player ${gameScore.fid} profile info - level: ${gameScore.level}, address: ${gameScore.userAddress}`);
+      console.log(`Updated player ${gameScore.fid} profile info - level: ${gameScore.level}`);
     }
   } else {
-    // Create new player record
-    await db.collection('gameScores').insertOne({
+    // Create new player record with both scores initialized
+    const newPlayerData = {
       ...gameScore,
+      currentSeasonScore: gameScore.score,
       createdAt: new Date()
-    });
+    };
+    
+    await db.collection('gameScores').insertOne(newPlayerData);
     console.log(`Created new player ${gameScore.fid} with score: ${gameScore.score}`);
   }
 }
@@ -265,9 +284,15 @@ export async function getLeaderboard(limit: number = 50): Promise<GameScore[]> {
   const client = await clientPromise;
   const db = client.db('chaincrush');
   
+  const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+  
   const leaderboard = await db.collection('gameScores')
-    .find({})
-    .sort({ score: -1 })
+    .find({ 
+      currentSeasonScore: { $exists: true },
+      hasMintedToday: true,
+      lastMintDate: today
+    })
+    .sort({ currentSeasonScore: -1 })
     .limit(limit)
     .toArray();
   
@@ -280,8 +305,8 @@ export async function getUserBestScore(fid: number): Promise<GameScore | null> {
   
   const bestScore = await db.collection('gameScores')
     .findOne(
-      { fid },
-      { sort: { score: -1 } }
+      { fid, currentSeasonScore: { $exists: true } },
+      { sort: { currentSeasonScore: -1 } }
     );
   
   return bestScore as GameScore | null;
@@ -345,22 +370,28 @@ export async function getMixedLeaderboard(limit: number = 50, offset: number = 0
   const client = await clientPromise;
   const db = client.db('chaincrush');
   
-  // Get ALL players sorted by score (no duplicates since we're getting unique fids)
+  const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+  
+  // Get players with currentSeasonScore who have minted today, sorted by currentSeasonScore
   const allPlayers = await db.collection('gameScores')
-    .find({})
-    .sort({ score: -1 })
+    .find({ 
+      currentSeasonScore: { $exists: true },
+      hasMintedToday: true,
+      lastMintDate: today
+    })
+    .sort({ currentSeasonScore: -1 })
     .toArray();
   
-  // Remove duplicates by fid (keep highest score for each user)
+  // Remove duplicates by fid (keep highest currentSeasonScore for each user)
   const uniquePlayers = new Map();
   allPlayers.forEach(player => {
     const existing = uniquePlayers.get(player.fid);
-    if (!existing || player.score > existing.score) {
+    if (!existing || (player.currentSeasonScore || 0) > (existing.currentSeasonScore || 0)) {
       uniquePlayers.set(player.fid, player);
     }
   });
   
-  const uniquePlayersList = Array.from(uniquePlayers.values()).sort((a, b) => b.score - a.score);
+  const uniquePlayersList = Array.from(uniquePlayers.values()).sort((a, b) => (b.currentSeasonScore || 0) - (a.currentSeasonScore || 0));
   
   // Separate NFT holders and non-NFT holders
   const nftHolders = uniquePlayersList.filter(player => player.hasNft === true && player.nftCount > 0);
@@ -370,8 +401,8 @@ export async function getMixedLeaderboard(limit: number = 50, offset: number = 0
   const top10NftHolders = nftHolders.slice(0, 10);
   const remainingNftHolders = nftHolders.slice(10);
   
-  // Combine remaining players and sort by score
-  const othersPool = [...remainingNftHolders, ...nonNftHolders].sort((a, b) => b.score - a.score);
+  // Combine remaining players and sort by currentSeasonScore
+  const othersPool = [...remainingNftHolders, ...nonNftHolders].sort((a, b) => (b.currentSeasonScore || 0) - (a.currentSeasonScore || 0));
   
   // Final leaderboard: top 10 NFT holders + others
   const finalLeaderboard = [
@@ -389,8 +420,14 @@ export async function getTotalPlayersCount(): Promise<number> {
   const client = await clientPromise;
   const db = client.db('chaincrush');
   
-  // Get unique player count by counting distinct fids
-  const totalPlayers = await db.collection('gameScores').distinct('fid');
+  const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+  
+  // Get unique player count by counting distinct fids who have currentSeasonScore and minted today
+  const totalPlayers = await db.collection('gameScores').distinct('fid', { 
+    currentSeasonScore: { $exists: true },
+    hasMintedToday: true,
+    lastMintDate: today
+  });
   return totalPlayers.length;
 }
 
@@ -462,4 +499,121 @@ export async function getWalletUsageStats(): Promise<Array<{ walletIndex: number
   ]).toArray();
   
   return stats as Array<{ walletIndex: number; usageCount: number; totalAmount: string }>;
+}
+
+// Migration function to update existing data with new scoring fields
+export async function migrateToNewScoringSystem(): Promise<void> {
+  const client = await clientPromise;
+  const db = client.db('chaincrush');
+  
+  console.log('Starting migration to new scoring system...');
+  
+  // Find all documents that don't have currentSeasonScore field
+  const documentsToUpdate = await db.collection('gameScores').find({
+    currentSeasonScore: { $exists: false }
+  }).toArray();
+  
+  console.log(`Found ${documentsToUpdate.length} documents to migrate`);
+  
+  for (const doc of documentsToUpdate) {
+    const legacyScore = doc.score || 0;
+    
+    await db.collection('gameScores').updateOne(
+      { _id: doc._id },
+      {
+        $set: {
+          currentSeasonScore: legacyScore
+        }
+      }
+    );
+  }
+  
+  console.log('Migration completed successfully');
+}
+
+// Get all-time high leaderboard
+export async function getAllTimeHighLeaderboard(limit: number = 50): Promise<GameScore[]> {
+  const client = await clientPromise;
+  const db = client.db('chaincrush');
+  
+  const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+  
+  const leaderboard = await db.collection('gameScores')
+    .find({ 
+      currentSeasonScore: { $exists: true },
+      hasMintedToday: true,
+      lastMintDate: today
+    })
+    .sort({ score: -1 })
+    .limit(limit)
+    .toArray();
+  
+  return leaderboard as unknown as GameScore[];
+}
+
+// Get user's game data by address
+export async function getUserGameDataByAddress(userAddress: string): Promise<GameScore | null> {
+  const client = await clientPromise;
+  const db = client.db('chaincrush');
+  
+  const userData = await db.collection('gameScores')
+    .findOne(
+      { userAddress: userAddress }
+    );
+  
+  return userData as GameScore | null;
+}
+
+// Check if user has minted today
+export async function hasUserMintedToday(userAddress: string): Promise<boolean> {
+  const client = await clientPromise;
+  const db = client.db('chaincrush');
+  
+  const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+  
+  const userData = await db.collection('gameScores')
+    .findOne(
+      { 
+        userAddress: userAddress,
+        hasMintedToday: true,
+        lastMintDate: today
+      }
+    );
+  
+  return !!userData;
+}
+
+// Update user's daily mint status
+export async function updateUserDailyMintStatus(userAddress: string, hasMinted: boolean = true): Promise<void> {
+  const client = await clientPromise;
+  const db = client.db('chaincrush');
+  
+  const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+  
+  await db.collection('gameScores').updateMany(
+    { userAddress: userAddress },
+    {
+      $set: {
+        hasMintedToday: hasMinted,
+        lastMintDate: today,
+        updatedAt: new Date()
+      }
+    }
+  );
+}
+
+// Reset daily mint status for all users (run daily)
+export async function resetDailyMintStatus(): Promise<void> {
+  const client = await clientPromise;
+  const db = client.db('chaincrush');
+  
+  await db.collection('gameScores').updateMany(
+    { hasMintedToday: true },
+    {
+      $set: {
+        hasMintedToday: false,
+        updatedAt: new Date()
+      }
+    }
+  );
 } 

@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
       fid,
       pfpUrl,
       username,
-      score,
+      score, // This will be used as the new currentSeasonScore
       level,
       userAddress,
       duration: duration || 0,

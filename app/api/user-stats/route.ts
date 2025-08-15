@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { getUserDailyMintCount, getUserMintHistory, getTopScores } from "@/lib/database";
+import { getUserDailyMintCount, getUserMintHistory, getTopScores, getUserGameDataByAddress, hasUserMintedToday } from "@/lib/database";
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -24,7 +24,14 @@ export async function GET(request: NextRequest) {
     
     // Get top scores
     const topScores = await getTopScores(10);
-
+    
+    // Get user's game data (current season score and ATH)
+    const userGameData = await getUserGameDataByAddress(userAddress);
+    
+    // Check if user has minted today
+    const hasMintedToday = await hasUserMintedToday(userAddress);
+    
+    console.log(userGameData)
     return Response.json({
       success: true,
       data: {
@@ -32,7 +39,11 @@ export async function GET(request: NextRequest) {
         dailyMintCount,
         mintHistory,
         topScores,
-        dailyMintsRemaining: 5 - dailyMintCount
+        dailyMintsRemaining: 5 - dailyMintCount,
+        currentSeasonScore: userGameData?.currentSeasonScore || null,
+        bestScore: userGameData?.score || null,
+        level: userGameData?.level || null,
+        hasMintedToday: hasMintedToday
       }
     });
   } catch (error) {

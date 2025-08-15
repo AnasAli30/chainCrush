@@ -2,6 +2,32 @@
 
 The template demonstrates all Mini App capabilities and lets you easily modify it, so you can build Mini Apps.
 
+## Scoring System
+
+ChainCrush uses a dual scoring system:
+
+### Current Season Score (`currentSeasonScore`)
+- Updated every time a user plays a game
+- Represents the user's score for the current season
+- Used for leaderboard rankings and rewards
+
+### All-Time High (`score`)
+- Tracks the user's best score ever achieved (stored in the `score` field)
+- Only updated when a user beats their previous best
+- Displayed alongside current season score in the leaderboard
+
+### How it Works
+1. When a user submits a score, it always updates their `currentSeasonScore`
+2. If the new score is higher than their current `score` (ATH), both scores are updated
+3. The leaderboard displays both scores for each player
+4. Rankings are based on `currentSeasonScore` for season rewards
+
+### Migration
+To migrate existing data to the new scoring system, run:
+```bash
+POST /api/migrate-scoring
+```
+
 ## Cloning the Template
 
 You can the following command to clone the Mini App template to your local machine:
