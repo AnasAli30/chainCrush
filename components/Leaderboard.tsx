@@ -422,7 +422,7 @@ export default function Leaderboard() {
             </div>
             <div>
               <div style={{ color: '#ffffff', fontSize: '14px', fontWeight: 600 }}>{poolDisplay}</div>
-              <div style={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '12px' }}>Click PEPE for details</div>
+              <div style={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '12px' }}>Click BOOP for details</div>
             </div>
           </div>
 

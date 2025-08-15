@@ -2,6 +2,8 @@ import { NextRequest } from "next/server";
 import { resetDailyMintStatus } from "@/lib/database";
 
 // Vercel cron job configuration
+// Using 'nodejs' runtime because MongoDB requires Node.js modules (like 'net') 
+// that are not available in the Edge Runtime
 export const runtime = 'nodejs';
 
 // This endpoint will be called automatically by Vercel cron
