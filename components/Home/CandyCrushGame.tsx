@@ -1955,7 +1955,7 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
             console.log('NFT minting recorded successfully');
           } catch (error) {
             console.error('Failed to record NFT minting:', error);
-            console.error('Error details:', error.message || error);
+            console.error('Error details:', error instanceof Error ? error.message : String(error));
           }
         };
         

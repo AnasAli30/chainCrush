@@ -4,7 +4,7 @@ import { incrementUserNftCount, updateUserNftInfo, updateUserDailyMintStatus } f
 export async function POST(request: NextRequest) {
   try {
     const { fid, nftName, userAddress } = await request.json();
-
+console.log(fid, nftName, userAddress)
     if (!fid || !nftName || !userAddress) {
       return NextResponse.json(
         { success: false, error: 'Missing required fields' },
