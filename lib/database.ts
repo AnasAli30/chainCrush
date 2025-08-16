@@ -233,6 +233,10 @@ export async function saveGameScore(gameScore: GameScore): Promise<void> {
     // Only update currentSeasonScore if it's a new season high
     if (newScore > currentSeasonScore) {
       updateFields.currentSeasonScore = newScore;
+      // Only update duration when current season score improves
+      if (gameScore.duration !== undefined) {
+        updateFields.duration = gameScore.duration;
+      }
     }
     
     // Only update score (ATH) if it's a new all-time high
@@ -248,11 +252,6 @@ export async function saveGameScore(gameScore: GameScore): Promise<void> {
     // Always update userAddress if provided
     if (gameScore.userAddress) {
       updateFields.userAddress = gameScore.userAddress;
-    }
-    
-    // Update duration if provided
-    if (gameScore.duration !== undefined) {
-      updateFields.duration = gameScore.duration;
     }
     
     await db.collection('gameScores').updateOne(
