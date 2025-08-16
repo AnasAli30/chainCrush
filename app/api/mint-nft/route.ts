@@ -25,13 +25,7 @@ export async function POST(request: NextRequest) {
     const canMint = await canUserMint(userAddress, DAILY_MINT_LIMIT);
    
 
-    // Validate score (optional - you can add more validation)
-    if (score < 0 || score > 1000000) {
-      return Response.json(
-        { success: false, error: "Invalid score value" },
-        { status: 400 }
-      );
-    }
+    
 
     // Create signature for NFT minting
     const timestamp = Math.floor(Date.now() / 1000);
