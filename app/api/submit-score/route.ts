@@ -5,7 +5,7 @@ export async function POST(request: NextRequest) {
   try {
     const { fid, pfpUrl, username, score, level, duration, userAddress, faucetClaimed } = await request.json();
 
-    console.log(username)
+    console.log(fid, pfpUrl, username, score, level, duration, userAddress, faucetClaimed)
     if (!fid || !pfpUrl || score === undefined || level === undefined) {
       return Response.json(
         { success: false, error: "Missing required fields: fid, pfpUrl, score, level" },
@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate score and level
-    if (score < 0 || score > 1000000) {
+    if (score < 0 ) {
       return Response.json(
         { success: false, error: "Invalid score value" },
         { status: 400 }
