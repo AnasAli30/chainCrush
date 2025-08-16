@@ -14,19 +14,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate score and level
-    if (score < 0 ) {
-      return Response.json(
-        { success: false, error: "Invalid score value" },
-        { status: 400 }
-      );
-    }
-
-    if (level < 1) {
-      return Response.json(
-        { success: false, error: "Invalid level value" },
-        { status: 400 }
-      );
-    }
+   
 
     // Save the game score
     await saveGameScore({
