@@ -5,7 +5,8 @@ export async function POST(request: NextRequest) {
   try {
     const { fid, pfpUrl, username, score, level, duration, userAddress, faucetClaimed } = await request.json();
 
-    console.log(fid, pfpUrl, username, score, level, duration, userAddress, faucetClaimed)
+    console.log(
+      "fid", fid, "pfpUrl", pfpUrl, "username", username, "score", score, "level", level, "duration", duration, "userAddress", userAddress, "faucetClaimed", faucetClaimed)
     if (!fid || !pfpUrl || score === undefined || level === undefined) {
       return Response.json(
         { success: false, error: "Missing required fields: fid, pfpUrl, score, level" },
