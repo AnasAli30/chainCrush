@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (level < 1 || level > 100) {
+    if (level < 1) {
       return Response.json(
         { success: false, error: "Invalid level value" },
         { status: 400 }
