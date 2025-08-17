@@ -12,14 +12,14 @@ export const metadata: Metadata = {
   description: 'A fun Game on arbitrum',
   icons: {
     icon: [
-      { url: '/images/icon.png', sizes: '32x32', type: 'image/png' },
-      { url: '/images/icon.png', sizes: '16x16', type: 'image/png' },
+      { url: '/images/icon.jpg', sizes: '32x32', type: 'image/png' },
+      { url: '/images/icon.jpg', sizes: '16x16', type: 'image/png' },
     ],
-    shortcut: '/images/icon.png',
-    apple: '/images/icon.png',
+    shortcut: '/images/icon.jpg',
+    apple: '/images/icon.jpg',
   },
   other: {
-    'msapplication-TileImage': '/images/icon.png',
+    'msapplication-TileImage': '/images/icon.jpg',
   },
 }
 

@@ -246,7 +246,7 @@ export function Demo() {
                 transition={{ type: "spring", stiffness: 300 }}
               >
                 <img 
-                  src="/images/icon.png" 
+                  src="/images/icon.jpg" 
                   alt="ChainCrush" 
                   className="w-20 h-20 rounded-2xl shadow-2xl border-4 border-white/20"
                 />

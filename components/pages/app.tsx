@@ -20,7 +20,7 @@ export default function Home() {
             {/* Centered icon with scaling animation */}
             <div className="w-32 h-32 flex items-center justify-center">
               <img 
-                src="/images/icon.png" 
+                src="/images/icon.jpg" 
                 alt="Chain Crush" 
                 className="w-24 h-24 rounded-[20px] animate-[iconScale_2s_ease-in-out_infinite]"
               />

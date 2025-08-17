@@ -113,14 +113,14 @@ const appUrl = env.NEXT_PUBLIC_URL;
 
 const frame = {
   version: "next",
-  imageUrl: `${appUrl}/images/feed.png`, // Embed image URL (3:2 image ratio)
+  imageUrl: `${appUrl}/images/feed.jpg`, // Embed image URL (3:2 image ratio)
   button: {
     title: "Template", // Text on the embed button
     action: {
       type: "launch_frame",
       name: "Chain Crush",
       url: appUrl, // URL that is opened when the embed button is tapped or clicked.
-      splashImageUrl: `${appUrl}/images/splash.png`,
+      splashImageUrl: `${appUrl}/images/splash.jpg`,
       splashBackgroundColor: "#f7f7f7",
     },
   },
@@ -152,14 +152,14 @@ const appUrl = env.NEXT_PUBLIC_URL;
 
 const frame = {
   version: "next",
-  imageUrl: `${appUrl}/images/feed.png`,
+  imageUrl: `${appUrl}/images/feed.jpg`,
   button: {
     title: "Launch Template",
     action: {
       type: "launch_frame",
       name: "Chain Crush",
       url: appUrl,
-      splashImageUrl: `${appUrl}/images/splash.png`, // App icon in the splash screen (200px * 200px)
+      splashImageUrl: `${appUrl}/images/splash.jpg`, // App icon in the splash screen (200px * 200px)
       splashBackgroundColor: "#f7f7f7", // Splash screen background color
     },
   },
@@ -294,14 +294,14 @@ const farcasterConfig = {
     frame: {
         version: "1",
         name: "Chain Crush",
-        iconUrl: `${appUrl}/images/icon.png`, // Icon of the app in the app store
+        iconUrl: `${appUrl}/images/icon.jpg`, // Icon of the app in the app store
         homeUrl: `${appUrl}`, // Default launch URL
-        imageUrl: `${appUrl}/images/feed.png`, // Default image to show if shared in a feed.
+        imageUrl: `${appUrl}/images/feed.jpg`, // Default image to show if shared in a feed.
         screenshotUrls: [], // Visual previews of the app
         tags: ["monad", "farcaster", "miniapp", "template"], // Descriptive tags for search
         primaryCategory: "developer-tools",
         buttonTitle: "Launch Template",
-        splashImageUrl: `${appUrl}/images/splash.png`, // URL of image to show on loading screen.	
+        splashImageUrl: `${appUrl}/images/splash.jpg`, // URL of image to show on loading screen.	
         splashBackgroundColor: "#ffffff", // Hex color code to use on loading screen.
     }
 };
