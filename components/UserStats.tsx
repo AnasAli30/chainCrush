@@ -784,50 +784,7 @@ export default function UserStats() {
         )}
       </motion.div>
 
-      {/* Top Scores */}
-      <motion.div 
-        className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.5, duration: 0.6 }}
-      >
-        <div className="flex items-center space-x-3 mb-4">
-          <FontAwesomeIcon icon={faTrophy} className="text-[#19adff] text-xl" />
-          <h3 className="text-xl font-bold text-gray-800">Personal Best Scores</h3>
-        </div>
-        <div className="space-y-3">
-          {stats.topScores.map((score, index) => (
-            <motion.div 
-              key={index} 
-              className="flex justify-between items-center p-4 bg-gradient-to-r from-[#19adff] to-[#28374d] rounded-xl border border-[#19adff]"
-              whileHover={{ scale: 1.02 }}
-              transition={{ type: "spring", stiffness: 300 }}
-            >
-              <div className="flex items-center space-x-3">
-                <div className="flex items-center justify-center w-8 h-8 bg-white text-[#19adff] font-bold text-sm rounded-full">
-                  {index + 1}
-                </div>
-                <div>
-                  <p className="font-bold text-white">
-                    {score.userAddress === address ? 'You' : `${score.userAddress.slice(0, 6)}...${score.userAddress.slice(-4)}`}
-                  </p>
-                  <p className="text-sm text-white opacity-80">
-                    {new Date(score.timestamp * 1000).toLocaleDateString('en-US', {
-                      year: 'numeric',
-                      month: 'short',
-                      day: 'numeric'
-                    })}
-                  </p>
-                </div>
-              </div>
-              <div className="text-right">
-                <p className="text-2xl font-bold text-white">{(score.score || 0).toLocaleString()}</p>
-                <p className="text-xs text-white opacity-80">points</p>
-              </div>
-            </motion.div>
-          ))}
-        </div>
-      </motion.div>
+      
     </div>
   );
 } 
