@@ -339,7 +339,7 @@ export function Demo() {
             <StatsCard 
               icon={faUsers} 
               title="Active Players" 
-              value="1.6K" 
+              value="2.5K" 
               trend="+23%" 
               color="from-cyan-400 via-blue-500 to-purple-600"
             />
@@ -353,7 +353,7 @@ export function Demo() {
             <StatsCard 
               icon={faFire} 
               title="Games Today" 
-              value="1.1K" 
+              value="4.5K" 
               trend="+12%" 
               color="from-pink-500 via-purple-500 to-cyan-400"
             />
