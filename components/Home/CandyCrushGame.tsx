@@ -2580,130 +2580,112 @@ Come for my spot or stay mid 😏🏆${improvementText}`;
                     )
                 }
                 
-                {/* Mint Status Popup */}
-                {showMintPopup && mintStatus !== 'idle' && (
+                {/* Placeholder for removed popup */}
                   <div
                     style={{
                       position: 'fixed',
-                      inset: 0,
-                      background: 'rgba(0,0,0,0.6)',
-                      border:"10px",
-                      padding:"20px 30px",
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      // background: 'linear-gradient(135deg, rgba(0,0,0,0.95), rgba(20,20,40,0.98))',
+                      backdropFilter: 'blur(20px)',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      zIndex: 3000,
+                      zIndex: 9999,
+                      animation: 'fadeIn 0.3s ease-out'
                     }}
                     onClick={() => setShowMintPopup(false)}
                   >
-                    <div
+                    {/* Animated background elements */}
+                    <div style={{
+                      position: 'absolute',
+                      top: '10%',
+                      left: '10%',
+                      width: '100px',
+                      height: '100px',
+                      background: 'radial-gradient(circle, rgba(255,215,0,0.3) 0%, transparent 70%)',
+                      borderRadius: '50%',
+                      animation: 'float 6s ease-in-out infinite',
+                      zIndex: 1
+                    }} />
+                    <div style={{
+                      position: 'absolute',
+                      bottom: '20%',
+                      right: '15%',
+                      width: '80px',
+                      height: '80px',
+                      background: 'radial-gradient(circle, rgba(138,43,226,0.3) 0%, transparent 70%)',
+                      borderRadius: '50%',
+                      animation: 'float 8s ease-in-out infinite reverse',
+                      zIndex: 1
+                    }} />
+                    
+                    {/* <div
                       onClick={(e) => e.stopPropagation()}
                       style={{
                         position: 'relative',
-                        width: 'min(92vw, 420px)',
-                        borderRadius: '16px',
-                        padding: '20px',
-                        border: '1px solid rgba(255,255,255,0.15)',
-                        backdropFilter: 'blur(14px)',
-                        background:
-                          mintStatus === 'minting'
-                            ? 'linear-gradient(135deg, rgba(253, 224, 71, 0.15), rgba(250, 204, 21, 0.08))'
-                            : mintStatus === 'success'
-                            ? 'linear-gradient(135deg, rgba(34, 197, 94, 0.15), rgba(16, 185, 129, 0.08))'
-                            : 'linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(248, 113, 113, 0.08))',
-                        boxShadow: '0 20px 60px rgba(0,0,0,0.35)'
+                        width: 'min(95vw, 480px)',
+                        maxHeight: '90vh',
+                        borderRadius: '24px',
+                        padding: '32px',
+                        border: '2px solid rgba(255,255,255,0.1)',
+                        backdropFilter: 'blur(20px)',
+                        background: mintStatus === 'minting'
+                          ? 'linear-gradient(135deg, rgba(255,215,0,0.15), rgba(255,165,0,0.1))'
+                          : mintStatus === 'success'
+                          ? 'linear-gradient(135deg, rgba(34,197,94,0.15), rgba(16,185,129,0.1))'
+                          : 'linear-gradient(135deg, rgba(239,68,68,0.15), rgba(248,113,113,0.1))',
+                        boxShadow: '0 25px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.1)',
+                        animation: 'slideInScale 0.4s ease-out',
+                        zIndex: 2
                       }}
-                    >
-                      {/* Close (X) */}
-                      <button
+                    > */}
+                      {/* Close Button */}
+                      {/* <button
                         onClick={() => setShowMintPopup(false)}
                         aria-label="Close"
                         style={{
                           position: 'absolute',
-                          top: 12,
-                          right: 12,
+                          top: 16,
+                          right: 16,
                           background: 'rgba(255,255,255,0.1)',
                           border: '1px solid rgba(255,255,255,0.2)',
                           color: '#fff',
-                          borderRadius: 8,
-                          width: 32,
-                          height: 32,
+                          borderRadius: '12px',
+                          width: 36,
+                          height: 36,
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          cursor: 'pointer'
+                          cursor: 'pointer',
+                          fontSize: '16px',
+                          fontWeight: 'bold',
+                          transition: 'all 0.2s ease',
+                          zIndex: 3
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = 'rgba(255,255,255,0.2)';
+                          e.currentTarget.style.transform = 'scale(1.1)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = 'rgba(255,255,255,0.1)';
+                          e.currentTarget.style.transform = 'scale(1)';
                         }}
                       >
                         ✕
-                      </button>
+                      </button> */}
 
                       {/* Content */}
-                      {mintStatus === 'minting' && (
-                        <div style={{ display: 'flex', alignItems: 'center' }}>
-                          <div
-                            style={{
-                              marginRight: 12,
-                              fontSize: 20,
-                      animation: 'spin 1s linear infinite'
-                            }}
-                          >
-                            ⏳
-                          </div>
-                          <div>
-                            <div style={{ fontWeight: 'bold', fontSize: 18 }}>Minting Your NFT...</div>
-                            <div style={{ fontSize: 13, opacity: 0.8 }}>Please wait while we confirm the transaction.</div>
-                          </div>
-                  </div>
-                )}
+                      
+                      
+                  
                 
-                {mintStatus === 'success' && (
-                        <div>
-                          <div style={{ fontWeight: 'bold', fontSize: 18, color: '#4ade80', marginBottom: 12 }}>NFT Minted Successfully!</div>
-                          <div style={{ fontSize: 14, opacity: 0.85, marginBottom: 16 }}>Your ChainCrush NFT has been added to your wallet.</div>
-                          
-                          {/* Share Button */}
-                          <button
-                            onClick={handleShareNFT}
-                            style={{
-                              width: '100%',
-                              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                              color: '#fff',
-                              border: 'none',
-                    borderRadius: '12px',
-                              padding: '12px 20px',
-                              fontSize: '16px',
-                              fontWeight: 'bold',
-                              cursor: 'pointer',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              gap: '8px',
-                              transition: 'all 0.3s ease'
-                            }}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.transform = 'scale(1.02)';
-                              e.currentTarget.style.boxShadow = '0 8px 25px rgba(102, 126, 234, 0.4)';
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.transform = 'scale(1)';
-                              e.currentTarget.style.boxShadow = 'none';
-                            }}
-                          >
-                            🚀 Share Your Achievement
-                          </button>
+              
+                    {/* </div> */}
                   </div>
-                )}
-                
-                {mintStatus === 'error' && (
-                        <div>
-                          <div style={{ fontSize: 28, marginBottom: 8 }}>❌</div>
-                          <div style={{ fontWeight: 'bold', fontSize: 18 }}>Minting Failed</div>
-                          <div style={{ fontSize: 12, marginTop: 8, opacity: 0.8 }}>Something went wrong</div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
+                {/* )} */}
               </div>
             )}
             
@@ -2840,6 +2822,62 @@ Come for my spot or stay mid 😏🏆${improvementText}`;
           100% {
             opacity: 1;
             transform: scale(1);
+          }
+        }
+        
+        @keyframes fadeIn {
+          0% {
+            opacity: 0;
+          }
+          100% {
+            opacity: 1;
+          }
+        }
+        
+        @keyframes slideInScale {
+          0% {
+            opacity: 0;
+            transform: scale(0.8) translateY(20px);
+          }
+          100% {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+          }
+        }
+        
+        @keyframes bounce {
+          0%, 80%, 100% {
+            transform: scale(0);
+          }
+          40% {
+            transform: scale(1);
+          }
+        }
+        
+        @keyframes successPulse {
+          0% {
+            transform: scale(0.5);
+            opacity: 0;
+          }
+          50% {
+            transform: scale(1.2);
+            opacity: 1;
+          }
+          100% {
+            transform: scale(1);
+            opacity: 1;
+          }
+        }
+        
+        @keyframes shake {
+          0%, 100% {
+            transform: translateX(0);
+          }
+          10%, 30%, 50%, 70%, 90% {
+            transform: translateX(-5px);
+          }
+          20%, 40%, 60%, 80% {
+            transform: translateX(5px);
           }
         }
       `}</style>
@@ -3189,6 +3227,353 @@ Come for my spot or stay mid 😏🏆${improvementText}`;
           }
         `
       }} />
+      {/* Full Screen Mint Status Popup */}
+      {showMintPopup && mintStatus !== 'idle' && (
+        <div
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'linear-gradient(135deg, rgba(0,0,0,0.95), rgba(20,20,40,0.5))',
+          backdropFilter: 'blur(12px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999,
+          animation: 'fadeIn 0.3s ease-out'
+        }}
+        onClick={() => setShowMintPopup(false)}
+      >
+        {/* Animated background elements */}
+        <div style={{
+          position: 'absolute',
+          top: '10%',
+          left: '10%',
+          width: '100px',
+          height: '100px',
+          background: 'radial-gradient(circle, rgba(255,215,0,0.3) 0%, transparent 70%)',
+          borderRadius: '50%',
+          animation: 'float 6s ease-in-out infinite',
+          zIndex: 1
+        }} />
+        <div style={{
+          position: 'absolute',
+          bottom: '20%',
+          right: '15%',
+          width: '80px',
+          height: '80px',
+          background: 'radial-gradient(circle, rgba(138,43,226,0.3) 0%, transparent 70%)',
+          borderRadius: '50%',
+          animation: 'float 8s ease-in-out infinite reverse',
+          zIndex: 1
+        }} />
+        
+        <div
+          onClick={(e) => e.stopPropagation()}
+          style={{
+            position: 'relative',
+            width: 'min(95vw, 480px)',
+            maxHeight: '90vh',
+            borderRadius: '24px',
+            padding: '32px',
+            border: '2px solid rgba(255,255,255,0.1)',
+            backdropFilter: 'blur(20px)',
+            background: mintStatus === 'minting'
+              ? 'linear-gradient(135deg, rgba(255,215,0,0.15), rgba(255,165,0,0.1))'
+              : mintStatus === 'success'
+              ? 'linear-gradient(135deg, rgba(34,197,94,0.15), rgba(16,185,129,0.1))'
+              : 'linear-gradient(135deg, rgba(239,68,68,0.15), rgba(248,113,113,0.1))',
+            boxShadow: '0 25px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.1)',
+            animation: 'slideInScale 0.4s ease-out',
+            zIndex: 2
+          }}
+        >
+          {/* Close Button */}
+          <button
+            onClick={() => setShowMintPopup(false)}
+            aria-label="Close"
+            style={{
+              position: 'absolute',
+              top: 16,
+              right: 16,
+              background: 'rgba(255,255,255,0.1)',
+              border: '1px solid rgba(255,255,255,0.2)',
+              color: '#fff',
+              borderRadius: '12px',
+              width: 36,
+              height: 36,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              fontSize: '16px',
+              fontWeight: 'bold',
+              transition: 'all 0.2s ease',
+              zIndex: 3
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'rgba(255,255,255,0.2)';
+              e.currentTarget.style.transform = 'scale(1.1)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'rgba(255,255,255,0.1)';
+              e.currentTarget.style.transform = 'scale(1)';
+            }}
+          >
+            ✕
+          </button>
+
+          {/* Content */}
+          {mintStatus === 'minting' && (
+            <div style={{ textAlign: 'center' }}>
+              {/* Animated NFT Icon */}
+              <div style={{
+                width: '80px',
+                height: '80px',
+                margin: '0 auto 24px',
+                background: 'linear-gradient(135deg, #ffd700, #ffa500)',
+                borderRadius: '20px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '40px',
+                animation: 'pulse 2s ease-in-out infinite',
+                boxShadow: '0 10px 30px rgba(255,215,0,0.3)'
+              }}>
+                🎴
+              </div>
+              
+              <h2 style={{
+                fontSize: '28px',
+                fontWeight: 'bold',
+                color: '#fff',
+                marginBottom: '12px',
+                background: 'linear-gradient(135deg, #ffd700, #ffa500)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent'
+              }}>
+                Minting Your NFT...
+              </h2>
+              
+              <p style={{
+                fontSize: '16px',
+                color: 'rgba(255,255,255,0.8)',
+                marginBottom: '24px',
+                lineHeight: '1.5'
+              }}>
+                Please wait while we confirm your transaction on the blockchain.
+              </p>
+              
+              {/* Loading Animation */}
+              <div style={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                gap: '8px',
+                marginBottom: '20px'
+              }}>
+                <div style={{
+                  width: '12px',
+                  height: '12px',
+                  borderRadius: '50%',
+                  background: '#ffd700',
+                  animation: 'bounce 1.4s ease-in-out infinite both'
+                }} />
+                <div style={{
+                  width: '12px',
+                  height: '12px',
+                  borderRadius: '50%',
+                  background: '#ffa500',
+                  animation: 'bounce 1.4s ease-in-out infinite both 0.2s'
+                }} />
+                <div style={{
+                  width: '12px',
+                  height: '12px',
+                  borderRadius: '50%',
+                  background: '#ff8c00',
+                  animation: 'bounce 1.4s ease-in-out infinite both 0.4s'
+                }} />
+              </div>
+              
+              <div style={{
+                fontSize: '14px',
+                color: 'rgba(255,255,255,0.6)',
+                fontStyle: 'italic'
+              }}>
+                This may take a few moments...
+              </div>
+            </div>
+          )}
+          
+          {mintStatus === 'success' && (
+            <div style={{ textAlign: 'center' }}>
+              {/* Success Animation */}
+              <div style={{
+                width: '100px',
+                height: '100px',
+                margin: '0 auto 24px',
+                background: 'linear-gradient(135deg, #22c55e, #10b981)',
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '50px',
+                animation: 'successPulse 0.6s ease-out',
+                boxShadow: '0 15px 40px rgba(34,197,94,0.4)'
+              }}>
+                ✅
+              </div>
+              
+              <h2 style={{
+                fontSize: '32px',
+                fontWeight: 'bold',
+                color: '#22c55e',
+                marginBottom: '16px',
+                textShadow: '0 2px 4px rgba(0,0,0,0.3)'
+              }}>
+                NFT Minted Successfully!
+              </h2>
+              
+              <p style={{
+                fontSize: '18px',
+                color: 'rgba(255,255,255,0.9)',
+                marginBottom: '32px',
+                lineHeight: '1.6'
+              }}>
+                Your ChainCrush NFT has been added to your wallet. 
+                <br />
+                <span style={{ fontSize: '16px', color: 'rgba(255,255,255,0.7)' }}>
+                  Score: {score} | Level: {level}
+                </span>
+              </p>
+              
+              {/* Share Button */}
+              <button
+                onClick={handleShareNFT}
+                style={{
+                  width: '100%',
+                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '16px',
+                  padding: '16px 24px',
+                  fontSize: '18px',
+                  fontWeight: 'bold',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '12px',
+                  transition: 'all 0.3s ease',
+                  boxShadow: '0 8px 25px rgba(102, 126, 234, 0.3)',
+                  marginBottom: '16px'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                  e.currentTarget.style.boxShadow = '0 12px 35px rgba(102, 126, 234, 0.5)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = '0 8px 25px rgba(102, 126, 234, 0.3)';
+                }}
+              >
+                🚀 Share Your Achievement
+              </button>
+              
+              <button
+                onClick={() => setShowMintPopup(false)}
+                style={{
+                  width: '100%',
+                  background: 'rgba(255,255,255,0.1)',
+                  color: '#fff',
+                  border: '1px solid rgba(255,255,255,0.2)',
+                  borderRadius: '16px',
+                  padding: '14px 24px',
+                  fontSize: '16px',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'rgba(255,255,255,0.2)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'rgba(255,255,255,0.1)';
+                }}
+              >
+                Continue
+              </button>
+            </div>
+          )}
+          
+          {mintStatus === 'error' && (
+            <div style={{ textAlign: 'center' }}>
+              {/* Error Icon */}
+              <div style={{
+                width: '80px',
+                height: '80px',
+                margin: '0 auto 24px',
+                background: 'linear-gradient(135deg, #ef4444, #f87171)',
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '40px',
+                animation: 'shake 0.5s ease-in-out',
+                boxShadow: '0 10px 30px rgba(239,68,68,0.3)'
+              }}>
+                ❌
+              </div>
+              
+              <h2 style={{
+                fontSize: '28px',
+                fontWeight: 'bold',
+                color: '#ef4444',
+                marginBottom: '16px'
+              }}>
+                Minting Failed
+              </h2>
+              
+              <p style={{
+                fontSize: '16px',
+                color: 'rgba(255,255,255,0.8)',
+                marginBottom: '24px',
+                lineHeight: '1.5'
+              }}>
+                Something went wrong during the minting process. 
+                Please try again or check your wallet connection.
+              </p>
+              
+              <button
+                onClick={() => setShowMintPopup(false)}
+                style={{
+                  width: '100%',
+                  background: 'linear-gradient(135deg, #ef4444, #f87171)',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '16px',
+                  padding: '14px 24px',
+                  fontSize: '16px',
+                  fontWeight: 'bold',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                }}
+              >
+                Try Again
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+      )}
     </div>
   );
 } 

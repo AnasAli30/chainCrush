@@ -255,7 +255,7 @@ export default function Leaderboard() {
     : '';
     
     await actions?.composeCast({
-      text: `🥇 Just locked in Rank #${userRank} on ChainCrush  😎\n\n🎯 Current Season: ${(userInfo.currentSeasonScore || userInfo.score || 0).toLocaleString()}\n🏆 All-Time High: ${(userInfo.score || 0).toLocaleString()}\n⚡ Level: ${userInfo.level || 0}\n⏱️ Time: ${formatDuration(userInfo.duration)}${rewardText}\n\nThink you can smoke me? Pull up and prove it 🕹️🔥`,
+      text: `🥇 Just locked in Rank #${userRank} on ChainCrush  😎\n\n🎯 Current Season: ${(userInfo.currentSeasonScore || userInfo.score || 0).toLocaleString()}\n🏆 All-Time High: ${(userInfo.score || 0).toLocaleString()}\n⚡ Level: ${userInfo.level || 0}${userInfo.duration && ((userRank <= 10 && userInfo.duration >= 3000) || (userRank > 10 && userInfo.duration >= 60)) ? `\n⏱️ Time: ${formatDuration(userInfo.duration)}` : ''}${rewardText}\n\nThink you can smoke me? Pull up and prove it 🕹️🔥`,
       embeds: [APP_URL || ""]
     });
     
@@ -500,7 +500,7 @@ export default function Leaderboard() {
                  <p className="text-lg font-bold text-[#19adff]">{(userInfo.currentSeasonScore || userInfo.score || 0).toLocaleString()}</p>
                  <p className="text-xs text-gray-600">Level {userInfo.level}</p>
              
-              {userInfo.duration && userInfo.duration != 0 &&   <p className="text-xs text-gray-500">⏱️ {formatDuration(userInfo.duration)}</p>}
+              {userInfo.duration && ((userRank <= 10 && userInfo.duration >= 3000) || (userRank > 10 && userInfo.duration >= 60)) &&   <p className="text-xs text-gray-500">⏱️ {formatDuration(userInfo.duration)}</p>}
                </div>
              </div>
              
@@ -631,7 +631,7 @@ export default function Leaderboard() {
                   </p>
                
 
-                  {entry.duration&& entry.duration!=0? <p className={`text-xs ${rankColors.text} opacity-90`}>
+                  {entry.duration && ((index < 10 && entry.duration >= 3000) || (index >= 10 && entry.duration >= 60)) ? <p className={`text-xs ${rankColors.text} opacity-90`}>
                         ⏱️ {formatDuration(entry?.duration)}
                       </p>:""}
                 </div>
