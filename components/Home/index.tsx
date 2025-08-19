@@ -343,10 +343,10 @@ export function Demo() {
               trend="+23%" 
               color="from-cyan-400 via-blue-500 to-purple-600"
             />
-            <StatsCard 
+                          <StatsCard 
               icon={faCoins} 
               title="Rewards Pool" 
-              value="1.6M BOOP" 
+              value="100 ARB" 
               trend="LIVE" 
               color="from-purple-500 via-cyan-400 to-green-400"
             />
@@ -464,8 +464,8 @@ export function Demo() {
               <p style={{ fontSize: '16px', opacity: 0.9, marginBottom: '5px', lineHeight: '1.5' }}>
                 Get ready for the sweetest rewards! Play daily 
               </p>
-              <img src="/candy/1.png" alt="" style={{width:"50px",height:"50px"}} />
-              <p style={{fontSize:"16px",opacity:0.9,marginBottom:"5px",lineHeight:"1.5"}}> compete for $BOOP coins.</p>
+              <img src="/candy/arb.png" alt="ARB" style={{width:"50px",height:"50px"}} />
+              <p style={{fontSize:"16px",opacity:0.9,marginBottom:"5px",lineHeight:"1.5"}}> compete for $ARB tokens.</p>
               {/* Reward Info */}
               <div style={{ 
                 background: 'rgba(255,255,255,0.1)', 
@@ -479,23 +479,23 @@ export function Demo() {
                   <div style={{ textAlign: 'left', fontSize: '13px', lineHeight: '1.4' }}>
                   <div style={{ marginBottom: '6px' ,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
                     <strong>🥇 1st Place (20%)</strong>
-                    <span style={{ opacity: 0.9 }}>310,360 $BOOP</span>
+                    <span style={{ opacity: 0.9 }}>20 $ARB</span>
                   </div>
                   <div style={{ marginBottom: '6px' ,display:"flex",alignItems:"center",justifyContent:"space-between"}}>                    <strong>🥈 2nd Place (18%)</strong>
-                    <span style={{ opacity: 0.9 }}>279,324 $BOOP</span>
+                    <span style={{ opacity: 0.9 }}>18 $ARB</span>
                   </div>
                   <div style={{ marginBottom: '6px' ,display:"flex",alignItems:"center",justifyContent:"space-between"}}>                    <strong>🥉 3rd Place (15%)</strong>
-                    <span style={{ opacity: 0.9 }}>232,770 $BOOP</span>
+                    <span style={{ opacity: 0.9 }}>15 $ARB</span>
                   </div>
                   <div style={{ marginBottom: '6px' ,display:"flex",alignItems:"center",justifyContent:"space-between"}}>                    <strong>4th–6th Place</strong>
-                    <span style={{ opacity: 0.9 }}>139,662 $BOOP each</span>
+                    <span style={{ opacity: 0.9 }}>9 $ARB each</span>
                   </div>
                   <div style={{ marginBottom: '6px' ,display:"flex",alignItems:"center",justifyContent:"space-between"}}>                    <strong>7th–8th Place</strong>
-                    <span style={{ opacity: 0.9 }}>93,108 $BOOP each</span>
+                    <span style={{ opacity: 0.9 }}>6 $ARB each</span>
                   </div>
                   <div style={{ marginBottom: '6px' ,display:"flex",alignItems:"center",justifyContent:"space-between"}}>                   
                     <strong>9th–10th Place</strong>
-                    <span style={{ opacity: 0.9 }}>62,072 $BOOP each</span>
+                    <span style={{ opacity: 0.9 }}>4 $ARB each</span>
                   </div>
                 </div>
               </div>
