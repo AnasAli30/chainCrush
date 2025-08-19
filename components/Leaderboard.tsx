@@ -39,15 +39,13 @@ export default function Leaderboard() {
   const [timerLoading, setTimerLoading] = useState<boolean>(false);
   const [timer, setTimer] = useState<number | null>(null); // Unix seconds
 
-  // Reward pool (ARB)
-  const POOL_ARB = 100; // raw pool amount
-  const formatNumber = (n: number) => n >= 1000000 
-    ? `${(n / 1_000_000).toFixed(2)}M` 
-    : n.toString();
-  const poolDisplay = `${formatNumber(POOL_ARB)} $ARB Pool`;
+  // Reward pool (BOOP)
+  const POOL_BOOP = 1551800; // raw pool amount
+  const formatMillions = (n: number) => `${(n / 1_000_000).toFixed(2)}M`;
+  const poolDisplay = `${formatMillions(POOL_BOOP)} $BOOP Pool`;
   // Top 10 distribution: 1st, 2nd, 3rd distinct; 4–6 equal; 7–8 equal; 9–10 equal (sums to 100)
   const DISTRIBUTION = [20, 18, 15, 9, 9, 9, 6, 6, 4, 4];
-  const distributionAmounts = DISTRIBUTION.map((pct) => Math.round((POOL_ARB * pct) / 100));
+  const distributionAmounts = DISTRIBUTION.map((pct) => Math.round((POOL_BOOP * pct) / 100));
   const firstAmt = distributionAmounts[0];
   const secondAmt = distributionAmounts[1];
   const thirdAmt = distributionAmounts[2];
@@ -253,7 +251,7 @@ export default function Leaderboard() {
     try {
           const isRewardEligible = userRank <= 10 && userInfo.nftCount && userInfo.nftCount > 0;
     const rewardText = isRewardEligible
-    ? `\n💰 Loot Secured: ${formatReward(getRewardAmount(userRank - 1))} $ARB`
+    ? `\n💰 Loot Secured: ${formatReward(getRewardAmount(userRank - 1))} $BOOP`
     : '';
     
     await actions?.composeCast({
@@ -414,6 +412,7 @@ export default function Leaderboard() {
           <div className="flex items-center" style={{ gap: '12px' }}>
             <div
               style={{
+                background: 'linear-gradient(135deg, #ffd700, #ffed4e)',
                 borderRadius: '50%',
                 width: '40px',
                 height: '40px',
@@ -423,18 +422,18 @@ export default function Leaderboard() {
                 justifyContent: 'center',
                 cursor: 'pointer',
                 transition: 'all 0.3s ease',
-                boxShadow: '0 4px 12px rgba(0, 120, 209, 0.3)'
+                boxShadow: '0 4px 12px rgba(255, 215, 0, 0.3)'
               }}
               onClick={() => setShowRewardInfo(true)}
               onMouseOver={(e) => (e.currentTarget.style.transform = 'scale(1.1)')}
               onMouseOut={(e) => (e.currentTarget.style.transform = 'scale(1)')}
               aria-label="Reward info"
             >
-              <img src="/candy/arb.png" alt="ARB rewards" />
+              <img src="/candy/1.png" alt="rewards"  />
             </div>
             <div>
               <div style={{ color: '#ffffff', fontSize: '14px', fontWeight: 600 }}>{poolDisplay}</div>
-              <div style={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '12px' }}>Click ARB for details</div>
+              <div style={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '12px' }}>Click BOOP for details</div>
             </div>
           </div>
 
@@ -506,13 +505,13 @@ export default function Leaderboard() {
              </div>
              
              {/* Reward Info */}
-                           {userRank <= 10 && userInfo.nftCount && userInfo.nftCount > 0 && (
-                <div className="mt-2 px-2 py-1 bg-gradient-to-r from-green-50 to-emerald-50 rounded-md border border-green-200">
-                  <p className="text-xs font-bold text-green-700 flex items-center">
-                    💰 Reward: {formatReward(getRewardAmount(userRank - 1))} $ARB
-                  </p>
-                </div>
-              )}
+             {userRank <= 10 && userInfo.nftCount && userInfo.nftCount > 0 && (
+               <div className="mt-2 px-2 py-1 bg-gradient-to-r from-green-50 to-emerald-50 rounded-md border border-green-200">
+                 <p className="text-xs font-bold text-green-700 flex items-center">
+                   💰 Reward: {formatReward(getRewardAmount(userRank - 1))} $BOOP
+                 </p>
+               </div>
+             )}
            </div>
          </div>
        </div>
@@ -618,7 +617,7 @@ export default function Leaderboard() {
                     {/* Reward Amount for Top 10 NFT Holders */}
                     {index < 10 && entry.nftCount && entry.nftCount > 0 && (
                       <p className={`text-xs ${index < 3 ? 'text-green-800' : 'text-green-300'} font-bold`}>
-                        💰 {formatReward(getRewardAmount(index))} $ARB
+                        💰 {formatReward(getRewardAmount(index))} $BOOP
                       </p>
                     )}
                   </div>
@@ -667,7 +666,7 @@ export default function Leaderboard() {
         <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4" onClick={() => setShowRewardInfo(false)}>
           <div className="rounded-2xl p-6 max-w-md w-full shadow-2xl transform transition-all duration-300 scale-100" style={{ background: 'rgba(15, 23, 42, 0.95)', border: '1px solid rgba(59, 130, 246, 0.3)' }} onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
-            <img src="/candy/arb.png" alt="ARB rewards" style={{width:"50px",height:"50px"}} />
+            <img src="/candy/1.png" alt="rewards"  style={{width:"50px",height:"50px"}} />
               <h3 className="text-xl font-bold flex items-center space-x-2" style={{ color: '#e5e7eb' }}>
                 {/* <FontAwesomeIcon icon={faCoins} className="text-yellow-400" /> */}
                 <span>Weekly Rewards</span>
@@ -689,35 +688,35 @@ export default function Leaderboard() {
                   {/* Top 3 distinct */}
                   <div className="flex items-center justify-between p-2 rounded-lg" style={{ background: 'rgba(2, 6, 23, 0.6)', border: '1px solid rgba(59, 130, 246, 0.15)' }}>
                     <span className="font-bold" style={{ color: '#fde68a' }}>🥇 1st Place (20%)</span>
-                    <span className="font-bold" style={{ color: '#93c5fd' }}>{firstAmt.toLocaleString()} $ARB</span>
+                    <span className="font-bold" style={{ color: '#93c5fd' }}>{firstAmt.toLocaleString()} $BOOP</span>
                   </div>
                   <div className="flex items-center justify-between p-2 rounded-lg" style={{ background: 'rgba(2, 6, 23, 0.6)', border: '1px solid rgba(59, 130, 246, 0.15)' }}>
                     <span className="font-bold" style={{ color: '#e5e7eb' }}>🥈 2nd Place (18%)</span>
-                    <span className="font-bold" style={{ color: '#93c5fd' }}>{secondAmt.toLocaleString()} $ARB</span>
+                    <span className="font-bold" style={{ color: '#93c5fd' }}>{secondAmt.toLocaleString()} $BOOP</span>
                   </div>
                   <div className="flex items-center justify-between p-2 rounded-lg" style={{ background: 'rgba(2, 6, 23, 0.6)', border: '1px solid rgba(59, 130, 246, 0.15)' }}>
                     <span className="font-bold" style={{ color: '#fdba74' }}>🥉 3rd Place (15%)</span>
-                    <span className="font-bold" style={{ color: '#93c5fd' }}>{thirdAmt.toLocaleString()} $ARB</span>
+                    <span className="font-bold" style={{ color: '#93c5fd' }}>{thirdAmt.toLocaleString()} $BOOP</span>
                   </div>
                   {/* Batches */}
                   <div className="flex items-center justify-between p-2 rounded-lg" style={{ background: 'rgba(2, 6, 23, 0.6)', border: '1px solid rgba(59, 130, 246, 0.15)' }}>
                     <span className="font-bold" style={{ color: '#cbd5e1' }}>4th–6th Place (9% each)</span>
-                    <span className="font-bold" style={{ color: '#93c5fd' }}>{per4to6.toLocaleString()} $ARB each</span>
+                    <span className="font-bold" style={{ color: '#93c5fd' }}>{per4to6.toLocaleString()} $BOOP each</span>
                   </div>
                   <div className="flex items-center justify-between p-2 rounded-lg" style={{ background: 'rgba(2, 6, 23, 0.6)', border: '1px solid rgba(59, 130, 246, 0.15)' }}>
                     <span className="font-bold" style={{ color: '#cbd5e1' }}>7th–8th Place (6% each)</span>
-                    <span className="font-bold" style={{ color: '#93c5fd' }}>{per7to8.toLocaleString()} $ARB each</span>
+                    <span className="font-bold" style={{ color: '#93c5fd' }}>{per7to8.toLocaleString()} $BOOP each</span>
                   </div>
                   <div className="flex items-center justify-between p-2 rounded-lg" style={{ background: 'rgba(2, 6, 23, 0.6)', border: '1px solid rgba(59, 130, 246, 0.15)' }}>
                     <span className="font-bold" style={{ color: '#cbd5e1' }}>9th–10th Place (4% each)</span>
-                    <span className="font-bold" style={{ color: '#93c5fd' }}>{per9to10.toLocaleString()} $ARB each</span>
+                    <span className="font-bold" style={{ color: '#93c5fd' }}>{per9to10.toLocaleString()} $BOOP each</span>
                   </div>
                 </div>
               </div>
               
               <div className="text-center">
                 <p className="text-xs mb-2" style={{ color: '#94a3b8' }}>⏰ Rewards distributed Weekly at midnight UTC</p>
-                <p className="text-xs" style={{ color: '#64748b' }}>Pool: {POOL_ARB.toLocaleString()} $ARB</p>
+                <p className="text-xs" style={{ color: '#64748b' }}>Pool: {POOL_BOOP.toLocaleString()} $BOOP ({formatMillions(POOL_BOOP)})</p>
               </div>
             </div>
 
