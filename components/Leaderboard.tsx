@@ -437,10 +437,21 @@ export default function Leaderboard() {
             </div>
           </div>
 
-         {displayTime && displayTime !== '0d 0h' && <div className="text-right">
-            <div style={{ color: '#ffffff', fontSize: '12px', opacity: 0.8 }}>Ends in</div>
-            <div style={{ color: '#ffffff', fontFamily: 'monospace', fontSize: '16px', fontWeight: 700 }}>{displayTime}</div>
-          </div>}
+         {displayTime && (
+           <div className="text-right">
+             {displayTime === '0d 0h' ? (
+               <>
+                 <div style={{ color: '#ffffff', fontSize: '12px', opacity: 0.8 }}>Status</div>
+                 <div style={{ color: '#ffffff', fontFamily: 'monospace', fontSize: '16px', fontWeight: 700 }}>Coming Soon</div>
+               </>
+             ) : (
+               <>
+                 <div style={{ color: '#ffffff', fontSize: '12px', opacity: 0.8 }}>Ends in</div>
+                 <div style={{ color: '#ffffff', fontFamily: 'monospace', fontSize: '16px', fontWeight: 700 }}>{displayTime}</div>
+               </>
+             )}
+           </div>
+         )}
         </div>
       </div>
 
