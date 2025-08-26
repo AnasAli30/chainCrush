@@ -283,13 +283,13 @@ export async function getLeaderboard(limit: number = 50): Promise<GameScore[]> {
   const client = await clientPromise;
   const db = client.db('chaincrush');
   
-  const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+  // const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
   
   const leaderboard = await db.collection('gameScores')
     .find({ 
-      currentSeasonScore: { $exists: true },
-      hasMintedToday: true,
-      lastMintDate: today
+      currentSeasonScore: { $exists: true }
+      // hasMintedToday: true, // COMMENTED OUT: This was causing daily reset
+      // lastMintDate: today   // COMMENTED OUT: This was causing daily reset
     })
     .sort({ currentSeasonScore: -1 })
     .limit(limit)
@@ -369,14 +369,14 @@ export async function getMixedLeaderboard(limit: number = 50, offset: number = 0
   const client = await clientPromise;
   const db = client.db('chaincrush');
   
-  const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+  // const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
   
   // Get players with currentSeasonScore who have minted today, sorted by currentSeasonScore
   const allPlayers = await db.collection('gameScores')
     .find({ 
-      currentSeasonScore: { $exists: true },
-      hasMintedToday: true,
-      lastMintDate: today
+      currentSeasonScore: { $exists: true }
+      // hasMintedToday: true, // COMMENTED OUT: This was causing daily reset
+      // lastMintDate: today   // COMMENTED OUT: This was causing daily reset
     })
     .sort({ currentSeasonScore: -1 })
     .toArray();
@@ -433,13 +433,13 @@ export async function getTotalPlayersCount(): Promise<number> {
   const client = await clientPromise;
   const db = client.db('chaincrush');
   
-  const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+  // const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
   
   // Get unique player count by counting distinct fids who have currentSeasonScore and minted today
   const totalPlayers = await db.collection('gameScores').distinct('fid', { 
-    currentSeasonScore: { $exists: true },
-    hasMintedToday: true,
-    lastMintDate: today
+    currentSeasonScore: { $exists: true }
+    // hasMintedToday: true, // COMMENTED OUT: This was causing daily reset
+    // lastMintDate: today   // COMMENTED OUT: This was causing daily reset
   });
   return totalPlayers.length;
 }
@@ -549,13 +549,13 @@ export async function getAllTimeHighLeaderboard(limit: number = 50): Promise<Gam
   const client = await clientPromise;
   const db = client.db('chaincrush');
   
-  const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+  // const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
   
   const leaderboard = await db.collection('gameScores')
     .find({ 
-      currentSeasonScore: { $exists: true },
-      hasMintedToday: true,
-      lastMintDate: today
+      currentSeasonScore: { $exists: true }
+      // hasMintedToday: true, // COMMENTED OUT: This was causing daily reset
+      // lastMintDate: today   // COMMENTED OUT: This was causing daily reset
     })
     .sort({ score: -1 })
     .limit(limit)
