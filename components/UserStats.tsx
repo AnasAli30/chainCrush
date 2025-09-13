@@ -627,7 +627,7 @@ export default function UserStats() {
       <div className='rounded-[13px]' style={{width:"100%",border:"4px #7c65c1 solid"}}>
         <button
                   onClick={shareStats}
-                  disabled={sharing}
+                  disabled={sharing || (shareRewardInfo?.canClaim === false)}
                   className="flex flex-col items-center justify-center space-y-1 text-purple-600 bg-white px-3 py-3 rounded-[10px] text-sm font-medium hover:bg-gray-100 transition-colors disabled:opacity-50 w-full text-center"
                 >
                   <div className="flex items-center space-x-2">

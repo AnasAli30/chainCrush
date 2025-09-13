@@ -526,20 +526,20 @@ export default function GiftBox({ onClose, onClaimComplete }: GiftBoxProps) {
                   >
                     {isOpening ? (
                       <div className="flex items-center justify-center">
-                        <motion.div
+                    <motion.div
                           className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full mr-3"
                           animate={{ rotate: 360 }}
                           transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
                         />
                         Opening...
-                      </div>
-                    ) : (
+                          </div>
+                        ) : (
                       <div className="flex items-center justify-center">
                         <FontAwesomeIcon icon={faGift} className="mr-3" />
                         Open Gift Box
-                      </div>
-                    )}
-                  </motion.button>
+                          </div>
+                        )}
+                      </motion.button>
                 )}
                     </motion.div>
             ) : (

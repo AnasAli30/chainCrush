@@ -164,9 +164,9 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
     setShowNoMovesPopup(false); // Reset no moves popup
     
     // Refresh mint eligibility data
-    if (address) {
-      checkFaucetEligibility();
-    }
+    // if (address) {
+    //   checkFaucetEligibility();
+    // }
     
     if (gameRef.current) {
       const existingGame = gameRef.current.querySelector('canvas');
@@ -270,9 +270,9 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
       setNftRecorded(false); // Reset NFT recording flag
       
       // Refresh mint eligibility data for new game
-      if (address) {
-        checkFaucetEligibility();
-      }
+      // if (address) {
+      //   checkFaucetEligibility();
+      // }
       
       startLoading();
     }
@@ -1751,7 +1751,7 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
       }
 
       // Check for faucet eligibility
-      checkFaucetEligibility();
+      // checkFaucetEligibility();
       
       // Show gift box after a short delay
       setTimeout(() => {
@@ -1934,9 +1934,9 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
         setNftRecorded(true); // Prevent duplicate calls
         
         // Refresh mint eligibility data after successful mint
-        if (address) {
-          checkFaucetEligibility();
-        }
+        // if (address) {
+        //   checkFaucetEligibility();
+        // }
         
         // Record NFT minting in database
         const recordNftMint = async () => {
