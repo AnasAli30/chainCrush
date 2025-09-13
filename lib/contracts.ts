@@ -2,7 +2,7 @@
 
 export const CONTRACT_ADDRESSES = {
   CHAINCRUSH_NFT: process.env.NEXT_PUBLIC_CHAINCRUSH_NFT_ADDRESS || "0x249c480B3591D164b03c22a1bD9257bb55040381",
-  TOKEN_REWARD: process.env.NEXT_PUBLIC_TOKEN_REWARD_ADDRESS || "0x14a4495E209A62F25CCe7ec32097E103490a6179",
+  TOKEN_REWARD: process.env.NEXT_PUBLIC_TOKEN_REWARD_ADDRESS || "0x086E5479305166660fCA0b15ACAbFCe83E9BA98A",
 };
 
 export const CHAINCRUSH_NFT_ABI = [
@@ -135,6 +135,17 @@ export const TOKEN_REWARD_ABI = [
       { "internalType": "bytes", "name": "signature", "type": "bytes" }
     ],
     "name": "burnNFTForReward",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "address", "name": "tokenAddress", "type": "address" },
+      { "internalType": "uint256", "name": "amount", "type": "uint256" },
+      { "internalType": "bytes", "name": "signature", "type": "bytes" }
+    ],
+    "name": "claimTokenReward",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

@@ -11,6 +11,7 @@ import { useContractWrite, useContractRead, useAccount, useWaitForTransactionRec
 import { parseEther } from 'viem';
 import { CONTRACT_ADDRESSES, CHAINCRUSH_NFT_ABI } from '@/lib/contracts';
 import ConfirmEndGameModal from '../ConfirmEndGameModal';
+import GiftBox from '../GiftBox';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
   faCoins, 
@@ -32,6 +33,7 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
   const [gameInitialized, setGameInitialized] = useState(false);
   const [gameOverState, setGameOverState] = useState(false); // Track game over for blur effect
   const [gameOver, setGameOver] = useState(false);
+  const [showGiftBox, setShowGiftBox] = useState(false);
   const [score, setScore] = useState(0);
   const [level, setLevel] = useState(1);
   const [moves, setMoves] = useState(10);
@@ -1750,6 +1752,11 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
 
       // Check for faucet eligibility
       checkFaucetEligibility();
+      
+      // Show gift box after a short delay
+      setTimeout(() => {
+        setShowGiftBox(true);
+      }, 1000); // 2 second delay for smooth transition
     }
   }, [gameOver, address, gameStartTime, gameDuration]);
 
@@ -3411,6 +3418,17 @@ Come for my spot or stay mid 😏🏆${improvementText}`;
           )}
         </div>
       </div>
+      )}
+
+      {/* Gift Box Modal */}
+      {showGiftBox && (
+        <GiftBox
+          onClose={() => setShowGiftBox(false)}
+          onClaimComplete={() => {
+            setShowGiftBox(false);
+            // Optional: show restart button or other UI
+          }}
+        />
       )}
     </div>
   );

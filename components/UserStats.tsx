@@ -16,12 +16,14 @@ import {
   faCheckCircle,
   faExternalLinkAlt,
   faRefresh,
-  faShare
+  faShare,
+  faGift
 } from '@fortawesome/free-solid-svg-icons';
 import { useMiniAppContext } from '@/hooks/use-miniapp-context';
 import { useNFTSupply } from '@/hooks/use-nft-supply';
 import { getAverageScore, getBestScore, getTotalGamesFromScores } from '@/lib/game-counter';
 import { APP_URL } from '@/lib/constants';
+import { authenticatedFetch } from '@/lib/auth';
 import { motion } from 'framer-motion';
 
 
@@ -54,6 +56,15 @@ interface UserStats {
     rare: number;
     legendary: number;
   };
+  giftBoxStats?: {
+    totalArb: number;
+    totalPepe: number;
+    totalBoop: number;
+    totalClaims: number;
+    claimsToday: number;
+    remainingClaims: number;
+    lastGiftBoxUpdate?: string | null;
+  };
 }
 
 export default function UserStats() {
@@ -74,6 +85,11 @@ export default function UserStats() {
   const [localBestFromScores, setLocalBestFromScores] = useState<number>(0);
   const [totalGamesFromScores, setTotalGamesFromScores] = useState<number>(0);
   const [sharing, setSharing] = useState(false);
+  const [shareRewardInfo, setShareRewardInfo] = useState<{
+    canClaim: boolean;
+    timeUntilNextShare: number;
+    lastShareTime?: number;
+  } | null>(null);
 
   // Get best score from localStorage
   const getBestScoreFromStorage = () => {
@@ -112,6 +128,96 @@ export default function UserStats() {
     setTotalGamesFromScores(getTotalGamesFromScores());
   };
 
+  // Get gift box stats from localStorage
+  const getGiftBoxStatsFromStorage = () => {
+    if (typeof window === 'undefined') return;
+    
+    try {
+      const totals = JSON.parse(localStorage.getItem('giftBoxTotals') || '{"arb": 0, "pepe": 0, "boop": 0, "totalClaims": 0}');
+      const claims = JSON.parse(localStorage.getItem('giftBoxClaims') || '[]');
+      
+      // Calculate claims today
+      const today = new Date().toISOString().split('T')[0];
+      const claimsToday = claims.filter((claim: any) => claim.date === today).length;
+      
+      // Calculate remaining claims (5 per 12-hour period)
+      const remainingClaims = Math.max(0, 5 - claimsToday);
+      
+      // Get last gift box update time
+      const lastClaim = claims.length > 0 ? claims[claims.length - 1] : null;
+      const lastGiftBoxUpdate = lastClaim ? new Date(lastClaim.timestamp + 12 * 60 * 60 * 1000).toISOString() : null;
+      
+      const giftBoxStats = {
+        totalArb: totals.arb || 0,
+        totalPepe: totals.pepe || 0,
+        totalBoop: totals.boop || 0,
+        totalClaims: totals.totalClaims || 0,
+        claimsToday,
+        remainingClaims,
+        lastGiftBoxUpdate
+      };
+      
+      setStats(prevStats => {
+        if (!prevStats) return null;
+        return {
+          ...prevStats,
+          giftBoxStats
+        };
+      });
+      
+    } catch (error) {
+      console.error('Failed to load gift box stats from localStorage:', error);
+    }
+  };
+
+  // Check share reward eligibility
+  const checkShareRewardEligibility = async () => {
+    if (!address || !context?.user?.fid) return;
+    
+    try {
+      const response = await authenticatedFetch(`/api/share-reward?userAddress=${address}&fid=${context.user.fid}`);
+      const result = await response.json();
+      
+      if (result.success) {
+        setShareRewardInfo({
+          canClaim: result.canClaim,
+          timeUntilNextShare: result.timeUntilNextShare,
+          lastShareTime: result.lastShareTime
+        });
+      }
+    } catch (error) {
+      console.error('Error checking share reward eligibility:', error);
+    }
+  };
+
+  // Claim share reward
+  const claimShareReward = async () => {
+    if (!address || !context?.user?.fid) return;
+    
+    try {
+      const response = await authenticatedFetch('/api/share-reward', {
+        method: 'POST',
+        body: JSON.stringify({
+          userAddress: address,
+          fid: context.user.fid
+        })
+      });
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        // Refresh share reward info
+        await checkShareRewardEligibility();
+        // Show success message or update UI
+        console.log('Share reward claimed successfully!');
+      } else {
+        console.error('Failed to claim share reward:', result.error);
+      }
+    } catch (error) {
+      console.error('Error claiming share reward:', error);
+    }
+  };
+
   // Share stats function using Farcaster ComposerCast
   const shareStats = async () => {
     if (!actions) {
@@ -145,9 +251,6 @@ export default function UserStats() {
         stats.push(`📊 ${localAverageScore.toLocaleString()} Avg Score`);
       }
       
-   
-       
-
       // Create the share message
       const statsText = stats.length > 0 ? stats.join(' • ') : 'Just started playing!';
       const username = context?.user?.username || 'ChainCrush Player';
@@ -158,6 +261,9 @@ export default function UserStats() {
         text: shareMessage,
         embeds: [APP_URL || "https://chain-crush-black.vercel.app/"]
       });
+      
+      // Claim share reward after successful share
+      await claimShareReward();
       
     } catch (error) {
       console.error('Failed to share stats:', error);
@@ -257,6 +363,7 @@ export default function UserStats() {
     getBestScoreFromStorage(); // This is synchronous, so no need to await
     getGamesPlayedFromStorage(); // This is synchronous, so no need to await
     getCalculatedStats(); // This is synchronous, so no need to await
+    getGiftBoxStatsFromStorage(); // Load gift box stats from localStorage
     setRefreshing(false);
   };
 
@@ -265,11 +372,13 @@ export default function UserStats() {
       fetchStats();
       fetchEthBalance();
       fetchNftBalance();
+      checkShareRewardEligibility();
     }
     // Always get best score and games played from localStorage regardless of wallet connection
     getBestScoreFromStorage();
     getGamesPlayedFromStorage();
     getCalculatedStats();
+    getGiftBoxStatsFromStorage();
   }, [address]);
 
   // Listen for localStorage changes to update best score and games played in real-time
@@ -281,6 +390,8 @@ export default function UserStats() {
         getGamesPlayedFromStorage();
       } else if (e.key === 'candyGameScores') {
         getCalculatedStats();
+      } else if (e.key === 'giftBoxClaims' || e.key === 'giftBoxTotals') {
+        getGiftBoxStatsFromStorage();
       }
     };
 
@@ -292,6 +403,7 @@ export default function UserStats() {
       getBestScoreFromStorage();
       getGamesPlayedFromStorage();
       getCalculatedStats();
+      getGiftBoxStatsFromStorage();
     }, 5000);
 
     return () => {
@@ -512,6 +624,36 @@ export default function UserStats() {
         </div>
       </motion.div>
 
+      <div className='rounded-[13px]' style={{width:"100%",border:"4px #7c65c1 solid"}}>
+        <button
+                  onClick={shareStats}
+                  disabled={sharing}
+                  className="flex flex-col items-center justify-center space-y-1 text-purple-600 bg-white px-3 py-3 rounded-[10px] text-sm font-medium hover:bg-gray-100 transition-colors disabled:opacity-50 w-full text-center"
+                >
+                  <div className="flex items-center space-x-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 256 256" fill="none">
+                    <rect width="256" height="256" rx="56" fill="#7C65C1"></rect>
+                    <path d="M183.296 71.68H211.968L207.872 94.208H200.704V180.224L201.02 180.232C204.266 180.396 206.848 183.081 206.848 186.368V191.488L207.164 191.496C210.41 191.66 212.992 194.345 212.992 197.632V202.752H155.648V197.632C155.648 194.345 158.229 191.66 161.476 191.496L161.792 191.488V186.368C161.792 183.081 164.373 180.396 167.62 180.232L167.936 180.224V138.24C167.936 116.184 150.056 98.304 128 98.304C105.944 98.304 88.0638 116.184 88.0638 138.24V180.224L88.3798 180.232C91.6262 180.396 94.2078 183.081 94.2078 186.368V191.488L94.5238 191.496C97.7702 191.66 100.352 194.345 100.352 197.632V202.752H43.0078V197.632C43.0078 194.345 45.5894 191.66 48.8358 191.496L49.1518 191.488V186.368C49.1518 183.081 51.7334 180.396 54.9798 180.232L55.2958 180.224V94.208H48.1278L44.0318 71.68H72.7038V54.272H183.296V71.68Z" fill="white"></path>
+                  </svg>
+                    <span>{sharing ? 'Sharing...' : 'Share Stats'}</span>
+                  </div>
+                  
+                  {/* Share Reward Info integrated in button */}
+                  {shareRewardInfo && (
+                    <div className="text-base">
+                      {shareRewardInfo.canClaim ? (
+                        <div className="text-green-600">
+                          🎁 Share to earn +2 gift box claims!
+                        </div>
+                      ) : (
+                        <div className="text-yellow-600">
+                          ⏰ Next share Claim in {Math.ceil(shareRewardInfo.timeUntilNextShare / (1000 * 60 * 60))}h
+                        </div>
+                      )}
+                    </div>
+                  )}
+        </button>
+        </div>
       {/* Stats Overview Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-6">
         {/* Total NFTs */}
@@ -625,19 +767,8 @@ export default function UserStats() {
           </motion.div>
         )}
       </div>
-<div className='rounded-[13px]' style={{width:"100%",border:"4px #7c65c1 solid"}}>
-      <button
-                  onClick={shareStats}
-                  disabled={sharing}
-                  className="flex items-center justify-center space-x-2 text-purple-600 bg-white px-3 py-3  rounded-[10px] text-sm font-medium hover:bg-gray-100 transition-colors disabled:opacity-50 w-full text-center"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 256 256" fill="none">
-                  <rect width="256" height="256" rx="56" fill="#7C65C1"></rect>
-                  <path d="M183.296 71.68H211.968L207.872 94.208H200.704V180.224L201.02 180.232C204.266 180.396 206.848 183.081 206.848 186.368V191.488L207.164 191.496C210.41 191.66 212.992 194.345 212.992 197.632V202.752H155.648V197.632C155.648 194.345 158.229 191.66 161.476 191.496L161.792 191.488V186.368C161.792 183.081 164.373 180.396 167.62 180.232L167.936 180.224V138.24C167.936 116.184 150.056 98.304 128 98.304C105.944 98.304 88.0638 116.184 88.0638 138.24V180.224L88.3798 180.232C91.6262 180.396 94.2078 183.081 94.2078 186.368V191.488L94.5238 191.496C97.7702 191.66 100.352 194.345 100.352 197.632V202.752H43.0078V197.632C43.0078 194.345 45.5894 191.66 48.8358 191.496L49.1518 191.488V186.368C49.1518 183.081 51.7334 180.396 54.9798 180.232L55.2958 180.224V94.208H48.1278L44.0318 71.68H72.7038V54.272H183.296V71.68Z" fill="white"></path>
-                </svg>
-                  <span>{sharing ? 'Sharing...' : 'Share Stats'}</span>
-        </button>
-        </div>
+
+
       {/* Daily Mint Status */}
       <motion.div 
         className="bg-gradient-to-r from-[#19adff] to-[#28374d] p-6 rounded-2xl text-white shadow-lg"
@@ -688,6 +819,195 @@ export default function UserStats() {
           )}
         </div>
       </motion.div>
+
+      {/* Gift Box Analytics */}
+      {stats.giftBoxStats && (
+        <motion.div 
+          className="glass-card neon-glow p-6 rounded-2xl text-white shadow-lg"
+          style={{
+            background: 'linear-gradient(135deg, rgba(0, 255, 255, 0.1) 0%, rgba(147, 51, 234, 0.15) 50%, rgba(0, 230, 118, 0.1) 100%)',
+            border: '2px solid rgba(0, 255, 255, 0.3)',
+            boxShadow: '0 25px 50px -12px rgba(0, 255, 255, 0.3), 0 0 30px rgba(147, 51, 234, 0.2)',
+            backdropFilter: 'blur(20px)'
+          }}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.25, duration: 0.6 }}
+        >
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-xl font-bold flex items-center space-x-2">
+              <FontAwesomeIcon icon={faGift} />
+              <span>Gift Box Analytics</span>
+            </h3>
+            <div className="text-3xl">🎁</div>
+          </div>
+
+          {/* Daily Status Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <motion.div 
+              className="text-center p-4 rounded-xl"
+              style={{
+                background: 'rgba(0, 255, 255, 0.1)',
+                border: '1px solid rgba(0, 255, 255, 0.3)',
+                backdropFilter: 'blur(10px)'
+              }}
+              whileHover={{ scale: 1.02, y: -2 }}
+              transition={{ type: "spring", stiffness: 300 }}
+            >
+              <div className="w-12 h-12 mx-auto mb-2 flex items-center justify-center">
+                <FontAwesomeIcon icon={faCalendarDay} className="text-cyan-400 text-xl" />
+              </div>
+              <p className="text-xs text-cyan-400 uppercase tracking-wider">Claims Today</p>
+              <p className="text-2xl font-bold text-white">{stats.giftBoxStats.claimsToday}</p>
+              <p className="text-xs text-white/60">/ 5 per period</p>
+            </motion.div>
+            
+            <motion.div 
+              className="text-center p-4 rounded-xl"
+              style={{
+                background: 'rgba(147, 51, 234, 0.1)',
+                border: '1px solid rgba(147, 51, 234, 0.3)',
+                backdropFilter: 'blur(10px)'
+              }}
+              whileHover={{ scale: 1.02, y: -2 }}
+              transition={{ type: "spring", stiffness: 300 }}
+            >
+              <div className="w-12 h-12 mx-auto mb-2 flex items-center justify-center">
+                <FontAwesomeIcon icon={faCheckCircle} className="text-purple-400 text-xl" />
+              </div>
+              <p className="text-xs text-purple-400 uppercase tracking-wider">Remaining</p>
+              <p className="text-2xl font-bold text-white">{stats.giftBoxStats.remainingClaims}</p>
+              <p className="text-xs text-white/60">boxes left</p>
+              
+              {/* Progress Bar */}
+              <div className="mt-3">
+                <div className="w-full bg-black/50 rounded-full h-2 border border-purple-400/20">
+                  <div 
+                    className="bg-gradient-to-r from-purple-400 to-cyan-400 h-2 rounded-full transition-all duration-500"
+                    style={{ width: `${(stats.giftBoxStats.remainingClaims / 5) * 100}%` }}
+                  ></div>
+                </div>
+              </div>
+            </motion.div>
+            
+            <motion.div 
+              className="text-center p-4 rounded-xl"
+              style={{
+                background: 'rgba(0, 230, 118, 0.1)',
+                border: '1px solid rgba(0, 230, 118, 0.3)',
+                backdropFilter: 'blur(10px)'
+              }}
+              whileHover={{ scale: 1.02, y: -2 }}
+              transition={{ type: "spring", stiffness: 300 }}
+            >
+              <div className="w-12 h-12 mx-auto mb-2 flex items-center justify-center">
+                <FontAwesomeIcon icon={faHistory} className="text-green-400 text-xl" />
+              </div>
+              <p className="text-xs text-green-400 uppercase tracking-wider">Total Claims</p>
+              <p className="text-2xl font-bold text-white">{stats.giftBoxStats.totalClaims}</p>
+              <p className="text-xs text-white/60">all time</p>
+            </motion.div>
+          </div>
+
+          {/* Reset Time Information */}
+          {stats.giftBoxStats.lastGiftBoxUpdate && (
+            <motion.div 
+              className="mb-6 p-4 rounded-lg"
+              style={{
+                background: 'rgba(0, 255, 255, 0.05)',
+                border: '1px solid rgba(0, 255, 255, 0.2)',
+                backdropFilter: 'blur(10px)'
+              }}
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.3 }}
+            >
+              <div className="flex items-center justify-center mb-2">
+                <FontAwesomeIcon icon={faRefresh} className="text-cyan-400 mr-2" />
+                <span className="text-sm text-cyan-400 font-medium">Next Reset</span>
+              </div>
+              <p className="text-center text-white/80 text-sm">
+                {(() => {
+                  const now = new Date();
+                  const resetTime = new Date(stats.giftBoxStats.lastGiftBoxUpdate);
+                  const timeDiff = resetTime.getTime() - now.getTime();
+                  
+                  if (timeDiff <= 0) {
+                    return "Available now!";
+                  }
+                  
+                  const hours = Math.floor(timeDiff / (1000 * 60 * 60));
+                  const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
+                  
+                  if (hours > 0) {
+                    return `${hours}h ${minutes}m remaining`;
+                  } else {
+                    return `${minutes}m remaining`;
+                  }
+                })()}
+              </p>
+            </motion.div>
+          )}
+
+          {/* Token Rewards Summary */}
+          <div className="border-t border-cyan-400/20 pt-4">
+            <h4 className="text-sm font-bold text-cyan-400 uppercase tracking-wider mb-3">Total Rewards Collected</h4>
+            <div className="grid grid-cols-3 gap-4">
+              <motion.div 
+                className="text-center p-3 rounded-lg"
+                style={{
+                  background: 'rgba(0, 255, 255, 0.05)',
+                  border: '1px solid rgba(0, 255, 255, 0.2)',
+                  backdropFilter: 'blur(10px)'
+                }}
+                whileHover={{ scale: 1.05, y: -2 }}
+                transition={{ type: "spring", stiffness: 300 }}
+              >
+                <div className="w-8 h-8 mx-auto mb-1">
+                  <img src="/candy/arb.png" alt="ARB" className="w-full h-full object-contain" />
+                </div>
+                <p className="text-xs text-cyan-400">ARB</p>
+                <p className="text-lg font-bold text-white">{stats.giftBoxStats.totalArb.toFixed(3)}</p>
+              </motion.div>
+              <motion.div 
+                className="text-center p-3 rounded-lg"
+                style={{
+                  background: 'rgba(147, 51, 234, 0.05)',
+                  border: '1px solid rgba(147, 51, 234, 0.2)',
+                  backdropFilter: 'blur(10px)'
+                }}
+                whileHover={{ scale: 1.05, y: -2 }}
+                transition={{ type: "spring", stiffness: 300 }}
+              >
+                <div className="w-8 h-8 mx-auto mb-1">
+                  <img src="/candy/2.png" alt="PEPE" className="w-full h-full object-contain" />
+                </div>
+                <p className="text-xs text-purple-400">PEPE</p>
+                <p className="text-lg font-bold text-white">{stats.giftBoxStats.totalPepe.toLocaleString()}</p>
+              </motion.div>
+              <motion.div 
+                className="text-center p-3 rounded-lg"
+                style={{
+                  background: 'rgba(0, 230, 118, 0.05)',
+                  border: '1px solid rgba(0, 230, 118, 0.2)',
+                  backdropFilter: 'blur(10px)'
+                }}
+                whileHover={{ scale: 1.05, y: -2 }}
+                transition={{ type: "spring", stiffness: 300 }}
+              >
+                <div className="w-8 h-8 mx-auto mb-1">
+                  <img src="/candy/1.png" alt="BOOP" className="w-full h-full object-contain" />
+                </div>
+                <p className="text-xs text-green-400">BOOP</p>
+                <p className="text-lg font-bold text-white">{stats.giftBoxStats.totalBoop.toLocaleString()}</p>
+              </motion.div>
+            </div>
+          </div>
+
+          <div className="absolute top-0 right-0 w-10 h-[1px] bg-cyan-400/30" />
+          <div className="absolute top-0 right-0 h-10 w-[1px] bg-cyan-400/30" />
+        </motion.div>
+      )}
 
       {/* NFT Collection Overview */}
       {stats.nftsByTrait && (

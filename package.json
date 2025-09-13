@@ -12,7 +12,7 @@
   "dependencies": {
     "@farcaster/auth-client": "^0.6.0",
     "@farcaster/frame-node": "^0.0.36",
-    "@farcaster/frame-sdk": "^0.0.55",
+    "@farcaster/frame-sdk": "^0.1.9",
     "@farcaster/frame-wagmi-connector": "^0.0.44",
     "@farcaster/miniapp-core": "^0.3.6",
     "@farcaster/miniapp-node": "^0.1.6",
@@ -34,6 +34,7 @@
     "phaser": "^3.90.0",
     "react": "^18",
     "react-dom": "^18",
+    "react-scratchcard": "^1.1.2",
     "viem": "^2.22.22",
     "wagmi": "^2.16.0",
     "zod": "^3.24.1"
