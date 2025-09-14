@@ -3810,6 +3810,14 @@ Come for my spot or stay mid 😏🏆${improvementText}`;
                         return '⛽ Gas estimation failed. Please try again or increase gas limit.';
                       } else if (errorMessage.includes('revert')) {
                         return '🚫 Transaction was rejected by the smart contract.';
+                      } else if (errorMessage.includes('connector.getChainId is not a function') || 
+                                 errorMessage.includes('connector.getChainId') ||
+                                 errorMessage.includes('getChainId is not a function')) {
+                        // Auto-refresh page for connector errors
+                        setTimeout(() => {
+                          window.location.reload();
+                        }, 2000);
+                        return '🔄 Wallet connector error detected. Refreshing page...';
                       } else {
                         return `⚠️ ${errorMessage.split('.')[0] || 'Transaction failed'}`;
                       }
