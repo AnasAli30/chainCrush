@@ -1862,17 +1862,11 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
     }
   }, [gameOver, address, gameStartTime, gameDuration]);
 
-  // Check remaining claims on component mount and periodically
+  // Check remaining claims on component mount and when dependencies change
+  // Note: Removed 10-second polling for better performance and reduced API calls
   useEffect(() => {
     checkRemainingClaims();
-    
-    // Check periodically to sync with database
-    const interval = setInterval(checkRemainingClaims, 10000); // Check every 10 seconds
-    
-    return () => {
-      clearInterval(interval);
-    };
-  }, [address, context?.user?.fid]); // Re-run when address or fid changes
+  }, [address, context?.user?.fid]); // Only check when address or fid changes
 
   // Check if user is eligible for faucet
   const checkFaucetEligibility = async () => {

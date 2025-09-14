@@ -631,7 +631,9 @@ export function Demo() {
                   zIndex: 2,
                   // Custom scrollbar styling
                   scrollbarWidth: 'thin',
-                  scrollbarColor: 'rgba(0,255,255,0.3) rgba(255,255,255,0.1)'
+                  scrollbarColor: 'rgba(0,255,255,0.3) rgba(255,255,255,0.1)',
+                  // Smooth scrolling
+                  scrollBehavior: 'smooth'
                 }}
               >
                 {/* Content */}

@@ -160,6 +160,11 @@ export default function UserStats() {
     }
   };
 
+  // Refresh gift box stats (can be called after claiming)
+  const refreshGiftBoxStats = () => {
+    getGiftBoxStatsFromAPI();
+  };
+
   // Check share reward eligibility
   const checkShareRewardEligibility = async () => {
     if (!address || !context?.user?.fid) return;
@@ -387,16 +392,8 @@ export default function UserStats() {
     window.addEventListener('storage', handleStorageChange);
 
     // Also check periodically in case the values are updated in the same tab
-    const interval = setInterval(() => {
-      getBestScoreFromStorage();
-      getGamesPlayedFromStorage();
-      getCalculatedStats();
-      getGiftBoxStatsFromAPI();
-    }, 10000); // Check every 10 seconds for API data
-
     return () => {
       window.removeEventListener('storage', handleStorageChange);
-      clearInterval(interval);
     };
   }, []);
 
