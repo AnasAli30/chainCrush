@@ -3853,9 +3853,9 @@ Come for my spot or stay mid 😏🏆${improvementText}`;
                           <strong>Cause:</strong> {String(playAgainError.cause).split('.')[0]}
                         </div>
                       )}
-                      {playAgainError.code && (
+                      {'code' in playAgainError && (playAgainError as any).code && (
                         <div>
-                          <strong>Code:</strong> {playAgainError.code}
+                          <strong>Code:</strong> {String((playAgainError as any).code)}
                         </div>
                       )}
                     </div>
