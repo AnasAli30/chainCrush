@@ -19,7 +19,7 @@ import { ThemeToggle } from '@/components/ThemeToggle'
 import NFTManager from '../NFTManager'
 import UserStats from '../UserStats'
 import Leaderboard from '../Leaderboard'
-import { useConnect, useAccount } from 'wagmi'
+import { useConnect, useAccount, useWriteContract, useWaitForTransactionReceipt } from 'wagmi'
 import { motion, AnimatePresence } from 'framer-motion'
 import GameLoader from '../GameLoader'
 
@@ -31,22 +31,31 @@ export function Demo() {
   const [showLeaderboard, setShowLeaderboard] = useState(false)
   const [activeTab, setActiveTab] = useState<'home' | 'nfts' | 'stats' | 'leaderboard'>('home')
   const [showRewardPopup, setShowRewardPopup] = useState(false)
+  const [showTransactionPopup, setShowTransactionPopup] = useState(false)
+  const [transactionStatus, setTransactionStatus] = useState<'idle' | 'pending' | 'confirmed' | 'error'>('idle')
+  const [transactionHash, setTransactionHash] = useState<string | null>(null)
   
   const { connect, connectors } = useConnect()
-  const { isConnected } = useAccount()
+  const { isConnected, address } = useAccount()
+  
+  // Blockchain transaction hooks
+  const { writeContract, data: hash, error, isPending } = useWriteContract()
+  const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({
+    hash,
+  })
   
   // Get NFT supply from blockchain
   const { formattedCurrentSupply, formattedMaxSupply, currentSupply, maxSupply, isLoading: isLoadingSupply, hasError } = useNFTSupply()
 
-  // Check if user has seen the reward popup before
+  // Check if user has seen the welcome popup before
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const hasSeenRewardPopup = localStorage.getItem('hasSeenRewardnewPopup')
-      if (!hasSeenRewardPopup) {
+      const hasSeenWelcomePopup = localStorage.getItem('hasSeenWelcomeGiftBoxPopup1')
+      if (!hasSeenWelcomePopup) {
         // Show popup after a short delay for better UX
         const timer = setTimeout(() => {
           setShowRewardPopup(true)
-        }, 1000)
+        }, 1500)
         return () => clearTimeout(timer)
       }
     }
@@ -55,7 +64,7 @@ export function Demo() {
   const handleCloseRewardPopup = () => {
     setShowRewardPopup(false)
     if (typeof window !== 'undefined') {
-      localStorage.setItem('hasSeenRewardnewPopup', 'true')
+      localStorage.setItem('hasSeenWelcomeGiftBoxPopup1', 'true')
     }
   }
 
@@ -64,6 +73,64 @@ export function Demo() {
       actions?.addFrame()
     }
   },[isConnected])
+
+  // Handle transaction status updates
+  useEffect(() => {
+    if (isPending) {
+      setTransactionStatus('pending')
+      setShowTransactionPopup(true)
+    } else if (isConfirming) {
+      setTransactionStatus('pending')
+    } else if (isConfirmed) {
+      setTransactionStatus('confirmed')
+      setTransactionHash(hash || null)
+      // Auto-close popup after 2 seconds and start game
+      setTimeout(() => {
+        setShowTransactionPopup(false)
+        setShowGame(true)
+        setTransactionStatus('idle')
+      }, 2000)
+    } else if (error) {
+      setTransactionStatus('error')
+      setShowTransactionPopup(true)
+    }
+  }, [isPending, isConfirming, isConfirmed, error, hash])
+
+  // Start game with blockchain transaction
+  const handleStartGame = async () => {
+    if (!isConnected) {
+      connect({ connector: connectors[0] })
+      return
+    }
+
+    try {
+      // Reset any previous error state
+      setTransactionStatus('idle')
+      setTransactionHash(null)
+      
+      const { CONTRACT_ADDRESSES, TOKEN_REWARD_ABI } = await import('@/lib/contracts')
+      
+      writeContract({
+        address: CONTRACT_ADDRESSES.TOKEN_REWARD as `0x${string}`,
+        abi: TOKEN_REWARD_ABI,
+        functionName: 'startGame',
+        args: []
+      })
+    } catch (err) {
+      console.error('Failed to start game transaction:', err)
+      setTransactionStatus('error')
+      setShowTransactionPopup(true)
+      
+      // Log detailed error for debugging
+      if (err instanceof Error) {
+        console.error('Transaction error details:', {
+          message: err.message,
+          name: err.name,
+          stack: err.stack
+        })
+      }
+    }
+  }
 
   // Sync activeTab with current view
   useEffect(() => {
@@ -155,16 +222,27 @@ export function Demo() {
               </div>
               
               <motion.button
-                onClick={() => {
-                  incrementGamesPlayed();
-                  setShowGame(true);
-                }}
-                className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-bold py-4 px-8 rounded-2xl shadow-xl transition-all duration-300"
-                whileHover={{ scale: 1.05, y: -2 }}
-                whileTap={{ scale: 0.95 }}
+                onClick={handleStartGame}
+                disabled={isPending || isConfirming}
+                className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-bold py-4 px-8 rounded-2xl shadow-xl transition-all duration-300 disabled:opacity-70 disabled:cursor-not-allowed"
+                whileHover={{ scale: isPending || isConfirming ? 1 : 1.05, y: isPending || isConfirming ? 0 : -2 }}
+                whileTap={{ scale: isPending || isConfirming ? 1 : 0.95 }}
               >
-                <FontAwesomeIcon icon={faPlay} className="mr-2" />
-                Start Playing Now
+                {isPending || isConfirming ? (
+                  <>
+                    <motion.div
+                      className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full mr-2"
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                    />
+                    {isPending ? 'Confirming...' : 'Processing...'}
+                  </>
+                ) : (
+                  <>
+                    <FontAwesomeIcon icon={faPlay} className="mr-2" />
+                    Start Playing Now
+                  </>
+                )}
               </motion.button>
             </div>
           </div>
@@ -273,16 +351,14 @@ export function Demo() {
             transition={{ delay: 1, duration: 0.8, type: "spring" }}
           >
             <motion.button
-              onClick={() => {
-                incrementGamesPlayed();
-                setShowGame(true);
-              }}
-              className="relative group overflow-hidden gaming-gradient text-white font-black py-6 px-12 rounded-3xl text-xl shadow-lg border border-cyan-500/20 backdrop-blur-sm"
+              onClick={handleStartGame}
+              disabled={isPending || isConfirming}
+              className="relative group overflow-hidden gaming-gradient text-white font-black py-6 px-12 rounded-3xl text-xl shadow-lg border border-cyan-500/20 backdrop-blur-sm disabled:opacity-70 disabled:cursor-not-allowed"
               whileHover={{ 
-                scale: 1.03,
-                boxShadow: "0 10px 30px -5px rgba(0, 255, 255, 0.3), 0 0 25px rgba(147, 51, 234, 0.2)"
+                scale: isPending || isConfirming ? 1 : 1.03,
+                boxShadow: isPending || isConfirming ? "0 8px 25px -5px rgba(0, 255, 255, 0.25), 0 0 15px rgba(147, 51, 234, 0.15)" : "0 10px 30px -5px rgba(0, 255, 255, 0.3), 0 0 25px rgba(147, 51, 234, 0.2)"
               }}
-              whileTap={{ scale: 0.97 }}
+              whileTap={{ scale: isPending || isConfirming ? 1 : 0.97 }}
               style={{ 
                 boxShadow: '0 8px 25px -5px rgba(0, 255, 255, 0.25), 0 0 15px rgba(147, 51, 234, 0.15)'
               }}
@@ -292,9 +368,22 @@ export function Demo() {
               
               {/* Content */}
               <div className="relative z-10 flex items-center justify-center space-x-4">
-                <FontAwesomeIcon icon={faGamepad} className="text-2xl" />
-                <span>Launch Game</span>
-                <FontAwesomeIcon icon={faRocket} className="text-xl" />
+                {isPending || isConfirming ? (
+                  <>
+                    <motion.div
+                      className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full"
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                    />
+                    <span>{isPending ? 'Confirming...' : 'Processing...'}</span>
+                  </>
+                ) : (
+                  <>
+                    <FontAwesomeIcon icon={faGamepad} className="text-2xl" />
+                    <span>Launch Game</span>
+                    <FontAwesomeIcon icon={faRocket} className="text-xl" />
+                  </>
+                )}
               </div>
               
               {/* Subtle shine effect */}
@@ -403,120 +492,767 @@ export function Demo() {
         </motion.div>
       </div>
       
-      {/* Reward Popup for First-Time Users */}
-      {showRewardPopup && (
+      {/* Welcome Gift Box Popup for First-Time Users */}
+      <AnimatePresence>
+        {showRewardPopup && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            style={{
+              position: 'fixed',
+              inset: 0,
+              background: 'linear-gradient(135deg, rgba(0,0,0,0.9), rgba(20,20,40,0.8))',
+              backdropFilter: 'blur(15px)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 3000,
+            }}
+            onClick={handleCloseRewardPopup}
+          >
+            {/* Animated background elements */}
+            <div style={{
+              position: 'absolute',
+              top: '10%',
+              left: '5%',
+              width: '100px',
+              height: '100px',
+              background: 'radial-gradient(circle, rgba(0,255,255,0.2) 0%, transparent 70%)',
+              borderRadius: '50%',
+              animation: 'float 8s ease-in-out infinite',
+            }} />
+            
+            <div style={{
+              position: 'absolute',
+              top: '20%',
+              right: '10%',
+              width: '80px',
+              height: '80px',
+              background: 'radial-gradient(circle, rgba(147,51,234,0.2) 0%, transparent 70%)',
+              borderRadius: '50%',
+              animation: 'float 6s ease-in-out infinite reverse',
+            }} />
+            
+            <div style={{
+              position: 'absolute',
+              bottom: '15%',
+              left: '15%',
+              width: '60px',
+              height: '60px',
+              background: 'radial-gradient(circle, rgba(34,197,94,0.2) 0%, transparent 70%)',
+              borderRadius: '50%',
+              animation: 'float 10s ease-in-out infinite',
+            }} />
+
+            <motion.div
+              initial={{ scale: 0.7, opacity: 0, y: 50 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.7, opacity: 0, y: 50 }}
+              transition={{ type: "spring", damping: 20, stiffness: 300 }}
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                position: 'relative',
+                width: 'min(95vw, 520px)',
+                maxHeight: '90vh',
+                borderRadius: '28px',
+                padding: '40px 32px',
+                border: '2px solid rgba(255,255,255,0.1)',
+                backdropFilter: 'blur(25px)',
+                background: 'linear-gradient(135deg, rgba(0,255,255,0.1), rgba(147,51,234,0.08), rgba(34,197,94,0.05))',
+                boxShadow: '0 30px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.1), inset 0 1px 0 rgba(255,255,255,0.2)',
+                overflow: 'hidden'
+              }}
+            >
+              {/* Animated gift box icon */}
+              <motion.div
+                initial={{ scale: 0, rotate: -180 }}
+                animate={{ scale: 1, rotate: 0 }}
+                transition={{ delay: 0.3, type: "spring", damping: 15 }}
+                style={{
+                  position: 'absolute',
+                  top: '-20px',
+                  right: '-20px',
+                  width: '120px',
+                  height: '120px',
+                  background: 'linear-gradient(135deg, rgba(255,215,0,0.3), rgba(255,165,0,0.2))',
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '48px',
+                  filter: 'blur(1px)',
+                  zIndex: -1
+                }}
+              >
+                🎁
+              </motion.div>
+
+              {/* Close Button */}
+              <motion.button
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: 0.5 }}
+                onClick={handleCloseRewardPopup}
+                style={{
+                  position: 'absolute',
+                  top: 20,
+                  right: 20,
+                  background: 'rgba(255,255,255,0.1)',
+                  border: '1px solid rgba(255,255,255,0.2)',
+                  color: '#fff',
+                  borderRadius: '50%',
+                  width: 40,
+                  height: 40,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  fontSize: '20px',
+                  backdropFilter: 'blur(10px)',
+                  transition: 'all 0.3s ease'
+                }}
+                whileHover={{ scale: 1.1, background: 'rgba(255,255,255,0.2)' }}
+                whileTap={{ scale: 0.9 }}
+              >
+                ✕
+              </motion.button>
+
+              {/* Content */}
+              <div style={{ 
+                textAlign: 'center', 
+                color: '#fff',
+                position: 'relative',
+                zIndex: 2
+              }}>
+                {/* Welcome Title */}
+                <motion.div
+                  initial={{ y: -20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.2 }}
+                >
+                  <h1 style={{ 
+                    fontSize: '32px', 
+                    fontWeight: '900', 
+                    marginBottom: '8px',
+                    background: 'linear-gradient(135deg, #00ffff, #9333ea, #22c55e)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    textShadow: '0 0 30px rgba(0,255,255,0.5)',
+                    letterSpacing: '-0.5px'
+                  }}>
+                    🎮 Welcome to ChainCrush!
+                  </h1>
+                  <p style={{ 
+                    fontSize: '18px', 
+                    opacity: 0.9, 
+                    marginBottom: '30px',
+                    fontWeight: '500'
+                  }}>
+                    The Ultimate Web3 Candy Crush Experience
+                  </p>
+                </motion.div>
+
+                {/* Gift Box Feature Highlight */}
+                <motion.div
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.4 }}
+                  style={{ 
+                    background: 'linear-gradient(135deg, rgba(255,215,0,0.15), rgba(255,165,0,0.1))', 
+                    borderRadius: '20px', 
+                    padding: '25px',
+                    marginBottom: '25px',
+                    border: '1px solid rgba(255,215,0,0.3)',
+                    position: 'relative',
+                    overflow: 'hidden'
+                  }}
+                >
+                  {/* Shimmer effect */}
+                  <div style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: '-100%',
+                    width: '100%',
+                    height: '100%',
+                    background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent)',
+                    animation: 'shimmer 3s infinite'
+                  }} />
+                  
+                  <div style={{ position: 'relative', zIndex: 2 }}>
+                    <div style={{ fontSize: '48px', marginBottom: '15px' }}>🎁</div>
+                    <h2 style={{ 
+                      fontSize: '24px', 
+                      fontWeight: 'bold', 
+                      marginBottom: '15px',
+                      color: '#ffd700'
+                    }}>
+                      Daily Gift Box Rewards!
+                    </h2>
+                    <p style={{ 
+                      fontSize: '16px', 
+                      opacity: 0.95, 
+                      lineHeight: '1.6',
+                      marginBottom: '20px'
+                    }}>
+                      Play games and earn amazing rewards every day!
+                    </p>
+                  </div>
+                </motion.div>
+
+                {/* Reward Details */}
+                <motion.div
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.6 }}
+                  style={{ 
+                    background: 'rgba(255,255,255,0.08)', 
+                    borderRadius: '18px', 
+                    padding: '20px',
+                    marginBottom: '25px',
+                    border: '1px solid rgba(255,255,255,0.1)'
+                  }}
+                >
+                  <h3 style={{ 
+                    fontSize: '20px', 
+                    fontWeight: 'bold', 
+                    marginBottom: '15px',
+                    color: '#00ffff'
+                  }}>
+                    🎯 How It Works
+                  </h3>
+                  
+                  <div style={{ textAlign: 'left', fontSize: '14px', lineHeight: '1.6' }}>
+                    <div style={{ 
+                      marginBottom: '12px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px'
+                    }}>
+                      <span style={{ 
+                        background: 'linear-gradient(135deg, #00ffff, #22c55e)',
+                        borderRadius: '50%',
+                        width: '24px',
+                        height: '24px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '12px',
+                        fontWeight: 'bold'
+                      }}>1</span>
+                      <span><strong>Play & Complete Games</strong> - Finish any game to unlock your gift box</span>
+                    </div>
+                    
+                    <div style={{ 
+                      marginBottom: '12px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px'
+                    }}>
+                      <span style={{ 
+                        background: 'linear-gradient(135deg, #9333ea, #22c55e)',
+                        borderRadius: '50%',
+                        width: '24px',
+                        height: '24px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '12px',
+                        fontWeight: 'bold'
+                      }}>2</span>
+                      <span><strong>Open Gift Box</strong> - Tap to reveal your daily rewards</span>
+                    </div>
+                    
+                    <div style={{ 
+                      marginBottom: '12px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px'
+                    }}>
+                      <span style={{ 
+                        background: 'linear-gradient(135deg, #ffd700, #ff6b35)',
+                        borderRadius: '50%',
+                        width: '24px',
+                        height: '24px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '12px',
+                        fontWeight: 'bold'
+                      }}>3</span>
+                      <span><strong>Claim Tokens</strong> - Get ARB, PEPE, BOOP, or try again!</span>
+                    </div>
+                    
+                    <div style={{ 
+                      marginBottom: '12px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px'
+                    }}>
+                      <span style={{ 
+                        background: 'linear-gradient(135deg, #ff6b35, #9333ea)',
+                        borderRadius: '50%',
+                        width: '24px',
+                        height: '24px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '12px',
+                        fontWeight: 'bold'
+                      }}>4</span>
+                      <span><strong>Share & Earn More</strong> - Share on Farcaster for bonus claims!</span>
+                    </div>
+                  </div>
+                </motion.div>
+
+                {/* Daily Limits */}
+                <motion.div
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.8 }}
+                  style={{ 
+                    background: 'rgba(34,197,94,0.1)', 
+                    borderRadius: '16px', 
+                    padding: '18px',
+                    marginBottom: '25px',
+                    border: '1px solid rgba(34,197,94,0.3)'
+                  }}
+                >
+                  <h4 style={{ 
+                    fontSize: '18px', 
+                    fontWeight: 'bold', 
+                    marginBottom: '10px',
+                    color: '#22c55e'
+                  }}>
+                    ⏰ Daily Limits
+                  </h4>
+                  <div style={{ fontSize: '14px', opacity: 0.9, lineHeight: '1.5' }}>
+                    <div style={{ marginBottom: '6px' }}>
+                      <strong>🎁 Gift Box:</strong> 5 claims per 12-hour period
+                    </div>
+                    <div style={{ marginBottom: '6px' }}>
+                      <strong>📤 Share Rewards:</strong> +2 bonus claims (6-hour cooldown)
+                    </div>
+                    <div>
+                      <strong>🔄 Reset:</strong> Every 12 hours at 5:30 AM IST
+                    </div>
+                  </div>
+                </motion.div>
+                
+                {/* CTA Button */}
+                <motion.button
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 1.0 }}
+                  onClick={handleCloseRewardPopup}
+                  style={{
+                    background: 'linear-gradient(135deg, #00ffff 0%, #9333ea 50%, #22c55e 100%)',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: '16px',
+                    padding: '16px 40px',
+                    fontSize: '18px',
+                    fontWeight: 'bold',
+                    cursor: 'pointer',
+                    boxShadow: '0 8px 25px rgba(0,255,255,0.3)',
+                    position: 'relative',
+                    overflow: 'hidden',
+                    transition: 'all 0.3s ease'
+                  }}
+                  whileHover={{ 
+                    scale: 1.05,
+                    boxShadow: '0 12px 35px rgba(0,255,255,0.4)'
+                  }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  {/* Button shine effect */}
+                  <div style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: '-100%',
+                    width: '100%',
+                    height: '100%',
+                    background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent)',
+                    animation: 'shimmer 2s infinite'
+                  }} />
+                  
+                  <span style={{ position: 'relative', zIndex: 2 }}>
+                    🚀 Start Earning Rewards Now!
+                  </span>
+                </motion.button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Transaction Popup */}
+      {showTransactionPopup && (
         <div
           style={{
             position: 'fixed',
-            inset: 0,
-            background: 'rgba(0,0,0,0.7)',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'linear-gradient(135deg, rgba(0,0,0,0.95), rgba(20,20,40,0.5))',
+            backdropFilter: 'blur(12px)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            zIndex: 3000,
+            zIndex: 9999,
+            animation: 'fadeIn 0.3s ease-out'
           }}
-          onClick={handleCloseRewardPopup}
+          onClick={() => {
+            if (transactionStatus === 'error') {
+              setShowTransactionPopup(false)
+              setTransactionStatus('idle')
+            }
+          }}
         >
+          {/* Animated background elements */}
+          <div style={{
+            position: 'absolute',
+            top: '20%',
+            left: '10%',
+            width: '60px',
+            height: '60px',
+            background: 'radial-gradient(circle, rgba(0,255,255,0.3) 0%, transparent 70%)',
+            borderRadius: '50%',
+            animation: 'float 6s ease-in-out infinite',
+            zIndex: 1
+          }} />
+          
+          <div style={{
+            position: 'absolute',
+            top: '60%',
+            right: '15%',
+            width: '80px',
+            height: '80px',
+            background: 'radial-gradient(circle, rgba(147,51,234,0.3) 0%, transparent 70%)',
+            borderRadius: '50%',
+            animation: 'float 8s ease-in-out infinite reverse',
+            zIndex: 1
+          }} />
+          
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.8, opacity: 0 }}
             onClick={(e) => e.stopPropagation()}
             style={{
-              width: 'min(90vw, 500px)',
-              borderRadius: '20px',
-              padding: '30px',
-              border: '1px solid rgba(255,255,255,0.2)',
+              position: 'relative',
+              width: 'min(95vw, 480px)',
+              maxHeight: '90vh',
+              borderRadius: '24px',
+              padding: '32px',
+              border: '2px solid rgba(255,255,255,0.1)',
               backdropFilter: 'blur(20px)',
-              background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(168, 85, 247, 0.1))',
-              boxShadow: '0 25px 60px rgba(0,0,0,0.4)'
+              background: transactionStatus === 'pending'
+                ? 'linear-gradient(135deg, rgba(0,255,255,0.15), rgba(147,51,234,0.1))'
+                : transactionStatus === 'confirmed'
+                ? 'linear-gradient(135deg, rgba(34,197,94,0.15), rgba(16,185,129,0.1))'
+                : 'linear-gradient(135deg, rgba(239,68,68,0.15), rgba(248,113,113,0.1))',
+              boxShadow: '0 25px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.1)',
+              animation: 'slideInScale 0.4s ease-out',
+              zIndex: 2
             }}
           >
-            {/* Close Button */}
-            <button
-              onClick={handleCloseRewardPopup}
-              style={{
-                position: 'absolute',
-                top: 15,
-                right: 15,
-                background: 'rgba(255,255,255,0.1)',
-                border: '1px solid rgba(255,255,255,0.2)',
-                color: '#fff',
-                borderRadius: '50%',
-                width: 35,
-                height: 35,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-                fontSize: '18px'
-              }}
-            >
-              ✕
-            </button>
+            {/* Close Button - only show on error */}
+            {transactionStatus === 'error' && (
+              <button
+                onClick={() => {
+                  setShowTransactionPopup(false)
+                  setTransactionStatus('idle')
+                }}
+                aria-label="Close"
+                style={{
+                  position: 'absolute',
+                  top: 16,
+                  right: 16,
+                  background: 'rgba(255,255,255,0.1)',
+                  border: '1px solid rgba(255,255,255,0.2)',
+                  color: '#fff',
+                  borderRadius: '12px',
+                  width: 36,
+                  height: 36,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  fontSize: '18px',
+                  transition: 'all 0.2s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'rgba(255,255,255,0.2)'
+                  e.currentTarget.style.transform = 'scale(1.1)'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'rgba(255,255,255,0.1)'
+                  e.currentTarget.style.transform = 'scale(1)'
+                }}
+              >
+                ✕
+              </button>
+            )}
 
             {/* Content */}
-            <div style={{ textAlign: 'center', color: '#fff',display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center" }}>
-              {/* <div style={{ fontSize: '48px', marginBottom: '20px' }}>🏆</div> */}
-              <h2 style={{ fontSize: '28px', fontWeight: 'bold', marginBottom: '15px' }}>
-                Welcome to ChainCrush!
-              </h2>
-              <p style={{ fontSize: '16px', opacity: 0.9, marginBottom: '5px', lineHeight: '1.5' }}>
-                Get ready for the sweetest rewards! Play daily 
-              </p>
-              <img src="/candy/1.png" alt="" style={{width:"50px",height:"50px"}} />
-              <p style={{fontSize:"16px",opacity:0.9,marginBottom:"5px",lineHeight:"1.5"}}> compete for $BOOP coins.</p>
-              {/* Reward Info */}
+            <div style={{ textAlign: 'center', color: '#fff', position: 'relative', zIndex: 3 }}>
+              {/* Status Icon */}
               <div style={{ 
-                background: 'rgba(255,255,255,0.1)', 
-                borderRadius: '15px', 
-                padding: '20px',
-                marginBottom: '20px'
+                fontSize: '64px', 
+                marginBottom: '24px',
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center'
               }}>
-                <h3 style={{ fontSize: '20px', fontWeight: 'bold', marginBottom: '15px' }}>
-                  🎁 Top 10 Players Get Rewards
-                </h3>
-                  <div style={{ textAlign: 'left', fontSize: '13px', lineHeight: '1.4' }}>
-                  <div style={{ marginBottom: '6px' ,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-                    <strong>🥇 1st Place (20%)</strong>
-                    <span style={{ opacity: 0.9 }}>310,360 $BOOP</span>
+                {transactionStatus === 'pending' && (
+                  <motion.div
+                    style={{ 
+                      display: 'inline-block',
+                      filter: 'drop-shadow(0 0 20px rgba(0,255,255,0.5))'
+                    }}
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                  >
+                    ⚡
+                  </motion.div>
+                )}
+                {transactionStatus === 'confirmed' && (
+                  <div style={{ filter: 'drop-shadow(0 0 20px rgba(34,197,94,0.5))' }}>
+                    ✅
                   </div>
-                  <div style={{ marginBottom: '6px' ,display:"flex",alignItems:"center",justifyContent:"space-between"}}>                    <strong>🥈 2nd Place (18%)</strong>
-                    <span style={{ opacity: 0.9 }}>279,324 $BOOP</span>
+                )}
+                {transactionStatus === 'error' && (
+                  <div style={{ filter: 'drop-shadow(0 0 20px rgba(239,68,68,0.5))' }}>
+                    ❌
                   </div>
-                  <div style={{ marginBottom: '6px' ,display:"flex",alignItems:"center",justifyContent:"space-between"}}>                    <strong>🥉 3rd Place (15%)</strong>
-                    <span style={{ opacity: 0.9 }}>232,770 $BOOP</span>
+                )}
+              </div>
+
+              {/* Status Text */}
+              <h2 style={{ 
+                fontSize: '28px', 
+                fontWeight: 'bold', 
+                marginBottom: '16px',
+                // background: transactionStatus === 'pending'
+                //   ? 'linear-gradient(135deg, #00ffff, #9333ea)'
+                //   : transactionStatus === 'confirmed'
+                //   ? 'linear-gradient(135deg, #22c55e, #10b981)'
+                //   : 'linear-gradient(135deg, #ef4444, #f87171)',
+                backgroundClip: 'text',
+                WebkitBackgroundClip: 'text',
+                color:'#ffffff',
+                // WebkitTextFillColor: 'transparent',
+                textShadow: '0 0 30px rgba(255,255,255,0.3)'
+              }}>
+                {transactionStatus === 'pending' && 'Transaction in Progress'}
+                {transactionStatus === 'confirmed' && 'Transaction Confirmed!'}
+                {transactionStatus === 'error' && 'Transaction Failed'}
+              </h2>
+
+              {/* Status Description */}
+              <p style={{ 
+                fontSize: '16px', 
+                opacity: 0.9, 
+                marginBottom: '24px', 
+                lineHeight: '1.6',
+                maxWidth: '400px',
+                margin: '0 auto 24px auto'
+              }}>
+                {transactionStatus === 'pending' && 'Please wait while we process your game start transaction on the blockchain...'}
+                {transactionStatus === 'confirmed' && 'Your game session has been registered! Starting the game now...'}
+                {transactionStatus === 'error' && 'Something went wrong. Please try again or check your wallet connection.'}
+              </p>
+
+              {/* Transaction Hash */}
+              {transactionHash && (
+                <div style={{ 
+                  background: 'rgba(255,255,255,0.05)', 
+                  borderRadius: '16px', 
+                  padding: '20px',
+                  marginBottom: '24px',
+                  fontSize: '13px',
+                  wordBreak: 'break-all',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  backdropFilter: 'blur(10px)'
+                }}>
+                  <div style={{ 
+                    marginBottom: '8px', 
+                    fontWeight: 'bold',
+                    color: '#00ffff',
+                    fontSize: '14px'
+                  }}>
+                    Transaction Hash:
                   </div>
-                  <div style={{ marginBottom: '6px' ,display:"flex",alignItems:"center",justifyContent:"space-between"}}>                    <strong>4th–6th Place</strong>
-                    <span style={{ opacity: 0.9 }}>139,662 $BOOP each</span>
-                  </div>
-                  <div style={{ marginBottom: '6px' ,display:"flex",alignItems:"center",justifyContent:"space-between"}}>                    <strong>7th–8th Place</strong>
-                    <span style={{ opacity: 0.9 }}>93,108 $BOOP each</span>
-                  </div>
-                  <div style={{ marginBottom: '6px' ,display:"flex",alignItems:"center",justifyContent:"space-between"}}>                   
-                    <strong>9th–10th Place</strong>
-                    <span style={{ opacity: 0.9 }}>62,072 $BOOP each</span>
+                  <div style={{ 
+                    opacity: 0.8,
+                    fontFamily: 'monospace',
+                    background: 'rgba(0,0,0,0.3)',
+                    padding: '8px',
+                    borderRadius: '8px',
+                    border: '1px solid rgba(255,255,255,0.1)'
+                  }}>
+                    {transactionHash}
                   </div>
                 </div>
-              </div>
-              
-              <motion.button
-                onClick={handleCloseRewardPopup}
-                style={{
-                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: '12px',
-                  padding: '12px 30px',
-                  fontSize: '16px',
-                  fontWeight: 'bold',
-                  cursor: 'pointer'
-                }}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                Let's Start Playing! 🎮
-              </motion.button>
+              )}
+
+              {/* Error Details */}
+              {transactionStatus === 'error' && error && (
+                <div style={{ 
+                  background: 'rgba(239,68,68,0.1)', 
+                  borderRadius: '16px', 
+                  padding: '20px',
+                  marginBottom: '24px',
+                  fontSize: '14px',
+                  border: '1px solid rgba(239,68,68,0.3)',
+                  backdropFilter: 'blur(10px)'
+                }}>
+                  <div style={{ 
+                    fontWeight: 'bold', 
+                    marginBottom: '12px',
+                    color: '#ef4444',
+                    fontSize: '16px'
+                  }}>
+                    Error Details:
+                  </div>
+                  
+                  {/* User-friendly error message */}
+                  <div style={{ 
+                    opacity: 0.9, 
+                    wordBreak: 'break-word',
+                    background: 'rgba(0,0,0,0.2)',
+                    padding: '12px',
+                    borderRadius: '8px',
+                    border: '1px solid rgba(239,68,68,0.2)',
+                    marginBottom: '12px'
+                  }}>
+                    {(() => {
+                      const errorMessage = error.message || 'Unknown error occurred';
+                      
+                      // Handle common error types with user-friendly messages
+                      if (errorMessage.includes('User rejected the request')) {
+                        return '❌ Transaction was cancelled by user. Please try again when ready.';
+                      } else if (errorMessage.includes('insufficient funds')) {
+                        return '💰 Insufficient funds for gas fees. Please add more ETH to your wallet.';
+                      } else if (errorMessage.includes('network')) {
+                        return '🌐 Network error. Please check your internet connection and try again.';
+                      } else if (errorMessage.includes('timeout')) {
+                        return '⏰ Transaction timed out. Please try again.';
+                      } else if (errorMessage.includes('nonce')) {
+                        return '🔄 Transaction nonce error. Please try again.';
+                      } else if (errorMessage.includes('gas')) {
+                        return '⛽ Gas estimation failed. Please try again or increase gas limit.';
+                      } else if (errorMessage.includes('revert')) {
+                        return '🚫 Transaction was rejected by the smart contract.';
+                      } else {
+                        return `⚠️ ${errorMessage.split('.')[0] || 'Transaction failed'}`;
+                      }
+                    })()}
+                  </div>
+
+                  {/* Technical details (collapsible) */}
+                  <details style={{ marginTop: '12px' }}>
+                    <summary style={{ 
+                      cursor: 'pointer', 
+                      color: '#f87171', 
+                      fontSize: '13px',
+                      fontWeight: 'bold',
+                      marginBottom: '8px'
+                    }}>
+                      🔧 Show Technical Details
+                    </summary>
+                    <div style={{ 
+                      fontSize: '12px', 
+                      opacity: 0.7,
+                      background: 'rgba(0,0,0,0.3)',
+                      padding: '10px',
+                      borderRadius: '6px',
+                      border: '1px solid rgba(239,68,68,0.2)',
+                      fontFamily: 'monospace',
+                      wordBreak: 'break-all',
+                      maxHeight: '150px',
+                      overflowY: 'auto'
+                    }}>
+                      <div style={{ marginBottom: '8px' }}>
+                        <strong>Error:</strong> {error.message}
+                      </div>
+                      {error.cause && (
+                        <div style={{ marginBottom: '8px' }}>
+                          <strong>Cause:</strong> {String(error.cause).split('.')[0]}
+                        </div>
+                      )}
+                      {'code' in error && (error as any).code && (
+                        <div>
+                          <strong>Code:</strong> {String((error as any).code)}
+                        </div>
+                      )}
+                    </div>
+                  </details>
+                </div>
+              )}
+
+              {/* Action Button */}
+              {transactionStatus === 'error' && (
+                <div style={{ 
+                  display: 'flex', 
+                  gap: '16px', 
+                  justifyContent: 'center',
+                  marginTop: '8px'
+                }}>
+                  <motion.button
+                    onClick={() => {
+                      setShowTransactionPopup(false)
+                      setTransactionStatus('idle')
+                      setTransactionHash(null)
+                    }}
+                    style={{
+                      background: 'rgba(255,255,255,0.1)',
+                      color: '#fff',
+                      border: '1px solid rgba(255,255,255,0.2)',
+                      borderRadius: '16px',
+                      padding: '14px 28px',
+                      fontSize: '16px',
+                      fontWeight: 'bold',
+                      cursor: 'pointer',
+                      transition: 'all 0.3s ease',
+                      backdropFilter: 'blur(10px)'
+                    }}
+                    whileHover={{ scale: 1.05, y: -2 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    Cancel
+                  </motion.button>
+                  <motion.button
+                    onClick={() => {
+                      setShowTransactionPopup(false)
+                      setTransactionStatus('idle')
+                      setTransactionHash(null)
+                      // Retry the transaction
+                      setTimeout(() => {
+                        handleStartGame()
+                      }, 100)
+                    }}
+                    style={{
+                      background: 'linear-gradient(135deg, #00ffff 0%, #9333ea 100%)',
+                      color: '#fff',
+                      border: 'none',
+                      borderRadius: '16px',
+                      padding: '14px 28px',
+                      fontSize: '16px',
+                      fontWeight: 'bold',
+                      cursor: 'pointer',
+                      transition: 'all 0.3s ease',
+                      boxShadow: '0 4px 15px rgba(0,255,255,0.3)'
+                    }}
+                    whileHover={{ scale: 1.05, y: -2 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    Try Again
+                  </motion.button>
+                </div>
+              )}
             </div>
           </motion.div>
         </div>

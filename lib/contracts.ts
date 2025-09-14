@@ -128,6 +128,13 @@ export const CHAINCRUSH_NFT_ABI = [
 
 export const TOKEN_REWARD_ABI = [
   {
+    "inputs": [],
+    "name": "startGame",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
     "inputs": [
       { "internalType": "uint256", "name": "tokenId", "type": "uint256" },
       { "internalType": "address", "name": "rewardToken", "type": "address" },

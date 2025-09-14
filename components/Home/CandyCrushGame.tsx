@@ -7,9 +7,9 @@ import { APP_URL } from '@/lib/constants';
 import { useMiniAppContext } from '@/hooks/use-miniapp-context';
 import { getPlayerData } from '@/lib/leaderboard';
 import { incrementGamesPlayed, addGameScore } from '@/lib/game-counter';
-import { useContractWrite, useContractRead, useAccount, useWaitForTransactionReceipt } from 'wagmi';
+import { useContractWrite, useContractRead, useAccount, useWaitForTransactionReceipt, useWriteContract } from 'wagmi';
 import { parseEther } from 'viem';
-import { CONTRACT_ADDRESSES, CHAINCRUSH_NFT_ABI } from '@/lib/contracts';
+import { CONTRACT_ADDRESSES, CHAINCRUSH_NFT_ABI, TOKEN_REWARD_ABI } from '@/lib/contracts';
 import ConfirmEndGameModal from '../ConfirmEndGameModal';
 import GiftBox from '../GiftBox';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -45,6 +45,11 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [showInternalLoader, setShowInternalLoader] = useState(true);
   
+  // Blockchain transaction state for Play Again
+  const [showTransactionPopup, setShowTransactionPopup] = useState(false);
+  const [transactionStatus, setTransactionStatus] = useState<'idle' | 'pending' | 'confirmed' | 'error'>('idle');
+  const [transactionHash, setTransactionHash] = useState<string | null>(null);
+  
   // Challenge system state
   const [challengeCandyType, setChallengeCandyType] = useState('1');
   const [challengeTarget, setChallengeTarget] = useState(10);
@@ -64,10 +69,37 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
   // Daily limit countdown state
   const [timeUntilReset, setTimeUntilReset] = useState('');
   const [dailyLimitReached, setDailyLimitReached] = useState(false);
+  const [remainingClaims, setRemainingClaims] = useState(5);
 
   // Game time tracking
   const [gameStartTime, setGameStartTime] = useState<number | null>(null);
   const [gameDuration, setGameDuration] = useState<number>(0);
+
+  // Check remaining gift box claims via API
+  const checkRemainingClaims = async () => {
+    if (!address) {
+      setRemainingClaims(5); // Default to 5 if no wallet connected
+      return 5;
+    }
+    
+    try {
+      const response = await fetch(`/api/claim-gift-box?userAddress=${address}&fid=${context?.user?.fid || ''}`);
+      const data = await response.json();
+      
+      if (data.success) {
+        setRemainingClaims(data.remainingClaims);
+        return data.remainingClaims;
+      } else {
+        console.error('Failed to check remaining claims:', data.error);
+        setRemainingClaims(0);
+        return 0;
+      }
+    } catch (error) {
+      console.error('Failed to check remaining claims:', error);
+      setRemainingClaims(5); // Default to 5 on error
+      return 5;
+    }
+  };
 
   // Score counting animation
   useEffect(() => {
@@ -132,6 +164,41 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
     
     return () => clearInterval(interval);
   }, []);
+
+  // Start new game with blockchain transaction
+  const handleStartNewGame = async () => {
+    if (!address) {
+      // If no wallet, just restart normally
+      handleRestart();
+      return;
+    }
+
+    try {
+      // Reset any previous error state
+      setTransactionStatus('idle')
+      setTransactionHash(null)
+      
+      writeContract({
+        address: CONTRACT_ADDRESSES.TOKEN_REWARD as `0x${string}`,
+        abi: TOKEN_REWARD_ABI,
+        functionName: 'startGame',
+        args: []
+      })
+    } catch (err) {
+      console.error('Failed to start new game transaction:', err)
+      setTransactionStatus('error')
+      setShowTransactionPopup(true)
+      
+      // Log detailed error for debugging
+      if (err instanceof Error) {
+        console.error('Transaction error details:', {
+          message: err.message,
+          name: err.name,
+          stack: err.stack
+        })
+      }
+    }
+  }
 
   const handleRestart = () => {
     // Increment games played counter
@@ -1734,6 +1801,34 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
     query: { enabled: !!address }
   });
 
+  // Blockchain transaction hooks for Play Again
+  const { writeContract, data: playAgainHash, error: playAgainError, isPending: isPlayAgainPending } = useWriteContract()
+  const { isLoading: isPlayAgainConfirming, isSuccess: isPlayAgainConfirmed } = useWaitForTransactionReceipt({
+    hash: playAgainHash,
+  })
+
+  // Handle transaction status updates for Play Again
+  useEffect(() => {
+    if (isPlayAgainPending) {
+      setTransactionStatus('pending')
+      setShowTransactionPopup(true)
+    } else if (isPlayAgainConfirming) {
+      setTransactionStatus('pending')
+    } else if (isPlayAgainConfirmed) {
+      setTransactionStatus('confirmed')
+      setTransactionHash(playAgainHash || null)
+      // Auto-close popup after 2 seconds and restart game
+      setTimeout(() => {
+        setShowTransactionPopup(false)
+        handleRestart()
+        setTransactionStatus('idle')
+      }, 2000)
+    } else if (playAgainError) {
+      setTransactionStatus('error')
+      setShowTransactionPopup(true)
+    }
+  }, [isPlayAgainPending, isPlayAgainConfirming, isPlayAgainConfirmed, playAgainError, playAgainHash])
+
   // On game over, show NFT minting option and check for faucet
   useEffect(() => {
     if (gameOver && address) {
@@ -1753,12 +1848,31 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
       // Check for faucet eligibility
       // checkFaucetEligibility();
       
-      // Show gift box after a short delay
-      setTimeout(() => {
-        setShowGiftBox(true);
-      }, 1000); // 2 second delay for smooth transition
+      // Check remaining claims before showing gift box
+      checkRemainingClaims().then((remaining) => {
+        if (remaining > 0) {
+          // Show gift box after a short delay only if user has remaining claims
+          setTimeout(() => {
+            setShowGiftBox(true);
+          }, 1000); // 2 second delay for smooth transition
+        } else {
+          console.log('Daily gift box limit reached. Gift box will not be shown.');
+        }
+      });
     }
   }, [gameOver, address, gameStartTime, gameDuration]);
+
+  // Check remaining claims on component mount and periodically
+  useEffect(() => {
+    checkRemainingClaims();
+    
+    // Check periodically to sync with database
+    const interval = setInterval(checkRemainingClaims, 10000); // Check every 10 seconds
+    
+    return () => {
+      clearInterval(interval);
+    };
+  }, [address, context?.user?.fid]); // Re-run when address or fid changes
 
   // Check if user is eligible for faucet
   const checkFaucetEligibility = async () => {
@@ -2588,6 +2702,7 @@ Come for my spot or stay mid 😏🏆${improvementText}`;
           {/* Play Again Button - Show after successful mint OR when daily limit reached OR no wallet */}
           {(mintStatus === 'success' || mintStatus === 'error' || !address || (address && (canMintToday === false || contractRemainingSupply === BigInt(0)))) && (
             <button
+              disabled={isPlayAgainPending || isPlayAgainConfirming}
               style={{ 
                 position: 'fixed', 
                 bottom: '40px', 
@@ -2597,26 +2712,38 @@ Come for my spot or stay mid 😏🏆${improvementText}`;
                 padding: '10px 20px',
                 fontSize: '20px',
                 fontWeight: 'bold',
-                backgroundColor: '#4caf50',
+                backgroundColor: isPlayAgainPending || isPlayAgainConfirming ? '#666' : '#4caf50',
                 color: 'white',
                 border: 'none',
                 borderRadius: '8px',
-                cursor: 'pointer',
+                cursor: isPlayAgainPending || isPlayAgainConfirming ? 'not-allowed' : 'pointer',
                 boxShadow: '0 4px 8px rgba(0,0,0,0.3)',
                 transition: 'all 0.5s ease',
-                pointerEvents: 'auto'
+                pointerEvents: 'auto',
+                opacity: isPlayAgainPending || isPlayAgainConfirming ? 0.7 : 1
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = '#4caf50';
-                e.currentTarget.style.transform = 'translateX(-50%) scale(1.05)';
+                if (!isPlayAgainPending && !isPlayAgainConfirming) {
+                  e.currentTarget.style.backgroundColor = '#4caf50';
+                  e.currentTarget.style.transform = 'translateX(-50%) scale(1.05)';
+                }
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = '#4caf50';
-                e.currentTarget.style.transform = 'translateX(-50%) scale(1)';
+                if (!isPlayAgainPending && !isPlayAgainConfirming) {
+                  e.currentTarget.style.backgroundColor = '#4caf50';
+                  e.currentTarget.style.transform = 'translateX(-50%) scale(1)';
+                }
               }}
-              onClick={handleRestart}
+              onClick={handleStartNewGame}
             >
-              ▶ Play Again 
+              {isPlayAgainPending || isPlayAgainConfirming ? (
+                <>
+                  <span style={{ marginRight: '8px' }}>⏳</span>
+                  {isPlayAgainPending ? 'Confirming...' : 'Processing...'}
+                </>
+              ) : (
+                '▶ Play Again'
+              )}
             </button>
           )}
         </>
@@ -3425,10 +3552,394 @@ Come for my spot or stay mid 😏🏆${improvementText}`;
         <GiftBox
           onClose={() => setShowGiftBox(false)}
           onClaimComplete={() => {
+            // Refresh remaining claims after a successful claim
+            checkRemainingClaims();
             setShowGiftBox(false);
             // Optional: show restart button or other UI
           }}
         />
+      )}
+
+      {/* Transaction Popup for Play Again */}
+      {showTransactionPopup && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'linear-gradient(135deg, rgba(0,0,0,0.95), rgba(20,20,40,0.5))',
+            backdropFilter: 'blur(12px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9999,
+            animation: 'fadeIn 0.3s ease-out'
+          }}
+          onClick={() => {
+            if (transactionStatus === 'error') {
+              setShowTransactionPopup(false)
+              setTransactionStatus('idle')
+            }
+          }}
+        >
+          {/* Animated background elements */}
+          <div style={{
+            position: 'absolute',
+            top: '20%',
+            left: '10%',
+            width: '60px',
+            height: '60px',
+            background: 'radial-gradient(circle, rgba(0,255,255,0.3) 0%, transparent 70%)',
+            borderRadius: '50%',
+            animation: 'float 6s ease-in-out infinite',
+            zIndex: 1
+          }} />
+          
+          <div style={{
+            position: 'absolute',
+            top: '60%',
+            right: '15%',
+            width: '80px',
+            height: '80px',
+            background: 'radial-gradient(circle, rgba(147,51,234,0.3) 0%, transparent 70%)',
+            borderRadius: '50%',
+            animation: 'float 8s ease-in-out infinite reverse',
+            zIndex: 1
+          }} />
+          
+          <div
+            style={{
+              position: 'relative',
+              width: 'min(95vw, 480px)',
+              maxHeight: '90vh',
+              borderRadius: '24px',
+              padding: '32px',
+              border: '2px solid rgba(255,255,255,0.1)',
+              backdropFilter: 'blur(20px)',
+              background: transactionStatus === 'pending'
+                ? 'linear-gradient(135deg, rgba(0,255,255,0.15), rgba(147,51,234,0.1))'
+                : transactionStatus === 'confirmed'
+                ? 'linear-gradient(135deg, rgba(34,197,94,0.15), rgba(16,185,129,0.1))'
+                : 'linear-gradient(135deg, rgba(239,68,68,0.15), rgba(248,113,113,0.1))',
+              boxShadow: '0 25px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.1)',
+              animation: 'slideInScale 0.4s ease-out',
+              zIndex: 2
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Close Button - only show on error */}
+            {transactionStatus === 'error' && (
+              <button
+                onClick={() => {
+                  setShowTransactionPopup(false)
+                  setTransactionStatus('idle')
+                }}
+                aria-label="Close"
+                style={{
+                  position: 'absolute',
+                  top: 16,
+                  right: 16,
+                  background: 'rgba(255,255,255,0.1)',
+                  border: '1px solid rgba(255,255,255,0.2)',
+                  color: '#fff',
+                  borderRadius: '12px',
+                  width: 36,
+                  height: 36,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  fontSize: '18px',
+                  transition: 'all 0.2s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'rgba(255,255,255,0.2)'
+                  e.currentTarget.style.transform = 'scale(1.1)'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'rgba(255,255,255,0.1)'
+                  e.currentTarget.style.transform = 'scale(1)'
+                }}
+              >
+                ✕
+              </button>
+            )}
+
+            {/* Content */}
+            <div style={{ textAlign: 'center', color: '#fff', position: 'relative', zIndex: 3 }}>
+              {/* Status Icon */}
+              <div style={{ 
+                fontSize: '64px', 
+                marginBottom: '24px',
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center'
+              }}>
+                {transactionStatus === 'pending' && (
+                  <div
+                    style={{ 
+                      display: 'inline-block',
+                      animation: 'spin 2s linear infinite',
+                      filter: 'drop-shadow(0 0 20px rgba(0,255,255,0.5))'
+                    }}
+                  >
+                    ⚡
+                  </div>
+                )}
+                {transactionStatus === 'confirmed' && (
+                  <div style={{ filter: 'drop-shadow(0 0 20px rgba(34,197,94,0.5))' }}>
+                    ✅
+                  </div>
+                )}
+                {transactionStatus === 'error' && (
+                  <div style={{ filter: 'drop-shadow(0 0 20px rgba(239,68,68,0.5))' }}>
+                    ❌
+                  </div>
+                )}
+              </div>
+
+              {/* Status Text */}
+              <h2 style={{ 
+                fontSize: '28px', 
+                fontWeight: 'bold', 
+                marginBottom: '16px',
+                // background: transactionStatus === 'pending'
+                //   ? 'linear-gradient(135deg, #00ffff, #9333ea)'
+                //   : transactionStatus === 'confirmed'
+                //   ? 'linear-gradient(135deg, #22c55e, #10b981)'
+                //   : 'linear-gradient(135deg, #ef4444, #f87171)',
+                backgroundClip: 'text',
+                WebkitBackgroundClip: 'text',
+                color:"#ffffff",
+                // WebkitTextFillColor: 'transparent',
+                textShadow: '0 0 30px rgba(255,255,255,0.3)'
+              }}>
+                {transactionStatus === 'pending' && 'Starting New Game...'}
+                {transactionStatus === 'confirmed' && 'Game Session Started!'}
+                {transactionStatus === 'error' && 'Transaction Failed'}
+              </h2>
+
+              {/* Status Description */}
+              <p style={{ 
+                fontSize: '16px', 
+                opacity: 0.9, 
+                marginBottom: '24px', 
+                lineHeight: '1.6',
+                maxWidth: '400px',
+                margin: '0 auto 24px auto'
+              }}>
+                {transactionStatus === 'pending' && 'Please wait while we register your new game session on the blockchain...'}
+                {transactionStatus === 'confirmed' && 'Your new game session has been registered! Starting the game now...'}
+                {transactionStatus === 'error' && 'Something went wrong. Please try again or check your wallet connection.'}
+              </p>
+
+              {/* Transaction Hash */}
+              {transactionHash && (
+                <div style={{ 
+                  background: 'rgba(255,255,255,0.05)', 
+                  borderRadius: '16px', 
+                  padding: '20px',
+                  marginBottom: '24px',
+                  fontSize: '13px',
+                  wordBreak: 'break-all',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  backdropFilter: 'blur(10px)'
+                }}>
+                  <div style={{ 
+                    marginBottom: '8px', 
+                    fontWeight: 'bold',
+                    color: '#00ffff',
+                    fontSize: '14px'
+                  }}>
+                    Transaction Hash:
+                  </div>
+                  <div style={{ 
+                    opacity: 0.8,
+                    fontFamily: 'monospace',
+                    background: 'rgba(0,0,0,0.3)',
+                    padding: '8px',
+                    borderRadius: '8px',
+                    border: '1px solid rgba(255,255,255,0.1)'
+                  }}>
+                    {transactionHash}
+                  </div>
+                </div>
+              )}
+
+              {/* Error Details */}
+              {transactionStatus === 'error' && playAgainError && (
+                <div style={{ 
+                  background: 'rgba(239,68,68,0.1)', 
+                  borderRadius: '16px', 
+                  padding: '20px',
+                  marginBottom: '24px',
+                  fontSize: '14px',
+                  border: '1px solid rgba(239,68,68,0.3)',
+                  backdropFilter: 'blur(10px)'
+                }}>
+                  <div style={{ 
+                    fontWeight: 'bold', 
+                    marginBottom: '12px',
+                    color: '#ef4444',
+                    fontSize: '16px'
+                  }}>
+                    Error Details:
+                  </div>
+                  
+                  {/* User-friendly error message */}
+                  <div style={{ 
+                    opacity: 0.9, 
+                    wordBreak: 'break-word',
+                    background: 'rgba(0,0,0,0.2)',
+                    padding: '12px',
+                    borderRadius: '8px',
+                    border: '1px solid rgba(239,68,68,0.2)',
+                    marginBottom: '12px'
+                  }}>
+                    {(() => {
+                      const errorMessage = playAgainError.message || 'Unknown error occurred';
+                      
+                      // Handle common error types with user-friendly messages
+                      if (errorMessage.includes('User rejected the request')) {
+                        return '❌ Transaction was cancelled by user. Please try again when ready.';
+                      } else if (errorMessage.includes('insufficient funds')) {
+                        return '💰 Insufficient funds for gas fees. Please add more ETH to your wallet.';
+                      } else if (errorMessage.includes('network')) {
+                        return '🌐 Network error. Please check your internet connection and try again.';
+                      } else if (errorMessage.includes('timeout')) {
+                        return '⏰ Transaction timed out. Please try again.';
+                      } else if (errorMessage.includes('nonce')) {
+                        return '🔄 Transaction nonce error. Please try again.';
+                      } else if (errorMessage.includes('gas')) {
+                        return '⛽ Gas estimation failed. Please try again or increase gas limit.';
+                      } else if (errorMessage.includes('revert')) {
+                        return '🚫 Transaction was rejected by the smart contract.';
+                      } else {
+                        return `⚠️ ${errorMessage.split('.')[0] || 'Transaction failed'}`;
+                      }
+                    })()}
+                  </div>
+
+                  {/* Technical details (collapsible) */}
+                  <details style={{ marginTop: '12px' }}>
+                    <summary style={{ 
+                      cursor: 'pointer', 
+                      color: '#f87171', 
+                      fontSize: '13px',
+                      fontWeight: 'bold',
+                      marginBottom: '8px'
+                    }}>
+                      🔧 Show Technical Details
+                    </summary>
+                    <div style={{ 
+                      fontSize: '12px', 
+                      opacity: 0.7,
+                      background: 'rgba(0,0,0,0.3)',
+                      padding: '10px',
+                      borderRadius: '6px',
+                      border: '1px solid rgba(239,68,68,0.2)',
+                      fontFamily: 'monospace',
+                      wordBreak: 'break-all',
+                      maxHeight: '150px',
+                      overflowY: 'auto'
+                    }}>
+                      <div style={{ marginBottom: '8px' }}>
+                        <strong>Error:</strong> {playAgainError.message}
+                      </div>
+                      {playAgainError.cause && (
+                        <div style={{ marginBottom: '8px' }}>
+                          <strong>Cause:</strong> {String(playAgainError.cause).split('.')[0]}
+                        </div>
+                      )}
+                      {playAgainError.code && (
+                        <div>
+                          <strong>Code:</strong> {playAgainError.code}
+                        </div>
+                      )}
+                    </div>
+                  </details>
+                </div>
+              )}
+
+              {/* Action Button */}
+              {transactionStatus === 'error' && (
+                <div style={{ 
+                  display: 'flex', 
+                  gap: '16px', 
+                  justifyContent: 'center',
+                  marginTop: '8px'
+                }}>
+                  <button
+                    onClick={() => {
+                      setShowTransactionPopup(false)
+                      setTransactionStatus('idle')
+                      setTransactionHash(null)
+                    }}
+                    style={{
+                      background: 'rgba(255,255,255,0.1)',
+                      color: '#fff',
+                      border: '1px solid rgba(255,255,255,0.2)',
+                      borderRadius: '16px',
+                      padding: '14px 28px',
+                      fontSize: '16px',
+                      fontWeight: 'bold',
+                      cursor: 'pointer',
+                      transition: 'all 0.3s ease',
+                      backdropFilter: 'blur(10px)'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = 'rgba(255,255,255,0.2)'
+                      e.currentTarget.style.transform = 'translateY(-2px)'
+                      e.currentTarget.style.boxShadow = '0 8px 25px rgba(255,255,255,0.1)'
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = 'rgba(255,255,255,0.1)'
+                      e.currentTarget.style.transform = 'translateY(0)'
+                      e.currentTarget.style.boxShadow = 'none'
+                    }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowTransactionPopup(false)
+                      setTransactionStatus('idle')
+                      setTransactionHash(null)
+                      // Retry the transaction
+                      setTimeout(() => {
+                        handleStartNewGame()
+                      }, 100)
+                    }}
+                    style={{
+                      background: 'linear-gradient(135deg, #00ffff 0%, #9333ea 100%)',
+                      color: '#fff',
+                      border: 'none',
+                      borderRadius: '16px',
+                      padding: '14px 28px',
+                      fontSize: '16px',
+                      fontWeight: 'bold',
+                      cursor: 'pointer',
+                      transition: 'all 0.3s ease',
+                      boxShadow: '0 4px 15px rgba(0,255,255,0.3)'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = 'translateY(-2px)'
+                      e.currentTarget.style.boxShadow = '0 8px 25px rgba(0,255,255,0.4)'
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = 'translateY(0)'
+                      e.currentTarget.style.boxShadow = '0 4px 15px rgba(0,255,255,0.3)'
+                    }}
+                  >
+                    Try Again
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

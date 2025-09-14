@@ -128,45 +128,35 @@ export default function UserStats() {
     setTotalGamesFromScores(getTotalGamesFromScores());
   };
 
-  // Get gift box stats from localStorage
-  const getGiftBoxStatsFromStorage = () => {
-    if (typeof window === 'undefined') return;
+  // Get gift box stats from API
+  const getGiftBoxStatsFromAPI = async () => {
+    if (!address) return;
     
     try {
-      const totals = JSON.parse(localStorage.getItem('giftBoxTotals') || '{"arb": 0, "pepe": 0, "boop": 0, "totalClaims": 0}');
-      const claims = JSON.parse(localStorage.getItem('giftBoxClaims') || '[]');
+      const response = await fetch(`/api/claim-gift-box?userAddress=${address}&fid=${context?.user?.fid || ''}&stats=true`);
+      const data = await response.json();
       
-      // Calculate claims today
-      const today = new Date().toISOString().split('T')[0];
-      const claimsToday = claims.filter((claim: any) => claim.date === today).length;
-      
-      // Calculate remaining claims (5 per 12-hour period)
-      const remainingClaims = Math.max(0, 5 - claimsToday);
-      
-      // Get last gift box update time
-      const lastClaim = claims.length > 0 ? claims[claims.length - 1] : null;
-      const lastGiftBoxUpdate = lastClaim ? new Date(lastClaim.timestamp + 12 * 60 * 60 * 1000).toISOString() : null;
-      
-      const giftBoxStats = {
-        totalArb: totals.arb || 0,
-        totalPepe: totals.pepe || 0,
-        totalBoop: totals.boop || 0,
-        totalClaims: totals.totalClaims || 0,
-        claimsToday,
-        remainingClaims,
-        lastGiftBoxUpdate
-      };
-      
-      setStats(prevStats => {
-        if (!prevStats) return null;
-        return {
-          ...prevStats,
-          giftBoxStats
+      if (data.success && data.stats) {
+        const giftBoxStats = {
+          totalArb: data.stats.totalArb || 0,
+          totalPepe: data.stats.totalPepe || 0,
+          totalBoop: data.stats.totalBoop || 0,
+          totalClaims: data.stats.totalClaims || 0,
+          claimsToday: data.stats.claimsToday || 0,
+          remainingClaims: data.stats.remainingClaims || 0,
+          lastGiftBoxUpdate: data.stats.lastClaimTime ? new Date(data.stats.lastClaimTime + 12 * 60 * 60 * 1000).toISOString() : null
         };
-      });
-      
+        
+        setStats(prevStats => {
+          if (!prevStats) return null;
+          return {
+            ...prevStats,
+            giftBoxStats
+          };
+        });
+      }
     } catch (error) {
-      console.error('Failed to load gift box stats from localStorage:', error);
+      console.error('Failed to get gift box stats from API:', error);
     }
   };
 
@@ -363,7 +353,7 @@ export default function UserStats() {
     getBestScoreFromStorage(); // This is synchronous, so no need to await
     getGamesPlayedFromStorage(); // This is synchronous, so no need to await
     getCalculatedStats(); // This is synchronous, so no need to await
-    getGiftBoxStatsFromStorage(); // Load gift box stats from localStorage
+    getGiftBoxStatsFromAPI(); // Load gift box stats from API
     setRefreshing(false);
   };
 
@@ -378,7 +368,7 @@ export default function UserStats() {
     getBestScoreFromStorage();
     getGamesPlayedFromStorage();
     getCalculatedStats();
-    getGiftBoxStatsFromStorage();
+    getGiftBoxStatsFromAPI();
   }, [address]);
 
   // Listen for localStorage changes to update best score and games played in real-time
@@ -390,8 +380,6 @@ export default function UserStats() {
         getGamesPlayedFromStorage();
       } else if (e.key === 'candyGameScores') {
         getCalculatedStats();
-      } else if (e.key === 'giftBoxClaims' || e.key === 'giftBoxTotals') {
-        getGiftBoxStatsFromStorage();
       }
     };
 
@@ -403,8 +391,8 @@ export default function UserStats() {
       getBestScoreFromStorage();
       getGamesPlayedFromStorage();
       getCalculatedStats();
-      getGiftBoxStatsFromStorage();
-    }, 5000);
+      getGiftBoxStatsFromAPI();
+    }, 10000); // Check every 10 seconds for API data
 
     return () => {
       window.removeEventListener('storage', handleStorageChange);
