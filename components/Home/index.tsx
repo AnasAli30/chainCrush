@@ -556,12 +556,13 @@ export function Demo() {
                 width: 'min(95vw, 520px)',
                 maxHeight: '90vh',
                 borderRadius: '28px',
-                padding: '40px 32px',
                 border: '2px solid rgba(255,255,255,0.1)',
                 backdropFilter: 'blur(25px)',
                 background: 'linear-gradient(135deg, rgba(0,255,255,0.1), rgba(147,51,234,0.08), rgba(34,197,94,0.05))',
                 boxShadow: '0 30px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.1), inset 0 1px 0 rgba(255,255,255,0.2)',
-                overflow: 'hidden'
+                overflow: 'hidden',
+                display: 'flex',
+                flexDirection: 'column'
               }}
             >
               {/* Animated gift box icon */}
@@ -618,13 +619,27 @@ export function Demo() {
                 ✕
               </motion.button>
 
-              {/* Content */}
-              <div style={{ 
-                textAlign: 'center', 
-                color: '#fff',
-                position: 'relative',
-                zIndex: 2
-              }}>
+              {/* Scrollable Content Container */}
+              <div 
+                className="popup-scroll"
+                style={{
+                  flex: 1,
+                  overflowY: 'auto',
+                  overflowX: 'hidden',
+                  padding: '40px 32px',
+                  position: 'relative',
+                  zIndex: 2,
+                  // Custom scrollbar styling
+                  scrollbarWidth: 'thin',
+                  scrollbarColor: 'rgba(0,255,255,0.3) rgba(255,255,255,0.1)'
+                }}
+              >
+                {/* Content */}
+                <div style={{ 
+                  textAlign: 'center', 
+                  color: '#fff',
+                  position: 'relative'
+                }}>
                 {/* Welcome Title */}
                 <motion.div
                   initial={{ y: -20, opacity: 0 }}
@@ -880,6 +895,7 @@ export function Demo() {
                     🚀 Start Earning Rewards Now!
                   </span>
                 </motion.button>
+                </div>
               </div>
             </motion.div>
           </motion.div>
