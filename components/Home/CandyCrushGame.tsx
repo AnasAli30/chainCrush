@@ -3819,7 +3819,7 @@ Come for my spot or stay mid 😏🏆${improvementText}`;
                         }, 2000);
                         return '🔄 Wallet connector error detected. Refreshing page...';
                       } else {
-                        return `⚠️ ${errorMessage.split('.')[0] || 'Transaction failed'}`;
+                        return '⚠️ Something went wrong. Please try again.';
                       }
                     })()}
                   </div>
