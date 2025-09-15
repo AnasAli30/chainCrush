@@ -833,7 +833,7 @@ export async function generateGiftBoxReward(score: number = 0): Promise<{
     return { tokenType: 'pepe', amount: pepeAmount };
   } else {
     // BOOP: 711 - 1000 (halved from 1423 - 2000)
-    const boopAmount = 611 + Math.floor(Math.random() * (1000 - 411 + 1));
+    const boopAmount = 311 + Math.floor(Math.random() * (1000 - 411 + 1));
     console.log(`🎁 Gift Box: BOOP reward! (${(tokenChance * 100).toFixed(1)}% chance) - Amount: ${boopAmount.toLocaleString()} - Score: ${score.toLocaleString()}`);
     return { tokenType: 'boop', amount: boopAmount };
   }
