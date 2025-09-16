@@ -828,12 +828,12 @@ export async function generateGiftBoxReward(score: number = 0): Promise<{
     return { tokenType: 'arb', amount: parseFloat(arbAmount.toFixed(6)) };
   } else if (tokenRandom < tokenChance * 2) {
     // PEPE: 2236 - 6778 (halved from 4473 - 13557)
-    const pepeAmount = 6236 + Math.floor(Math.random() * (3778 - 1236 + 1));
+    const pepeAmount = 3236 + Math.floor(Math.random() * (3778 - 1236 + 1));
     console.log(`🎁 Gift Box: PEPE reward! (${(tokenChance * 100).toFixed(1)}% chance) - Amount: ${pepeAmount.toLocaleString()} - Score: ${score.toLocaleString()}`);
     return { tokenType: 'pepe', amount: pepeAmount };
   } else {
     // BOOP: 711 - 1000 (halved from 1423 - 2000)
-    const boopAmount = 811 + Math.floor(Math.random() * (1000 - 411 + 1));
+    const boopAmount = 511 + Math.floor(Math.random() * (1000 - 411 + 1));
     console.log(`🎁 Gift Box: BOOP reward! (${(tokenChance * 100).toFixed(1)}% chance) - Amount: ${boopAmount.toLocaleString()} - Score: ${score.toLocaleString()}`);
     return { tokenType: 'boop', amount: boopAmount };
   }
