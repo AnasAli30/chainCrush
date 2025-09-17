@@ -2359,7 +2359,7 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
 Come for my spot or stay mid 😏🏆${improvementText}`;
                     
                     const playerData = getPlayerData(context);
-                    const shareUrl = `${APP_URL}`;
+                    const shareUrl = `https://farcaster.xyz/miniapps/djk3nS-wYTQu/chain-crush`;
                     
                     if (actions && actions.composeCast) {
                       await actions.composeCast({

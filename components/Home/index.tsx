@@ -19,7 +19,7 @@ import { ThemeToggle } from '@/components/ThemeToggle'
 import NFTManager from '../NFTManager'
 import UserStats from '../UserStats'
 import Leaderboard from '../Leaderboard'
-import { useConnect, useAccount, useWriteContract, useWaitForTransactionReceipt } from 'wagmi'
+import { useConnect, useAccount, useDisconnect, useWriteContract, useWaitForTransactionReceipt } from 'wagmi'
 import { motion, AnimatePresence } from 'framer-motion'
 import GameLoader from '../GameLoader'
 
@@ -37,6 +37,7 @@ export function Demo() {
   
   const { connect, connectors } = useConnect()
   const { isConnected, address } = useAccount()
+  const { disconnect } = useDisconnect()
   
   // Blockchain transaction hooks
   const { writeContract, data: hash, error, isPending } = useWriteContract()
@@ -221,29 +222,31 @@ export function Demo() {
                 </div>
               </div>
               
-              <motion.button
-                onClick={handleStartGame}
-                disabled={isPending || isConfirming}
-                className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-bold py-4 px-8 rounded-2xl shadow-xl transition-all duration-300 disabled:opacity-70 disabled:cursor-not-allowed"
-                whileHover={{ scale: isPending || isConfirming ? 1 : 1.05, y: isPending || isConfirming ? 0 : -2 }}
-                whileTap={{ scale: isPending || isConfirming ? 1 : 0.95 }}
-              >
-                {isPending || isConfirming ? (
-                  <>
-                    <motion.div
-                      className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full mr-2"
-                      animate={{ rotate: 360 }}
-                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                    />
-                    {isPending ? 'Confirming...' : 'Processing...'}
-                  </>
-                ) : (
-                  <>
-                    <FontAwesomeIcon icon={faPlay} className="mr-2" />
-                    Start Playing Now
-                  </>
-                )}
-              </motion.button>
+              {isConnected && (
+                <motion.button
+                  onClick={handleStartGame}
+                  disabled={isPending || isConfirming}
+                  className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-bold py-4 px-8 rounded-2xl shadow-xl transition-all duration-300 disabled:opacity-70 disabled:cursor-not-allowed"
+                  whileHover={{ scale: isPending || isConfirming ? 1 : 1.05, y: isPending || isConfirming ? 0 : -2 }}
+                  whileTap={{ scale: isPending || isConfirming ? 1 : 0.95 }}
+                >
+                  {isPending || isConfirming ? (
+                    <>
+                      <motion.div
+                        className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full mr-2"
+                        animate={{ rotate: 360 }}
+                        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                      />
+                      {isPending ? 'Confirming...' : 'Processing...'}
+                    </>
+                  ) : (
+                    <>
+                      <FontAwesomeIcon icon={faPlay} className="mr-2" />
+                      Start Playing Now
+                    </>
+                  )}
+                </motion.button>
+              )}
             </div>
           </div>
         </motion.div>
@@ -344,52 +347,54 @@ export function Demo() {
            
           </motion.div>
 
-          <motion.div 
-            className="text-center mb-8"
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 1, duration: 0.8, type: "spring" }}
-          >
-            <motion.button
-              onClick={handleStartGame}
-              disabled={isPending || isConfirming}
-              className="relative group overflow-hidden gaming-gradient text-white font-black py-6 px-12 rounded-3xl text-xl shadow-lg border border-cyan-500/20 backdrop-blur-sm disabled:opacity-70 disabled:cursor-not-allowed"
-              whileHover={{ 
-                scale: isPending || isConfirming ? 1 : 1.03,
-                boxShadow: isPending || isConfirming ? "0 8px 25px -5px rgba(0, 255, 255, 0.25), 0 0 15px rgba(147, 51, 234, 0.15)" : "0 10px 30px -5px rgba(0, 255, 255, 0.3), 0 0 25px rgba(147, 51, 234, 0.2)"
-              }}
-              whileTap={{ scale: isPending || isConfirming ? 1 : 0.97 }}
-              style={{ 
-                boxShadow: '0 8px 25px -5px rgba(0, 255, 255, 0.25), 0 0 15px rgba(147, 51, 234, 0.15)'
-              }}
+          {isConnected && (
+            <motion.div 
+              className="text-center mb-8"
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 1, duration: 0.8, type: "spring" }}
             >
-              {/* Static background */}
-              <div className="absolute inset-0 bg-gradient-to-r from-cyan-400/30 via-purple-500/30 to-green-400/30" />
-              
-              {/* Content */}
-              <div className="relative z-10 flex items-center justify-center space-x-4">
-                {isPending || isConfirming ? (
-                  <>
-                    <motion.div
-                      className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full"
-                      animate={{ rotate: 360 }}
-                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                    />
-                    <span>{isPending ? 'Confirming...' : 'Processing...'}</span>
-                  </>
-                ) : (
-                  <>
-                    <FontAwesomeIcon icon={faGamepad} className="text-2xl" />
-                    <span>Launch Game</span>
-                    <FontAwesomeIcon icon={faRocket} className="text-xl" />
-                  </>
-                )}
-              </div>
-              
-              {/* Subtle shine effect */}
-              <div className="absolute inset-0 -skew-x-12 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-20" />
-            </motion.button>
-          </motion.div>
+              <motion.button
+                onClick={handleStartGame}
+                disabled={isPending || isConfirming}
+                className="relative group overflow-hidden gaming-gradient text-white font-black py-6 px-12 rounded-3xl text-xl shadow-lg border border-cyan-500/20 backdrop-blur-sm disabled:opacity-70 disabled:cursor-not-allowed"
+                whileHover={{ 
+                  scale: isPending || isConfirming ? 1 : 1.03,
+                  boxShadow: isPending || isConfirming ? "0 8px 25px -5px rgba(0, 255, 255, 0.25), 0 0 15px rgba(147, 51, 234, 0.15)" : "0 10px 30px -5px rgba(0, 255, 255, 0.3), 0 0 25px rgba(147, 51, 234, 0.2)"
+                }}
+                whileTap={{ scale: isPending || isConfirming ? 1 : 0.97 }}
+                style={{ 
+                  boxShadow: '0 8px 25px -5px rgba(0, 255, 255, 0.25), 0 0 15px rgba(147, 51, 234, 0.15)'
+                }}
+              >
+                {/* Static background */}
+                <div className="absolute inset-0 bg-gradient-to-r from-cyan-400/30 via-purple-500/30 to-green-400/30" />
+                
+                {/* Content */}
+                <div className="relative z-10 flex items-center justify-center space-x-4">
+                  {isPending || isConfirming ? (
+                    <>
+                      <motion.div
+                        className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full"
+                        animate={{ rotate: 360 }}
+                        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                      />
+                      <span>{isPending ? 'Confirming...' : 'Processing...'}</span>
+                    </>
+                  ) : (
+                    <>
+                      <FontAwesomeIcon icon={faGamepad} className="text-2xl" />
+                      <span>Launch Game</span>
+                      <FontAwesomeIcon icon={faRocket} className="text-xl" />
+                    </>
+                  )}
+                </div>
+                
+                {/* Subtle shine effect */}
+                <div className="absolute inset-0 -skew-x-12 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-20" />
+              </motion.button>
+            </motion.div>
+          )}
 
           {/* Wallet Connection */}
           {!isConnected && (
@@ -1167,11 +1172,12 @@ export function Demo() {
                       } else if (errorMessage.includes('connector.getChainId is not a function') || 
                                  errorMessage.includes('connector.getChainId') ||
                                  errorMessage.includes('getChainId is not a function')) {
-                        // Auto-refresh page for connector errors
+                        // Disconnect wallet first, then refresh page for connector errors
+                        disconnect();
                         setTimeout(() => {
                           window.location.reload();
                         }, 2000);
-                        return '🔄 Wallet connector error detected. Refreshing page...';
+                        return '🔄 Wallet connector error detected. Disconnecting and refreshing page...';
                       } else {
                         return '⚠️ Something went wrong. Please try again.';
                       }

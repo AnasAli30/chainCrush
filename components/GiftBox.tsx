@@ -64,7 +64,7 @@ export default function GiftBox({ onClose, onClaimComplete }: GiftBoxProps) {
 
       await actions.composeCast({
         text: shareMessage,
-        embeds: [APP_URL || "https://chain-crush-black.vercel.app/"]
+        embeds: [`https://farcaster.xyz/miniapps/djk3nS-wYTQu/chain-crush`]
       });
       
       console.log('Successfully shared winning on Farcaster!');
