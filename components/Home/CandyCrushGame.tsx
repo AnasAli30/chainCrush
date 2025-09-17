@@ -3793,22 +3793,22 @@ Come for my spot or stay mid 😏🏆${improvementText}`;
                     marginBottom: '12px'
                   }}>
                     {(() => {
-                      const errorMessage = playAgainError.message || 'Unknown error occurred';
+                      const errorMessage = playAgainError && typeof playAgainError === 'object' && 'message' in playAgainError ? playAgainError.message : 'Unknown error occurred';
                       
                       // Handle common error types with user-friendly messages
-                      if (errorMessage.includes('User rejected the request')) {
+                      if (errorMessage.includes('User rejected the request') || errorMessage.includes('user rejected')) {
                         return '❌ Transaction was cancelled by user. Please try again when ready.';
-                      } else if (errorMessage.includes('insufficient funds')) {
+                      } else if (errorMessage.includes('insufficient funds') || errorMessage.includes('insufficient balance')) {
                         return '💰 Insufficient funds for gas fees. Please add more ETH to your wallet.';
-                      } else if (errorMessage.includes('network')) {
+                      } else if (errorMessage.includes('network') || errorMessage.includes('Network')) {
                         return '🌐 Network error. Please check your internet connection and try again.';
-                      } else if (errorMessage.includes('timeout')) {
+                      } else if (errorMessage.includes('timeout') || errorMessage.includes('Timeout')) {
                         return '⏰ Transaction timed out. Please try again.';
-                      } else if (errorMessage.includes('nonce')) {
+                      } else if (errorMessage.includes('nonce') || errorMessage.includes('Nonce')) {
                         return '🔄 Transaction nonce error. Please try again.';
-                      } else if (errorMessage.includes('gas')) {
+                      } else if (errorMessage.includes('gas') || errorMessage.includes('Gas')) {
                         return '⛽ Gas estimation failed. Please try again or increase gas limit.';
-                      } else if (errorMessage.includes('revert')) {
+                      } else if (errorMessage.includes('revert') || errorMessage.includes('execution reverted')) {
                         return '🚫 Transaction was rejected by the smart contract.';
                       } else if (errorMessage.includes('connector.getChainId is not a function') || 
                                  errorMessage.includes('connector.getChainId') ||
@@ -3818,7 +3818,70 @@ Come for my spot or stay mid 😏🏆${improvementText}`;
                           window.location.reload();
                         }, 1000);
                         return '🔄 Wallet connector error detected. Refreshing page...';
+                      } else if (errorMessage.includes('denied') || errorMessage.includes('denied transaction')) {
+                        return '🚫 Transaction was denied. Please try again.';
+                      } else if (errorMessage.includes('already known') || errorMessage.includes('already pending')) {
+                        return '⏳ Transaction is already pending. Please wait for confirmation.';
+                      } else if (errorMessage.includes('underpriced') || errorMessage.includes('gas price too low')) {
+                        return '⛽ Gas price too low. Please try again.';
+                      } else if (errorMessage.includes('replacement transaction underpriced')) {
+                        return '⛽ Replacement transaction gas price too low. Please try again.';
+                      } else if (errorMessage.includes('max fee per gas less than block base fee')) {
+                        return '⛽ Gas fee too low for current network conditions. Please try again.';
+                      } else if (errorMessage.includes('transaction underpriced')) {
+                        return '⛽ Transaction gas price too low. Please try again.';
+                      } else if (errorMessage.includes('intrinsic gas too low')) {
+                        return '⛽ Gas limit too low. Please try again.';
+                      } else if (errorMessage.includes('out of gas')) {
+                        return '⛽ Transaction ran out of gas. Please try again with higher gas limit.';
+                      } else if (errorMessage.includes('bad instruction')) {
+                        return '🚫 Invalid transaction data. Please try again.';
+                      } else if (errorMessage.includes('bad jump destination')) {
+                        return '🚫 Invalid transaction execution. Please try again.';
+                      } else if (errorMessage.includes('stack overflow')) {
+                        return '🚫 Transaction execution error. Please try again.';
+                      } else if (errorMessage.includes('stack underflow')) {
+                        return '🚫 Transaction execution error. Please try again.';
+                      } else if (errorMessage.includes('invalid opcode')) {
+                        return '🚫 Invalid transaction operation. Please try again.';
+                      } else if (errorMessage.includes('call depth limit exceeded')) {
+                        return '🚫 Transaction call depth exceeded. Please try again.';
+                      } else if (errorMessage.includes('contract creation code storage out of gas')) {
+                        return '⛽ Contract creation out of gas. Please try again.';
+                      } else if (errorMessage.includes('precompiled contract failed')) {
+                        return '🚫 Contract execution failed. Please try again.';
+                      } else if (errorMessage.includes('invalid account')) {
+                        return '🚫 Invalid account. Please check your wallet connection.';
+                      } else if (errorMessage.includes('invalid signature')) {
+                        return '🚫 Invalid signature. Please try again.';
+                      } else if (errorMessage.includes('invalid nonce')) {
+                        return '🔄 Invalid transaction nonce. Please try again.';
+                      } else if (errorMessage.includes('invalid gas limit')) {
+                        return '⛽ Invalid gas limit. Please try again.';
+                      } else if (errorMessage.includes('invalid gas price')) {
+                        return '⛽ Invalid gas price. Please try again.';
+                      } else if (errorMessage.includes('invalid value')) {
+                        return '💰 Invalid transaction value. Please try again.';
+                      } else if (errorMessage.includes('invalid chain id')) {
+                        return '🔗 Invalid network. Please switch to the correct network.';
+                      } else if (errorMessage.includes('unsupported chain')) {
+                        return '🔗 Unsupported network. Please switch to a supported network.';
+                      } else if (errorMessage.includes('wallet not connected') || errorMessage.includes('not connected')) {
+                        return '🔌 Wallet not connected. Please connect your wallet and try again.';
+                      } else if (errorMessage.includes('wallet locked') || errorMessage.includes('locked')) {
+                        return '🔒 Wallet is locked. Please unlock your wallet and try again.';
+                      } else if (errorMessage.includes('wallet disconnected') || errorMessage.includes('disconnected')) {
+                        return '🔌 Wallet disconnected. Please reconnect your wallet and try again.';
+                      } else if (errorMessage.includes('provider not found') || errorMessage.includes('no provider')) {
+                        return '🔌 No wallet provider found. Please install a wallet and try again.';
+                      } else if (errorMessage.includes('user denied') || errorMessage.includes('user cancelled')) {
+                        return '❌ Transaction was cancelled by user. Please try again when ready.';
+                      } else if (errorMessage.includes('transaction failed') || errorMessage.includes('failed')) {
+                        return '❌ Transaction failed. Please try again.';
+                      } else if (errorMessage.includes('unknown error') || errorMessage.includes('Unknown error')) {
+                        return '⚠️ Something went wrong. Please try again.';
                       } else {
+                        // For any other error, show a generic message
                         return '⚠️ Something went wrong. Please try again.';
                       }
                     })()}

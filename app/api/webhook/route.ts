@@ -18,25 +18,26 @@ import {
       data = await parseWebhookEvent(requestJson, verifyAppKeyWithNeynar);
     } catch (e: unknown) {
       const error = e as ParseWebhookEvent.ErrorType;
+      const errorMessage = error && typeof error === 'object' && 'message' in error ? error.message : String(error);
   
       switch (error.name) {
         case "VerifyJsonFarcasterSignature.InvalidDataError":
         case "VerifyJsonFarcasterSignature.InvalidEventDataError":
           // The request data is invalid
           return Response.json(
-            { success: false, error: error.message },
+            { success: false, error: errorMessage },
             { status: 400 }
           );
         case "VerifyJsonFarcasterSignature.InvalidAppKeyError":
           // The app key is invalid
           return Response.json(
-            { success: false, error: error.message },
+            { success: false, error: errorMessage },
             { status: 401 }
           );
         case "VerifyJsonFarcasterSignature.VerifyAppKeyError":
           // Internal error verifying the app key (caller may want to try again)
           return Response.json(
-            { success: false, error: error.message },
+            { success: false, error: errorMessage },
             { status: 500 }
           );
       }
