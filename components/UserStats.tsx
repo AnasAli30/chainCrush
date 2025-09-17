@@ -442,7 +442,7 @@ localStorage.setItem('giftBoxTotals', JSON.stringify({
           tokenRewards.push(`🎁 ${tokenAmounts.totalBoop.toLocaleString()} BOOP`);
         }
         if (tokenRewards.length > 0) {
-          statsArray.push(`💰 ${tokenRewards.join(' + ')} Rewards`);
+          statsArray.push(`💰 ${tokenRewards.join(' + ')} Rewards Claimed`);
         }
       }
       
@@ -456,7 +456,7 @@ localStorage.setItem('giftBoxTotals', JSON.stringify({
       const username = context?.user?.username || 'ChainCrush Player';
       
       // Enhanced share message with token rewards
-      const shareMessage = `just CRUSHED it on ChainCrush! 💪\n\n${statsText}\n\n🔥 Y'all think you can beat these stats? I'm waiting... 👀\n Drop your best score below and let's see who's really built different!\n\n💰 Daily rewards available! Claim your gift boxes and earn tokens! 🎁\n\n#ChainCrush #Web3Gaming #CryptoRewards`;
+      const shareMessage = `just CRUSHED it on ChainCrush! 💪\n\n${statsText}\n\n🔥 Y'all think you can beat these stats? I'm waiting... 👀\n Drop your best score below and let's see who's really built different!\n\n💰 Daily rewards available! Claim your gift boxes and earn tokens! 🎁`;
       
       await actions.composeCast({
         text: shareMessage,
