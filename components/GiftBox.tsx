@@ -195,6 +195,9 @@ export default function GiftBox({ onClose, onClaimComplete }: GiftBoxProps) {
       
       localStorage.setItem('giftBoxTotals', JSON.stringify(existingTotals));
       
+      // Dispatch custom event to notify other components
+      window.dispatchEvent(new CustomEvent('giftBoxClaimed', { detail: newClaim }));
+      
       console.log('Gift box claim stored in localStorage:', newClaim);
     } catch (error) {
       console.error('Failed to store gift box claim:', error);

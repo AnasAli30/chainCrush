@@ -128,16 +128,88 @@ export default function UserStats() {
     setTotalGamesFromScores(getTotalGamesFromScores());
   };
 
-  // Get gift box stats from API
-  const getGiftBoxStatsFromAPI = async () => {
-    if (!address) return;
+  // Get token amounts from localStorage (from GiftBox component)
+  const getTokenAmountsFromStorage = (): { totalArb: number; totalPepe: number; totalBoop: number } | null => {
+    if (typeof window === 'undefined') return null;
     
     try {
+      // Get token totals from localStorage (stored by GiftBox component)
+      const totals = JSON.parse(localStorage.getItem('giftBoxTotals') || '{"arb": 0, "pepe": 0, "boop": 0, "totalClaims": 0}');
+      
+      console.log('Token amounts from localStorage (giftBoxTotals):', totals);
+      
+      // If no data found, add test data for demonstration
+      if (totals.arb === 0 && totals.pepe === 0 && totals.boop === 0) {
+        console.log('No token data found. You can add test data by running this in console:');
+        console.log(`
+localStorage.setItem('giftBoxTotals', JSON.stringify({
+  "arb": 0,
+  "pepe": 0, 
+  "boop": 1545,
+  "totalClaims": 3
+}));
+        `);
+      }
+      
+      // If totals are empty, try to calculate from claims array
+      if (totals.arb === 0 && totals.pepe === 0 && totals.boop === 0) {
+        const claims = JSON.parse(localStorage.getItem('giftBoxClaims') || '[]');
+        console.log('Totals empty, calculating from claims:', claims);
+        
+        if (claims.length > 0) {
+          const calculatedTotals = {
+            arb: 0,
+            pepe: 0,
+            boop: 0
+          };
+          
+          claims.forEach((claim: any) => {
+            if (claim.tokenType === 'arb') {
+              calculatedTotals.arb += claim.amount || 0;
+            } else if (claim.tokenType === 'pepe') {
+              calculatedTotals.pepe += claim.amount || 0;
+            } else if (claim.tokenType === 'boop') {
+              calculatedTotals.boop += claim.amount || 0;
+            }
+          });
+          
+          console.log('Calculated token amounts from claims:', calculatedTotals);
+          return {
+            totalArb: calculatedTotals.arb,
+            totalPepe: calculatedTotals.pepe,
+            totalBoop: calculatedTotals.boop
+          };
+        }
+      }
+      
+      return {
+        totalArb: totals.arb || 0,
+        totalPepe: totals.pepe || 0,
+        totalBoop: totals.boop || 0
+      };
+    } catch (error) {
+      console.error('Failed to get token amounts from localStorage:', error);
+      return null;
+    }
+  };
+
+  // Get gift box stats from API
+  const getGiftBoxStatsFromAPI = async () => {
+    console.log('getGiftBoxStatsFromAPI: Function called');
+    if (!address) {
+      console.log('No address, skipping gift box stats API call');
+      return;
+    }
+    
+    try {
+      console.log('Fetching gift box stats from API...');
       const response = await fetch(`/api/claim-gift-box?userAddress=${address}&fid=${context?.user?.fid || ''}&stats=true`);
       const data = await response.json();
       
+      console.log('API response:', data);
+      
       if (data.success && data.stats) {
-        const giftBoxStats = {
+        const apiStats = {
           totalArb: data.stats.totalArb || 0,
           totalPepe: data.stats.totalPepe || 0,
           totalBoop: data.stats.totalBoop || 0,
@@ -147,16 +219,111 @@ export default function UserStats() {
           lastGiftBoxUpdate: data.stats.lastClaimTime ? new Date(data.stats.lastClaimTime + 12 * 60 * 60 * 1000).toISOString() : null
         };
         
+        console.log('API stats:', apiStats);
+        
+        // Get token amounts from localStorage (from GiftBox component)
+        const tokenAmounts = getTokenAmountsFromStorage();
+        console.log('Token amounts from localStorage:', tokenAmounts);
+        
+        const giftBoxStats = {
+          // Use API data for claims info (daily limits, remaining, etc.)
+          totalClaims: apiStats.totalClaims,
+          claimsToday: apiStats.claimsToday,
+          remainingClaims: apiStats.remainingClaims,
+          lastGiftBoxUpdate: apiStats.lastGiftBoxUpdate,
+          // Use localStorage data for token amounts (from GiftBox claims)
+          totalArb: tokenAmounts?.totalArb || 0,
+          totalPepe: tokenAmounts?.totalPepe || 0,
+          totalBoop: tokenAmounts?.totalBoop || 0
+        };
+        
+        console.log('Combined gift box stats:', giftBoxStats);
+        
         setStats(prevStats => {
-          if (!prevStats) return null;
+          if (!prevStats) {
+            // If no stats yet, create a minimal stats object with gift box data
+            console.log('getGiftBoxStatsFromAPI: Creating new stats object with gift box data');
+            return {
+              userAddress: address,
+              dailyMintCount: 0,
+              mintHistory: [],
+              topScores: [],
+              dailyMintsRemaining: 5,
+              giftBoxStats
+            };
+          }
+          console.log('getGiftBoxStatsFromAPI: Updating existing stats with gift box data, prevStats:', prevStats);
           return {
             ...prevStats,
             giftBoxStats
           };
         });
+      } else {
+        console.log('API returned no stats, using localStorage token amounts only');
+        // Use localStorage token amounts even if API has no stats
+        const tokenAmounts = getTokenAmountsFromStorage();
+        if (tokenAmounts) {
+          const fallbackStats = {
+            totalClaims: 0,
+            claimsToday: 0,
+            remainingClaims: 5,
+            lastGiftBoxUpdate: null,
+            totalArb: tokenAmounts.totalArb || 0,
+            totalPepe: tokenAmounts.totalPepe || 0,
+            totalBoop: tokenAmounts.totalBoop || 0
+          };
+          console.log('Using localStorage token amounts as fallback:', fallbackStats);
+          setStats(prevStats => {
+            if (!prevStats) {
+              return {
+                userAddress: address,
+                dailyMintCount: 0,
+                mintHistory: [],
+                topScores: [],
+                dailyMintsRemaining: 5,
+                giftBoxStats: fallbackStats
+              };
+            }
+            return {
+              ...prevStats,
+              giftBoxStats: fallbackStats
+            };
+          });
+        }
       }
     } catch (error) {
       console.error('Failed to get gift box stats from API:', error);
+      
+      // Fallback to localStorage token amounts only if API fails
+      const tokenAmounts = getTokenAmountsFromStorage();
+      if (tokenAmounts) {
+        const fallbackStats = {
+          totalClaims: 0,
+          claimsToday: 0,
+          remainingClaims: 5,
+          lastGiftBoxUpdate: null,
+          totalArb: tokenAmounts.totalArb || 0,
+          totalPepe: tokenAmounts.totalPepe || 0,
+          totalBoop: tokenAmounts.totalBoop || 0
+        };
+        console.log('API failed, using localStorage token amounts:', fallbackStats);
+        setStats(prevStats => {
+          if (!prevStats) {
+            return {
+              userAddress: address,
+              dailyMintCount: 0,
+              mintHistory: [],
+              topScores: [],
+              dailyMintsRemaining: 5,
+              giftBoxStats: fallbackStats
+            };
+          }
+          return {
+            ...prevStats,
+            giftBoxStats: fallbackStats
+          };
+        });
+      }
     }
   };
 
@@ -164,6 +331,21 @@ export default function UserStats() {
   const refreshGiftBoxStats = () => {
     getGiftBoxStatsFromAPI();
   };
+
+  // Listen for custom gift box claim events
+  useEffect(() => {
+    const handleGiftBoxClaim = () => {
+      // Refresh gift box stats when a claim is made
+      getGiftBoxStatsFromAPI();
+    };
+
+    // Listen for custom gift box claim events
+    window.addEventListener('giftBoxClaimed', handleGiftBoxClaim);
+
+    return () => {
+      window.removeEventListener('giftBoxClaimed', handleGiftBoxClaim);
+    };
+  }, []);
 
   // Check share reward eligibility
   const checkShareRewardEligibility = async () => {
@@ -324,6 +506,7 @@ export default function UserStats() {
 
   // Fetch user stats function
   const fetchStats = async () => {
+    console.log('fetchStats: Function called');
     if (!address) return;
     setLoading(true);
     try {
@@ -334,9 +517,14 @@ export default function UserStats() {
         // Fix the remaining value calculation
         const data = result.data;
         const correctedRemaining = Math.max(0, 5 - (data.dailyMintCount || 0));
-        setStats({
-          ...data,
-          dailyMintsRemaining: correctedRemaining
+        setStats(prevStats => {
+          console.log('fetchStats: Setting stats, prevStats.giftBoxStats:', prevStats?.giftBoxStats);
+          return {
+            ...data,
+            dailyMintsRemaining: correctedRemaining,
+            // Preserve existing giftBoxStats if they exist
+            giftBoxStats: prevStats?.giftBoxStats
+          };
         });
       }
     } catch (error) {
@@ -353,27 +541,64 @@ export default function UserStats() {
       fetchStats(),
       refetchAll(),
       fetchEthBalance(),
-      fetchNftBalance()
+      fetchNftBalance(),
+      getGiftBoxStatsFromAPI() // Load gift box stats from API
     ]);
     getBestScoreFromStorage(); // This is synchronous, so no need to await
     getGamesPlayedFromStorage(); // This is synchronous, so no need to await
     getCalculatedStats(); // This is synchronous, so no need to await
-    getGiftBoxStatsFromAPI(); // Load gift box stats from API
     setRefreshing(false);
   };
 
   useEffect(() => {
-    if (address) {
-      fetchStats();
-      fetchEthBalance();
-      fetchNftBalance();
-      checkShareRewardEligibility();
-    }
-    // Always get best score and games played from localStorage regardless of wallet connection
-    getBestScoreFromStorage();
-    getGamesPlayedFromStorage();
-    getCalculatedStats();
-    getGiftBoxStatsFromAPI();
+    const loadData = async () => {
+      if (address) {
+        await Promise.all([
+          fetchStats(),
+          fetchEthBalance(),
+          fetchNftBalance(),
+          checkShareRewardEligibility(),
+          getGiftBoxStatsFromAPI()
+        ]);
+      } else {
+        // Even without address, try to load token amounts from localStorage
+        const tokenAmounts = getTokenAmountsFromStorage();
+        if (tokenAmounts) {
+          const fallbackStats = {
+            totalClaims: 0,
+            claimsToday: 0,
+            remainingClaims: 5,
+            lastGiftBoxUpdate: null,
+            totalArb: tokenAmounts.totalArb || 0,
+            totalPepe: tokenAmounts.totalPepe || 0,
+            totalBoop: tokenAmounts.totalBoop || 0
+          };
+          console.log('No address but found localStorage token amounts:', fallbackStats);
+          setStats(prevStats => {
+            if (!prevStats) {
+              return {
+                userAddress: '',
+                dailyMintCount: 0,
+                mintHistory: [],
+                topScores: [],
+                dailyMintsRemaining: 5,
+                giftBoxStats: fallbackStats
+              };
+            }
+            return {
+              ...prevStats,
+              giftBoxStats: fallbackStats
+            };
+          });
+        }
+      }
+      // Always get best score and games played from localStorage regardless of wallet connection
+      getBestScoreFromStorage();
+      getGamesPlayedFromStorage();
+      getCalculatedStats();
+    };
+    
+    loadData();
   }, [address]);
 
   // Listen for localStorage changes to update best score and games played in real-time
@@ -385,6 +610,9 @@ export default function UserStats() {
         getGamesPlayedFromStorage();
       } else if (e.key === 'candyGameScores') {
         getCalculatedStats();
+      } else if (e.key === 'giftBoxClaims' || e.key === 'giftBoxTotals') {
+        // Refresh gift box stats when localStorage is updated
+        getGiftBoxStatsFromAPI();
       }
     };
 
@@ -806,7 +1034,37 @@ export default function UserStats() {
       </motion.div>
 
       {/* Gift Box Analytics */}
-      {stats.giftBoxStats && (
+      {(() => {
+        const tokenAmounts = getTokenAmountsFromStorage();
+        const hasTokenData = tokenAmounts && (tokenAmounts.totalArb > 0 || tokenAmounts.totalPepe > 0 || tokenAmounts.totalBoop > 0);
+        const hasApiData = stats.giftBoxStats && (stats.giftBoxStats.claimsToday > 0 || stats.giftBoxStats.totalClaims > 0);
+        
+        // Show if we have either token data OR API data OR stats.giftBoxStats exists
+        // Also show if we have any gift box related data at all
+        const shouldShow = stats.giftBoxStats || hasTokenData || hasApiData || true; // Always show for now to debug
+        
+        const giftBoxData = stats.giftBoxStats || (hasTokenData ? {
+          totalClaims: 0,
+          claimsToday: 0,
+          remainingClaims: 5,
+          lastGiftBoxUpdate: null,
+          totalArb: tokenAmounts?.totalArb || 0,
+          totalPepe: tokenAmounts?.totalPepe || 0,
+          totalBoop: tokenAmounts?.totalBoop || 0
+        } : null);
+        
+        console.log('Gift Box Analytics render check:', { 
+          hasStatsGiftBox: !!stats.giftBoxStats, 
+          statsGiftBoxContent: stats.giftBoxStats,
+          hasTokenData,
+          hasApiData,
+          shouldShow,
+          tokenAmounts,
+          giftBoxData,
+          fullStatsObject: stats
+        });
+        return shouldShow;
+      })() && (
         <motion.div 
           className="glass-card neon-glow p-6 rounded-2xl text-white shadow-lg"
           style={{
@@ -843,7 +1101,7 @@ export default function UserStats() {
                 <FontAwesomeIcon icon={faCalendarDay} className="text-cyan-400 text-xl" />
               </div>
               <p className="text-xs text-cyan-400 uppercase tracking-wider">Claims Today</p>
-              <p className="text-2xl font-bold text-white">{stats.giftBoxStats.claimsToday}</p>
+              <p className="text-2xl font-bold text-white">{stats.giftBoxStats?.claimsToday || 0}</p>
               <p className="text-xs text-white/60">/ 5 per period</p>
             </motion.div>
             
@@ -861,7 +1119,7 @@ export default function UserStats() {
                 <FontAwesomeIcon icon={faCheckCircle} className="text-purple-400 text-xl" />
               </div>
               <p className="text-xs text-purple-400 uppercase tracking-wider">Remaining</p>
-              <p className="text-2xl font-bold text-white">{stats.giftBoxStats.remainingClaims}</p>
+              <p className="text-2xl font-bold text-white">{stats.giftBoxStats?.remainingClaims || 0}</p>
               <p className="text-xs text-white/60">boxes left</p>
               
               {/* Progress Bar */}
@@ -869,7 +1127,7 @@ export default function UserStats() {
                 <div className="w-full bg-black/50 rounded-full h-2 border border-purple-400/20">
                   <div 
                     className="bg-gradient-to-r from-purple-400 to-cyan-400 h-2 rounded-full transition-all duration-500"
-                    style={{ width: `${(stats.giftBoxStats.remainingClaims / 5) * 100}%` }}
+                    style={{ width: `${((stats.giftBoxStats?.remainingClaims || 0) / 5) * 100}%` }}
                   ></div>
                 </div>
               </div>
@@ -889,13 +1147,13 @@ export default function UserStats() {
                 <FontAwesomeIcon icon={faHistory} className="text-green-400 text-xl" />
               </div>
               <p className="text-xs text-green-400 uppercase tracking-wider">Total Claims</p>
-              <p className="text-2xl font-bold text-white">{stats.giftBoxStats.totalClaims}</p>
+              <p className="text-2xl font-bold text-white">{stats.giftBoxStats?.totalClaims || 0}</p>
               <p className="text-xs text-white/60">all time</p>
             </motion.div>
           </div>
 
           {/* Reset Time Information */}
-          {stats.giftBoxStats.lastGiftBoxUpdate && (
+          {stats.giftBoxStats?.lastGiftBoxUpdate && (
             <motion.div 
               className="mb-6 p-4 rounded-lg"
               style={{
@@ -914,7 +1172,8 @@ export default function UserStats() {
               <p className="text-center text-white/80 text-sm">
                 {(() => {
                   const now = new Date();
-                  const resetTime = new Date(stats.giftBoxStats.lastGiftBoxUpdate);
+                  const lastUpdate = stats.giftBoxStats?.lastGiftBoxUpdate;
+                  const resetTime = lastUpdate ? new Date(lastUpdate) : new Date();
                   const timeDiff = resetTime.getTime() - now.getTime();
                   
                   if (timeDiff <= 0) {
@@ -952,7 +1211,7 @@ export default function UserStats() {
                   <img src="/candy/arb.png" alt="ARB" className="w-full h-full object-contain" />
                 </div>
                 <p className="text-xs text-cyan-400">ARB</p>
-                <p className="text-lg font-bold text-white">{stats.giftBoxStats.totalArb.toFixed(3)}</p>
+                <p className="text-lg font-bold text-white">{(stats.giftBoxStats?.totalArb || 0).toFixed(3)}</p>
               </motion.div>
               <motion.div 
                 className="text-center p-3 rounded-lg"
@@ -968,7 +1227,7 @@ export default function UserStats() {
                   <img src="/candy/2.png" alt="PEPE" className="w-full h-full object-contain" />
                 </div>
                 <p className="text-xs text-purple-400">PEPE</p>
-                <p className="text-lg font-bold text-white">{stats.giftBoxStats.totalPepe.toLocaleString()}</p>
+                <p className="text-lg font-bold text-white">{(stats.giftBoxStats?.totalPepe || 0).toLocaleString()}</p>
               </motion.div>
               <motion.div 
                 className="text-center p-3 rounded-lg"
@@ -984,7 +1243,7 @@ export default function UserStats() {
                   <img src="/candy/1.png" alt="BOOP" className="w-full h-full object-contain" />
                 </div>
                 <p className="text-xs text-green-400">BOOP</p>
-                <p className="text-lg font-bold text-white">{stats.giftBoxStats.totalBoop.toLocaleString()}</p>
+                <p className="text-lg font-bold text-white">{(stats.giftBoxStats?.totalBoop || 0).toLocaleString()}</p>
               </motion.div>
             </div>
           </div>
