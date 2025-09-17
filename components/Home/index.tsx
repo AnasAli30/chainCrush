@@ -20,7 +20,7 @@ import NFTManager from '../NFTManager'
 import UserStats from '../UserStats'
 import Leaderboard from '../Leaderboard'
 import { useConnect, useAccount, useDisconnect, useWriteContract, useWaitForTransactionReceipt } from 'wagmi'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence, sync } from 'framer-motion'
 import GameLoader from '../GameLoader'
 
 export function Demo() {

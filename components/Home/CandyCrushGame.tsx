@@ -3816,7 +3816,7 @@ Come for my spot or stay mid 😏🏆${improvementText}`;
                         // Auto-refresh page for connector errors
                         setTimeout(() => {
                           window.location.reload();
-                        }, 2000);
+                        }, 1000);
                         return '🔄 Wallet connector error detected. Refreshing page...';
                       } else {
                         return '⚠️ Something went wrong. Please try again.';
