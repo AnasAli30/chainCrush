@@ -61,6 +61,7 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
   // Add reshuffles state
   const [reshuffles, setReshuffles] = useState(1);
   const reshuffleGridRef = useRef<null | (() => void)>(null);
+  const [reshuffleError, setReshuffleError] = useState<string | null>(null);
   
   // Combo system state
   const [comboCount, setComboCount] = useState(0);
@@ -794,13 +795,27 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
     }
 
     function triggerVibration(pattern: number[]) {
-      // Check if vibration is supported
-      if ('vibrate' in navigator) {
-        try {
-          navigator.vibrate(pattern);
-        } catch (error) {
-          console.log('Vibration not supported on this device');
+      // Enhanced vibration function with proper error handling for iOS and other devices
+      try {
+        // Check if vibration is supported and available
+        if ('vibrate' in navigator && typeof navigator.vibrate === 'function') {
+          // For iOS devices, ensure we're in a user interaction context
+          const result = navigator.vibrate(pattern);
+          
+          // Some browsers return false when vibration is not supported
+          if (result === false) {
+            console.log('Vibration not supported on this device');
+            return false;
+          }
+          
+          return true;
+        } else {
+          console.log('Vibration API not available');
+          return false;
         }
+      } catch (error) {
+        console.log('Vibration failed:', error);
+        return false;
       }
     }
 
@@ -1642,12 +1657,14 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
 
     // Add reshuffleGrid function in Phaser logic and expose to React
     function reshuffleGrid() {
-      // Animate all candies falling down and fading out
-      let total = 0, done = 0;
-      // Vibrate for reshuffle start
-      if ('vibrate' in navigator) {
-        navigator.vibrate([100, 50, 100]);
-      }
+      try {
+        // Animate all candies falling down and fading out
+        let total = 0, done = 0;
+        // Vibrate for reshuffle start with proper error handling
+        const vibrationSuccess = triggerVibration([100, 50, 100]);
+        if (!vibrationSuccess) {
+          console.log('Vibration failed during reshuffle, continuing without haptic feedback');
+        }
       for (let row = 0; row < GRID_ROWS; row++) {
         for (let col = 0; col < GRID_COLS; col++) {
           const candy = grid[row][col];
@@ -1674,6 +1691,15 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
       }
       // If grid was empty (shouldn't happen), just refill
       if (total === 0) refillGridWithAnimation();
+      } catch (error) {
+        console.error('Error in reshuffleGrid:', error);
+        // Fallback: try to refill grid without animation
+        try {
+          refillGridWithAnimation();
+        } catch (fallbackError) {
+          console.error('Fallback refill also failed:', fallbackError);
+        }
+      }
     }
 
     function refillGridWithAnimation() {
@@ -1697,9 +1723,10 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
             ease: 'Bounce.easeOut',
             onComplete: () => {
               landed++;
-              // Vibrate for each candy landing (short pulse)
-              if ('vibrate' in navigator) {
-                navigator.vibrate(10);
+              // Vibrate for each candy landing (short pulse) with error handling
+              // Only vibrate for the last candy to avoid too many vibration calls
+              if (landed === total) {
+                triggerVibration([10]);
               }
               // When the last candy animates in, update UI and check for matches
               if (landed === total) {
@@ -3007,8 +3034,21 @@ Come for my spot or stay mid 😏🏆${improvementText}`;
           <button
             onClick={() => {
               if (reshuffleGridRef.current) {
-                reshuffleGridRef.current();
-                setReshuffles(r => r - 1);
+                try {
+                  setReshuffleError(null); // Clear any previous errors
+                  reshuffleGridRef.current();
+                  setReshuffles(r => r - 1);
+                } catch (error) {
+                  console.error('Reshuffle failed:', error);
+                  setReshuffleError('Reshuffle failed, but grid was updated');
+                  // Fallback: still decrement reshuffles even if animation fails
+                  setReshuffles(r => r - 1);
+                  // Clear error after 3 seconds
+                  setTimeout(() => setReshuffleError(null), 3000);
+                }
+              } else {
+                setReshuffleError('Reshuffle not available yet');
+                setTimeout(() => setReshuffleError(null), 3000);
               }
             }}
             style={{

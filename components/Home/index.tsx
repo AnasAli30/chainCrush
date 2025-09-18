@@ -571,7 +571,7 @@ export function Demo() {
               }}
             >
               {/* Animated gift box icon */}
-              <motion.div
+              {/* <motion.div
                 initial={{ scale: 0, rotate: -180 }}
                 animate={{ scale: 1, rotate: 0 }}
                 transition={{ delay: 0.3, type: "spring", damping: 15 }}
@@ -592,7 +592,7 @@ export function Demo() {
                 }}
               >
                 🎁
-              </motion.div>
+              </motion.div> */}
 
               {/* Close Button */}
               <motion.button
@@ -615,6 +615,7 @@ export function Demo() {
                   justifyContent: 'center',
                   cursor: 'pointer',
                   fontSize: '20px',
+                  zIndex: 1000,
                   backdropFilter: 'blur(10px)',
                   transition: 'all 0.3s ease'
                 }}
