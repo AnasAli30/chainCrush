@@ -433,21 +433,21 @@ export function Demo() {
             <StatsCard 
               icon={faUsers} 
               title="Active Players" 
-              value="2.5K" 
+              value="3.5K" 
               trend="+23%" 
               color="from-cyan-400 via-blue-500 to-purple-600"
             />
             <StatsCard 
               icon={faCoins} 
               title="Rewards Pool" 
-              value="1.6M BOOP" 
+              value="100 ARB" 
               trend="LIVE" 
               color="from-purple-500 via-cyan-400 to-green-400"
             />
             <StatsCard 
               icon={faFire} 
               title="Games Today" 
-              value="4.5K" 
+              value="5K" 
               trend="+12%" 
               color="from-pink-500 via-purple-500 to-cyan-400"
             />
