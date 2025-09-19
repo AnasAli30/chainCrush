@@ -438,11 +438,27 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
       });
       
       // Load sound effects for candy matches and game events
-      this.load.audio('match-sound', ['/sounds/candy-match.mp3']);
-      this.load.audio('combo-sound', ['/sounds/combo.mp3']);
-      this.load.audio('level-up', ['/sounds/level-up.mp3']);
-      this.load.audio('invalid-move', ['/sounds/invalid-move.mp3']);
-      this.load.audio('candy-crush', ['/sounds/candy-crush.mp3']);
+      // Load all sound effects with error handling
+      try {
+        this.load.audio('match-sound', ['/sounds/candy-match.mp3']);
+        this.load.audio('combo-sound', ['/sounds/combo.mp3']);
+        this.load.audio('level-up', ['/sounds/level-up.mp3']);
+        this.load.audio('invalid-move', ['/sounds/invalid-move.mp3']);
+        this.load.audio('candy-crush', ['/sounds/candy-crush.mp3']);
+        
+        // Add load complete listener to verify sounds loaded
+        this.load.on('complete', () => {
+          console.log('✅ All game assets loaded successfully');
+          // Check if level-up sound loaded
+          if (this.cache.audio.exists('level-up')) {
+            console.log('✅ Level-up sound loaded successfully');
+          } else {
+            console.error('❌ Level-up sound failed to load!');
+          }
+        });
+      } catch (error) {
+        console.error('❌ Error loading sound assets:', error);
+      }
       
       // Load particle textures for special effects
       this.load.image('particle', '/images/particle.png');
@@ -726,13 +742,23 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
         console.log('🎉 Challenge completed! Auto advancing to next level...');
         
         // Play level up sound - stop any playing sounds first
-     
+        Object.values(sounds).forEach(sound => {
+          if (sound.isPlaying) sound.stop();
+        });
         
         if (sounds && sounds.levelUp) {
-          sounds.levelUp.play({
-            volume: 0.4,
-            detune: 0
-          });
+          console.log('🔊 Playing level up sound...');
+          try {
+            sounds.levelUp.play({
+              volume: 0.6, // Increased volume for level up sound
+              detune: 0
+            });
+            console.log('✅ Level up sound played successfully');
+          } catch (error) {
+            console.error('❌ Error playing level up sound:', error);
+          }
+        } else {
+          console.error('❌ Level up sound not available!', sounds);
         }
         
         // Increment level and generate new challenge
