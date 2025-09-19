@@ -369,6 +369,17 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
     let gameChallengeTarget = challengeTarget;
     let gameChallengeProgress = challengeProgress;
 
+    // Sound and particle effect variables
+    let sounds: { 
+      match: Phaser.Sound.BaseSound; 
+      combo: Phaser.Sound.BaseSound;
+      levelUp: Phaser.Sound.BaseSound;
+      invalidMove: Phaser.Sound.BaseSound;
+      candyCrush: Phaser.Sound.BaseSound;
+    };
+    let particleEmitters: { [key: string]: any } = {};
+    let sparkleEmitter: any;
+
     const GRID_COLS = 6;
     const GRID_ROWS = 8;
     const CANDY_SIZE = 55; // Smaller candy size to create padding
@@ -426,6 +437,18 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
         this.load.image('candy-' + type, `/candy/${type}.png`);
       });
       
+      // Load sound effects for candy matches and game events
+      this.load.audio('match-sound', ['/sounds/candy-match.mp3']);
+      this.load.audio('combo-sound', ['/sounds/combo.mp3']);
+      this.load.audio('level-up', ['/sounds/level-up.mp3']);
+      this.load.audio('invalid-move', ['/sounds/invalid-move.mp3']);
+      this.load.audio('candy-crush', ['/sounds/candy-crush.mp3']);
+      
+      // Load particle textures for special effects
+      this.load.image('particle', '/images/particle.png');
+      this.load.image('star', '/images/star.png');
+      this.load.image('sparkle', '/images/sparkle.png');
+      
       // Ensure images maintain quality when loaded
       this.load.on('filecomplete-image', (key: string) => {
         const texture = this.textures.get(key);
@@ -438,7 +461,7 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
       
       // Log any errors but don't create fallbacks
       this.load.on('loaderror', (file: any) => {
-        console.error('❌ Failed to load meme image:', file.key);
+        console.error('❌ Failed to load asset:', file.key);
       });
     }
 
@@ -468,6 +491,66 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
 
         function create(this: Phaser.Scene) {
       scene = this;
+      
+      // Initialize sound effects with more controlled volume
+      // The individual volume here gets multiplied by the master volume
+      sounds = {
+        match: this.sound.add('match-sound', { volume: 0.3, loop: false }),
+        combo: this.sound.add('combo-sound', { volume: 0.35, loop: false }),
+        levelUp: this.sound.add('level-up', { volume: 0.4, loop: false }),
+        invalidMove: this.sound.add('invalid-move', { volume: 0.25, loop: false }),
+        candyCrush: this.sound.add('candy-crush', { volume: 0.35, loop: false })
+      };
+      
+      // Configure the sound system
+      this.sound.setVolume(0.5); // Additional global volume control
+      
+      // Set up sound handlers to avoid issues
+      Object.values(sounds).forEach(sound => {
+        sound.on('complete', () => {
+          // Ensure sound stops completely when done playing
+          if (sound.isPlaying) sound.stop();
+        });
+      });
+      
+      // Create particle emitters for each candy type
+      CANDY_TYPES.forEach((type) => {
+        // Use Phaser's ParticleEmitterManager directly
+        const emitterConfig = {
+          x: 0,
+          y: 0,
+          blendMode: Phaser.BlendModes.ADD,
+          lifespan: 600,
+          speed: { min: 100, max: 200 },
+          scale: { start: 0.6, end: 0 },
+          rotate: { min: 0, max: 360 },
+          alpha: { start: 1, end: 0 },
+          frequency: -1, // Don't emit automatically
+          tint: getMemeColor(type) // Set color directly in config
+        };
+        
+        // Create a separate particle manager for each candy type
+        const particleManager = this.add.particles(0, 0, 'particle', emitterConfig);
+        // Store the particle manager as our emitter (Phaser API differences)
+        particleEmitters[type] = particleManager;
+      });
+      
+      // Create sparkle particle effect for score animations
+      const sparkleConfig = {
+        x: 0,
+        y: 0,
+        blendMode: Phaser.BlendModes.ADD,
+        lifespan: 800,
+        speed: { min: 50, max: 100 },
+        scale: { start: 0.4, end: 0 },
+        alpha: { start: 1, end: 0 },
+        frequency: -1 // Don't emit automatically
+      };
+      
+      // Create sparkle particle manager
+      const sparkleManager = this.add.particles(0, 0, 'sparkle', sparkleConfig);
+      // Store the manager as our emitter (Phaser API differences)
+      sparkleEmitter = sparkleManager;
       
       // Calculate responsive grid dimensions after scene is initialized
       const availableWidth = this.cameras.main.width - (GRID_PADDING * 2);
@@ -641,9 +724,159 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
       // Check for challenge completion - auto advance to next level
       if (gameChallengeProgress >= gameChallengeTarget) {
         console.log('🎉 Challenge completed! Auto advancing to next level...');
+        
+        // Play level up sound - stop any playing sounds first
+     
+        
+        if (sounds && sounds.levelUp) {
+          sounds.levelUp.play({
+            volume: 0.4,
+            detune: 0
+          });
+        }
+        
         // Increment level and generate new challenge
         gameLevel++;
         scene.events.emit('levelup'); // <-- emit event for reshuffle
+        
+        // Create a DOM-based level up animation that looks much better than Phaser text
+        // First create a container div for our CSS animation
+        const gameContainer = document.getElementById('game-container') || gameRef.current;
+        const levelUpElement = document.createElement('div');
+        levelUpElement.className = 'level-up-animation';
+        levelUpElement.innerHTML = `
+          <div class="level-up-text">LEVEL UP!</div>
+          <div class="level-number">${gameLevel}</div>
+          <div class="particles-container">
+            ${Array(20).fill(0).map(() => '<div class="particle"></div>').join('')}
+          </div>
+        `;
+        
+        // Inject the required CSS
+        if (!document.getElementById('level-up-styles')) {
+          const styleElement = document.createElement('style');
+          styleElement.id = 'level-up-styles';
+          styleElement.textContent = `
+            .level-up-animation {
+              position: absolute;
+              top: 0;
+              left: 0;
+              width: 100%;
+              height: 100%;
+              display: flex;
+              flex-direction: column;
+              justify-content: center;
+              align-items: center;
+              pointer-events: none;
+              z-index: 1000;
+            }
+            .level-up-text {
+              font-size: 52px;
+              font-weight: bold;
+              color: #FFFF00;
+              text-shadow: 
+                0 0 10px #FF00FF,
+                0 0 20px #FF00FF,
+                2px 2px 2px rgba(0,0,0,0.8);
+              animation: pulse 0.8s ease-in-out infinite alternate, 
+                         levelup 2s ease-out forwards;
+              opacity: 0;
+            }
+            .level-number {
+              font-size: 80px;
+              font-weight: bold;
+              color: #FFFFFF;
+              text-shadow: 
+                0 0 10px #00FFFF,
+                0 0 20px #0088FF,
+                2px 2px 2px rgba(0,0,0,0.8);
+              animation: appear 0.5s 0.3s ease-out forwards,
+                         float 2s 0.5s ease-in-out infinite alternate;
+              opacity: 0;
+              margin-top: 10px;
+            }
+            .particles-container {
+              position: absolute;
+              width: 100%;
+              height: 100%;
+            }
+            .particle {
+              position: absolute;
+              width: 10px;
+              height: 10px;
+              background: radial-gradient(circle, rgba(255,255,255,1) 0%, rgba(255,255,0,0.8) 70%, rgba(255,255,0,0) 100%);
+              border-radius: 50%;
+              opacity: 0;
+              animation: particle-animation 2s ease-out forwards;
+            }
+            @keyframes pulse {
+              0% { transform: scale(1); }
+              100% { transform: scale(1.1); }
+            }
+            @keyframes levelup {
+              0% { transform: translateY(50px); opacity: 0; }
+              10% { transform: translateY(0); opacity: 1; }
+              80% { transform: translateY(0); opacity: 1; }
+              100% { transform: translateY(-100px); opacity: 0; }
+            }
+            @keyframes appear {
+              0% { transform: scale(0.5); opacity: 0; }
+              100% { transform: scale(1); opacity: 1; }
+            }
+            @keyframes float {
+              0% { transform: translateY(0); }
+              100% { transform: translateY(-15px); }
+            }
+            @keyframes particle-animation {
+              0% { 
+                transform: translate(0, 0) scale(0); 
+                opacity: 0;
+              }
+              10% {
+                opacity: 1;
+              }
+              90% {
+                opacity: 0.5;
+              }
+              100% { 
+                transform: translate(
+                  calc(${Math.random() < 0.5 ? '-' : ''}1 * ${Math.floor(Math.random() * 200)}px), 
+                  calc(${Math.random() < 0.5 ? '-' : ''}1 * ${Math.floor(Math.random() * 200)}px)
+                ) scale(${0.5 + Math.random()});
+                opacity: 0;
+              }
+            }
+          `;
+          document.head.appendChild(styleElement);
+        }
+        
+        // Position the particles randomly
+        const particles = levelUpElement.querySelectorAll('.particle');
+        particles.forEach((p) => {
+          // Cast to HTMLElement to safely access style properties
+          const particle = p as HTMLElement;
+          // Random start position around the center
+          const centerX = window.innerWidth / 2;
+          const centerY = window.innerHeight / 2;
+          particle.style.left = `${centerX}px`;
+          particle.style.top = `${centerY}px`;
+          
+          // Random animation delay
+          particle.style.animationDelay = `${Math.random() * 0.5}s`;
+        });
+        
+        // Add to the DOM
+        if (gameContainer) {
+          gameContainer.appendChild(levelUpElement);
+          
+          // Remove after animation completes
+          setTimeout(() => {
+            if (levelUpElement.parentNode) {
+              levelUpElement.parentNode.removeChild(levelUpElement);
+            }
+          }, 2500);
+        }
+        
         // Calculate new challenge parameters
         const newChallengeTarget = 10 + (gameLevel - 1) * 5; // Start with 10, add 5 per level
         const newChallengeCandy = CANDY_TYPES[Math.floor(Math.random() * CANDY_TYPES.length)];
@@ -878,6 +1111,14 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
       if (!checkSwapValidity(candy1, candy2)) {
         console.log(`❌ Invalid swap - no matches created, showing revert animation`);
         
+        // Play invalid move sound
+        if (sounds && sounds.invalidMove) {
+          sounds.invalidMove.play();
+        }
+        
+        // Show invalid move effect
+        showInvalidMoveEffect();
+        
         // Store original positions for revert animation
         const originalCandy1 = { x: candy1.x, y: candy1.y };
         const originalCandy2 = { x: candy2.x, y: candy2.y };
@@ -970,6 +1211,11 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
           // We already know this creates matches, so proceed directly
           triggerVibration([100]); // Short vibration for successful swap
           gameMoves--;
+          
+          // Reset combo counter for new move - this is the start of a potential combo chain
+          // In Candy Crush, the first match doesn't count as a combo, so we start at 0
+          setComboCount(0);
+          
           updateUI();
           debugGrid('BEFORE MATCH CHECK');
           checkForMatches();
@@ -985,20 +1231,24 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
       // Create a brief "X" or "Invalid" text effect
       const centerX = scene.cameras.main.width / 2;
       const centerY = scene.cameras.main.height / 2;
-      const invalidText = scene.add.text(centerX, centerY, '❌', {
-        fontSize: '48px',
-        color: '#ffffff'
-      }).setOrigin(0.5).setAlpha(0);
       
-      scene.tweens.add({
-        targets: invalidText,
-        alpha: 1,
-        scaleX: 1.2,
-        scaleY: 1.2,
-        duration: 200,
-        yoyo: true,
-        onComplete: () => invalidText.destroy()
+      // Play invalid move sound - first stop any playing sounds
+      Object.values(sounds).forEach(sound => {
+        if (sound.isPlaying) sound.stop();
       });
+      
+      if (sounds && sounds.invalidMove) {
+        sounds.invalidMove.play({
+          volume: 0.25,
+          detune: 0
+        });
+      }
+      
+      // Vibrate for invalid move
+      triggerVibration([50, 50]); // Double short vibration for invalid swap
+      
+      
+      
     }
 
     function checkForMatchesAfterSwap(): boolean {
@@ -1191,7 +1441,10 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
         console.log('✅ Game stable - no more matches found');
         
         // Reset combo when no matches are found
-        setComboCount(0);
+        if (comboCount > 0) {
+          console.log('🔄 Combo chain broken - resetting combo counter');
+          setComboCount(0);
+        }
         
         updateUI(); // Update status
         
@@ -1244,24 +1497,68 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
       gameChallengeProgress += challengeCandiesMatched;
       console.log(`🍭 Challenge progress: ${challengeCandiesMatched} candies of type ${gameChallengeCandy} matched (${gameChallengeProgress}/${gameChallengeTarget})`);
       
-      // Increment combo count
-      setComboCount(prev => prev + 1);
+      // We don't increment combo count here anymore
+      // Combo count is handled in the cascade completion
       
       // Calculate combo bonus score
+      // For scoring, we use the actual combo count (not +1)
       const comboMultiplier = Math.min(comboCount + 1, 5); // Cap at 5x
       const baseScore = matches.length * 100;
-      const comboBonus = baseScore * (comboMultiplier - 1);
+      const comboBonus = comboCount > 0 ? baseScore * comboCount : 0; // Only apply bonus for actual combos
       const totalScore = baseScore + comboBonus;
+      
+      // Log the score calculation
+      if (comboCount > 0) {
+        console.log(`💰 Combo bonus: ${baseScore} × ${comboCount} = ${comboBonus}`);
+      }
       
       gameScore += totalScore;
       updateUI();
       
       console.log(`💥 Removing ${matches.length} matches (Combo: ${comboMultiplier}x, Score: +${totalScore})`);
       
-      // Show combo animation only for 2x+ combos
-      if (comboCount + 1 >= 2) {
-        setShowComboAnimation(true);
-        setTimeout(() => setShowComboAnimation(false), 2000);
+      // Play sound effects based on match size and combo
+      // First stop any currently playing sounds to avoid overlap
+      Object.values(sounds).forEach(sound => {
+        if (sound.isPlaying) sound.stop();
+      });
+      
+      // Play appropriate sound with controlled volume
+      if (comboCount + 1 >= 3) {
+        // For bigger combos, play combo sound
+        sounds.combo.play({
+          volume: 0.35 * (matches.length / 5), // Scale volume by match size (cap at 5)
+          detune: -200 + (comboCount * 50) // Higher combos sound more exciting
+        });
+      } else {
+        // For regular matches
+        sounds.match.play({
+          volume: 0.25 + (0.05 * Math.min(matches.length, 5)), // Slight volume increase for bigger matches
+          detune: matches.length * 25 // Higher pitch for bigger matches
+        });
+      }
+      
+      // Show combo animation based on combo count and match size
+      // In Candy Crush, combos become more dramatic as they increase
+      if (comboCount >= 1) {  // Only show for actual combos (1x or higher)
+        console.log(`🎯 Showing combo animation for combo count: ${comboCount}`);
+        
+        // Higher combos deserve more emphasis
+        if (comboCount >= 3) {
+          // For big combos, we want to delay slightly to let the match animation be seen first
+          setTimeout(() => {
+            setShowComboAnimation(true);
+            // Vibrate differently for bigger combos
+            triggerVibration([100, 50, 150]);
+          }, 200);
+        } else {
+          setShowComboAnimation(true);
+        }
+        
+        // Clear combo animation after the appropriate duration
+        // Longer duration for bigger combos
+        setTimeout(() => setShowComboAnimation(false), 
+          comboCount >= 3 ? 2200 : 1800);
       }
       
       // Vibrate based on match size and combo - bigger matches and combos = longer vibration
@@ -1285,17 +1582,300 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
       
       debugGrid('AFTER MATCH REMOVAL');
       
-      // Enhanced destruction animation
+      // Create score text to animate to score counter
+      const scorePosition = { 
+        x: matches.reduce((sum, c) => sum + c.x, 0) / matches.length,
+        y: matches.reduce((sum, c) => sum + c.y, 0) / matches.length
+      };
+      
+      // Get center position for reference
+      const centerX = scene.cameras.main.width / 2;
+      
+      // Create a more direct animation to the score that clearly moves to the score counter
+      
+      // First create the flying score element
+      const gameContainer = document.getElementById('game-container') || gameRef.current;
+      if (!gameContainer) return;
+      
+      // Get position of match in screen coordinates
+      const scoreX = scorePosition.x;
+      const scoreY = scorePosition.y;
+      
+      // Get exact target coordinates for score display
+      const actualScoreX = scoreText ? scoreText.x + scoreText.width/2 : 60;
+      const actualScoreY = scoreText ? scoreText.y + scoreText.height/2 : 10;
+      
+      // Calculate animation parameters based on actual positions
+      const distanceX = actualScoreX - scoreX;
+      const distanceY = actualScoreY - scoreY;
+      
+      // Create the score element
+      const scoreElement = document.createElement('div');
+      scoreElement.className = 'flying-score';
+      scoreElement.textContent = `+${totalScore}`;
+      scoreElement.id = `score-popup-${Date.now()}`; // Unique ID for this specific animation
+      
+      // Calculate the angle for animation
+      const angle = Math.atan2(distanceY, distanceX) * (180 / Math.PI);
+      
+      // Create a container for our particles
+      const particleContainer = document.createElement('div');
+      particleContainer.className = 'score-particles-container';
+      particleContainer.id = `score-particles-${Date.now()}`;
+      gameContainer.appendChild(particleContainer);
+      
+      // Create particles that will fly to score
+      const particleCount = 5;
+      for (let i = 0; i < particleCount; i++) {
+        const particle = document.createElement('div');
+        particle.className = 'score-particle';
+        particle.textContent = '+';
+        particleContainer.appendChild(particle);
+      }
+      
+      // Inject the required CSS with dynamic keyframes for this specific animation
+      // This recreates the classic Candy Crush animation flow
+      const styleElement = document.createElement('style');
+      styleElement.textContent = `
+        .flying-score {
+          position: absolute;
+          font-size: 28px;
+          font-weight: bold;
+          color: #FFFF00;
+          text-shadow: 
+            0 0 5px #FF00FF,
+            0 0 10px #FF8800,
+            2px 2px 2px rgba(0,0,0,0.8);
+          z-index: 1000;
+          pointer-events: none;
+          transform: translate(-50%, -50%);
+        }
+        
+        #${scoreElement.id} {
+          animation: popAndDisappear${Date.now()} 0.7s forwards;
+        }
+        
+        .score-particles-container {
+          position: absolute;
+          left: ${scoreX}px;
+          top: ${scoreY}px;
+          width: 0;
+          height: 0;
+          z-index: 999;
+        }
+        
+        .score-particle {
+          position: absolute;
+          font-size: 22px;
+          font-weight: bold;
+          color: #FFFF00;
+          text-shadow: 0 0 4px #FF8800, 2px 2px 2px rgba(0,0,0,0.7);
+          opacity: 0;
+          transform: translate(-50%, -50%);
+        }
+        
+        #${particleContainer.id} .score-particle:nth-child(1) {
+          animation: particleFly${Date.now()}-1 0.8s 0.5s forwards cubic-bezier(.17,.67,.4,.99);
+        }
+        #${particleContainer.id} .score-particle:nth-child(2) {
+          animation: particleFly${Date.now()}-2 0.75s 0.5s forwards cubic-bezier(.17,.67,.4,.99);
+        }
+        #${particleContainer.id} .score-particle:nth-child(3) {
+          animation: particleFly${Date.now()}-3 0.7s 0.5s forwards cubic-bezier(.17,.67,.4,.99);
+        }
+        #${particleContainer.id} .score-particle:nth-child(4) {
+          animation: particleFly${Date.now()}-4 0.65s 0.5s forwards cubic-bezier(.17,.67,.4,.99);
+        }
+        #${particleContainer.id} .score-particle:nth-child(5) {
+          animation: particleFly${Date.now()}-5 0.6s 0.5s forwards cubic-bezier(.17,.67,.4,.99);
+        }
+        
+        @keyframes popAndDisappear${Date.now()} {
+          0% { 
+            opacity: 0;
+            transform: translate(-50%, -50%) scale(0.5);
+          }
+          10% {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1.3);
+          }
+          30% { 
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+          }
+          80% {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+          }
+          100% { 
+            opacity: 0;
+            transform: translate(-50%, -50%) scale(0.7);
+          }
+        }
+        
+        @keyframes particleFly${Date.now()}-1 {
+          0% { 
+            opacity: 0;
+            left: -10px;
+            top: -10px;
+          }
+          10% {
+            opacity: 1;
+            left: -10px;
+            top: -10px;
+          }
+          100% { 
+            opacity: 0;
+            left: ${distanceX - 10}px;
+            top: ${distanceY - 10}px;
+          }
+        }
+        
+        @keyframes particleFly${Date.now()}-2 {
+          0% { 
+            opacity: 0;
+            left: 10px;
+            top: -5px;
+          }
+          10% {
+            opacity: 1;
+            left: 10px;
+            top: -5px;
+          }
+          100% { 
+            opacity: 0;
+            left: ${distanceX + 10}px;
+            top: ${distanceY - 5}px;
+          }
+        }
+        
+        @keyframes particleFly${Date.now()}-3 {
+          0% { 
+            opacity: 0;
+            left: 0px;
+            top: 0px;
+          }
+          10% {
+            opacity: 1;
+            left: 0px;
+            top: 0px;
+          }
+          100% { 
+            opacity: 0;
+            left: ${distanceX}px;
+            top: ${distanceY}px;
+          }
+        }
+        
+        @keyframes particleFly${Date.now()}-4 {
+          0% { 
+            opacity: 0;
+            left: -5px;
+            top: 10px;
+          }
+          10% {
+            opacity: 1;
+            left: -5px;
+            top: 10px;
+          }
+          100% { 
+            opacity: 0;
+            left: ${distanceX - 5}px;
+            top: ${distanceY + 10}px;
+          }
+        }
+        
+        @keyframes particleFly${Date.now()}-5 {
+          0% { 
+            opacity: 0;
+            left: 10px;
+            top: 10px;
+          }
+          10% {
+            opacity: 1;
+            left: 10px;
+            top: 10px;
+          }
+          100% { 
+            opacity: 0;
+            left: ${distanceX + 10}px;
+            top: ${distanceY + 10}px;
+          }
+        }
+      `;
+      
+      document.head.appendChild(styleElement);
+      
+      // Position at match location
+      scoreElement.style.left = `${scoreX}px`;
+      scoreElement.style.top = `${scoreY}px`;
+      
+      // Add to DOM
+      gameContainer.appendChild(scoreElement);
+      
+      // Clean up after animation and show sparkle exactly when animation arrives
+      setTimeout(() => {
+        // Create sparkle effect at the score display using Phaser when the animation arrives
+        if (sparkleEmitter) {
+          sparkleEmitter.emitParticleAt(actualScoreX, actualScoreY, 20);
+        }
+        
+        // Flash the score text with a scale animation for emphasis
+        if (scoreText) {
+          scene.tweens.add({
+            targets: scoreText,
+            scaleX: 1.3,
+            scaleY: 1.3,
+            duration: 150,
+            yoyo: true,
+            repeat: 1
+          });
+        }
+      }, 700); // Timed to appear exactly when animation arrives
+      
+      // Cleanup styles and DOM elements
+      setTimeout(() => {
+        if (styleElement.parentNode) {
+          styleElement.parentNode.removeChild(styleElement);
+        }
+        if (scoreElement.parentNode) {
+          scoreElement.parentNode.removeChild(scoreElement);
+        }
+        if (particleContainer.parentNode) {
+          particleContainer.parentNode.removeChild(particleContainer);
+        }
+      }, 1500);
+      
+      // We've removed the Phaser text trails since the CSS animation works better
+      // This prevents small score numbers appearing all over the screen
+      
+      // Enhanced destruction animation with particles
       let completedAnimations = 0;
       matches.forEach((candy, index) => {
+        // Emit particles for this candy type
+        const emitter = particleEmitters[candy.candyType];
+        if (emitter) {
+          // Create particle explosion at candy position
+          emitter.emitParticleAt(candy.x, candy.y, 20);
+        }
+        
         // Enhanced candy destruction animation with rotation and scaling
+        scene.tweens.add({
+          targets: candy,
+          scaleX: 1.5, // First grow
+          scaleY: 1.5,
+          duration: 100,
+          yoyo: true, // Then shrink
+          ease: 'Sine.easeOut',
+          onComplete: () => {
+            // Second phase of animation: rotate and fade out
         scene.tweens.add({
           targets: candy,
           scaleX: 0,
           scaleY: 0,
           alpha: 0,
           rotation: Math.PI * 2, // Full rotation
-          duration: 300,
+              duration: 200,
           ease: 'Cubic.easeIn',
           onComplete: () => {
             candy.destroy();
@@ -1306,11 +1886,13 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
               debugGrid('BEFORE CASCADE');
               animatedCascade();
             }
+              }
+            });
           }
         });
         
         // Stagger the animations slightly for better visual effect
-        scene.time.delayedCall(index * 50, () => {
+        scene.time.delayedCall(index * 40, () => {
           candy.setVisible(true);
         });
       });
@@ -1599,20 +2181,91 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
         }
       }
       
-      function finalizeCascade() {
-        // Final validation
-        debugGrid('AFTER CASCADE');
-        validateAndFixGrid();
+    function finalizeCascade() {
+      // Final validation
+      debugGrid('AFTER CASCADE');
+      validateAndFixGrid();
+      
+      isProcessingCascade = false;
+      
+      // Check for matches after brief delay
+      scene.time.delayedCall(150, () => {
+        console.log('🔍 Cascade complete, checking matches');
+        debugGrid('BEFORE NEXT MATCH CHECK');
         
-        isProcessingCascade = false;
+        // In Candy Crush, automatic matches from cascade count as combos
+        // We increment combo count here BEFORE checking for matches
+        // This is the key to the proper combo behavior
+        const previousMatches = findMatches();
         
-        // Check for matches after brief delay
-        scene.time.delayedCall(150, () => {
-          console.log('🔍 Cascade complete, checking matches');
-          debugGrid('BEFORE NEXT MATCH CHECK');
-          checkForMatches();
-        });
+        if (previousMatches.length > 0) {
+          // Found automatic matches after cascade - this is a combo!
+          console.log(`🔥 CASCADE COMBO! Found ${previousMatches.length} automatic matches`);
+          setComboCount(prev => prev + 1);
+        }
+        
+        checkForMatches();
+      });
+    }
+    
+    // Helper function to find matches without removing them
+    function findMatches() {
+      const matches = [];
+      
+      // Check horizontal matches
+      for (let row = 0; row < GRID_ROWS; row++) {
+        let count = 1;
+        let currentType = grid[row][0]?.candyType;
+        
+        for (let col = 1; col < GRID_COLS; col++) {
+          if (grid[row][col]?.candyType === currentType && currentType) {
+            count++;
+          } else {
+            if (count >= 3) {
+              for (let i = col - count; i < col; i++) {
+                matches.push(grid[row][i]);
+              }
+            }
+            count = 1;
+            currentType = grid[row][col]?.candyType;
+          }
+        }
+        
+        if (count >= 3) {
+          for (let i = GRID_COLS - count; i < GRID_COLS; i++) {
+            matches.push(grid[row][i]);
+          }
+        }
       }
+      
+      // Check vertical matches
+      for (let col = 0; col < GRID_COLS; col++) {
+        let count = 1;
+        let currentType = grid[0][col]?.candyType;
+        
+        for (let row = 1; row < GRID_ROWS; row++) {
+          if (grid[row][col]?.candyType === currentType && currentType) {
+            count++;
+          } else {
+            if (count >= 3) {
+              for (let i = row - count; i < row; i++) {
+                matches.push(grid[i][col]);
+              }
+            }
+            count = 1;
+            currentType = grid[row][col]?.candyType;
+          }
+        }
+        
+        if (count >= 3) {
+          for (let i = GRID_ROWS - count; i < GRID_ROWS; i++) {
+            matches.push(grid[i][col]);
+          }
+        }
+      }
+      
+      return matches;
+    }
     }
 
     const config: Phaser.Types.Core.GameConfig = {
@@ -1625,7 +2278,6 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
         mode: Phaser.Scale.RESIZE,
         autoCenter: Phaser.Scale.CENTER_BOTH,
         zoom: window.devicePixelRatio || 1
-
       },
       render: {
         antialias: true,
@@ -1641,6 +2293,10 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
           gravity: { x: 0, y: 0 },
           debug: false
         }
+      },
+      audio: {
+        disableWebAudio: false,
+        noAudio: false
       },
       scene: {
         preload: preload,
@@ -1879,9 +2535,9 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
       checkRemainingClaims().then((remaining) => {
         if (remaining > 0) {
           // Show gift box after a short delay only if user has remaining claims
-          setTimeout(() => {
+          // setTimeout(() => {
             setShowGiftBox(true);
-          }, 1000); // 2 second delay for smooth transition
+          // }, 1000); // 2 second delay for smooth transition
         } else {
           console.log('Daily gift box limit reached. Gift box will not be shown.');
         }
@@ -3083,7 +3739,7 @@ Come for my spot or stay mid 😏🏆${improvementText}`;
         </div>
       )}
       
-      {/* Thunder Combo Animation */}
+      {/* Candy Crush Style Combo Animation */}
       {showComboAnimation && (
         <div style={{
           position: 'fixed',
@@ -3097,119 +3753,169 @@ Come for my spot or stay mid 😏🏆${improvementText}`;
           alignItems: 'center',
           justifyContent: 'center'
         }}>
-          {/* Thunder Flash Effect */}
+          {/* Brief flash on combo activation */}
           <div style={{
             position: 'absolute',
             top: 0,
             left: 0,
             width: '100%',
             height: '100%',
-            background: 'linear-gradient(45deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.3))',
-            animation: 'thunderFlash 0.3s ease-out forwards'
+            background: 'rgba(255, 255, 255, 0.3)',
+            animation: 'comboFlash 0.3s ease-out forwards'
           }} />
           
-          {/* Thunder Lightning Effect */}
-          <div style={{
-            position: 'absolute',
-            top: '20%',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            width: '4px',
-            height: '60%',
-            background: 'linear-gradient(to bottom, #ffff00, #ff6b6b, #ffff00)',
-            boxShadow: '0 0 20px #ffff00, 0 0 40px #ff6b6b',
-            animation: 'thunderLightning 0.5s ease-out forwards'
-          }} />
-          
-          {/* Combo Text */}
-          <div style={{
-            fontSize: '96px',
-            fontWeight: 'bold',
-            color: '#ff6b6b',
-            textShadow: '0 0 30px rgba(255, 107, 107, 0.9), 0 0 60px rgba(255, 107, 107, 0.6)',
-            animation: 'comboThunder 2s ease-out forwards',
-            textAlign: 'center',
-            zIndex: 1,
-            position: 'relative'
+          {/* Main combo container */}
+          <div className="combo-container" style={{
+            position: 'relative',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center'
           }}>
-            {comboCount}x COMBO!
+            {/* Glow background */}
+            <div style={{
+              position: 'absolute',
+              width: '300px',
+              height: '300px',
+              borderRadius: '50%',
+              background: 'radial-gradient(circle, rgba(255, 215, 0, 0.8) 0%, rgba(255, 69, 0, 0.3) 60%, transparent 80%)',
+              filter: 'blur(15px)',
+              animation: 'comboGlowPulse 1.5s ease-out forwards',
+              zIndex: -1
+            }} />
+            
+            {/* Sweet Particles flying outward */}
+            {Array.from({length: 16}).map((_, i) => (
+              <div key={i} style={{
+                position: 'absolute',
+                width: i % 3 === 0 ? '25px' : '15px',
+                height: i % 3 === 0 ? '25px' : '15px',
+                backgroundColor: 
+                  i % 5 === 0 ? '#FF5722' : 
+                  i % 4 === 0 ? '#FFC107' : 
+                  i % 3 === 0 ? '#E91E63' : 
+                  i % 2 === 0 ? '#2196F3' : 
+                  '#4CAF50',
+                borderRadius: i % 2 === 0 ? '50%' : '4px',
+                boxShadow: `0 0 10px ${i % 5 === 0 ? '#FF5722' : i % 4 === 0 ? '#FFC107' : i % 3 === 0 ? '#E91E63' : i % 2 === 0 ? '#2196F3' : '#4CAF50'}`,
+                animation: `comboParticle${i} 1.5s ease-out forwards`,
+                opacity: 0
+              }} />
+            ))}
+            
+            {/* Main "COMBO" text */}
+            <div style={{
+              fontSize: comboCount >= 4 ? '90px' : '80px',
+              fontWeight: 'bold',
+              color: '#FFFFFF',
+              textAlign: 'center',
+              textShadow: '0 0 20px #FF9800, 0 0 40px #FF5722, 0 3px 0 #000000',
+              animation: 'comboTextPop 1.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards',
+              transform: 'scale(0) rotate(-5deg)',
+              opacity: 0,
+              fontFamily: "'Bangers', cursive" // Candy Crush uses a fun, playful font
+            }}>
+              COMBO
+            </div>
+            
+            {/* Multiplier with special styling for higher combos */}
+            <div style={{
+              position: 'absolute',
+              top: comboCount >= 5 ? '-60px' : '-40px',
+              right: comboCount >= 5 ? '-40px' : '-30px',
+              fontSize: comboCount >= 5 ? '72px' : '64px',
+              fontWeight: 'bold',
+              color: comboCount >= 5 ? '#FFEB3B' : '#FFFFFF',
+              textShadow: `0 0 20px ${comboCount >= 5 ? '#FF5722' : '#FF9800'}, 0 0 40px #FF5722, 0 3px 0 #000000`,
+              background: `radial-gradient(circle, ${comboCount >= 5 ? 'rgba(255,59,0,0.9)' : 'rgba(255,152,0,0.85)'} 0%, ${comboCount >= 5 ? 'rgba(255,87,34,0.8)' : 'rgba(255,87,34,0.7)'} 100%)`,
+              borderRadius: '50%',
+              width: comboCount >= 5 ? '120px' : '100px',
+              height: comboCount >= 5 ? '120px' : '100px',
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              boxShadow: `0 0 30px ${comboCount >= 5 ? 'rgba(255,59,0,0.8)' : 'rgba(255,152,0,0.7)'}, inset 0 0 20px rgba(255,255,255,0.6)`,
+              animation: 'comboMultiplierPop 1.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards',
+              transform: 'scale(0) rotate(15deg)',
+              opacity: 0,
+              fontFamily: "'Bangers', cursive",
+              zIndex: 10
+            }}>
+              {comboCount + 1}x
+            </div>
+            
+            {/* Sparkles around the combo */}
+            {Array.from({length: 12}).map((_, i) => (
+              <div key={`sparkle-${i}`} style={{
+                position: 'absolute',
+                width: '8px',
+                height: '8px',
+                background: '#FFFFFF',
+                borderRadius: '50%',
+                boxShadow: '0 0 15px #FFEB3B, 0 0 30px #FF9800',
+                animation: `comboSparkle${i} 2s ease-out infinite`,
+                opacity: 0
+              }} />
+            ))}
           </div>
-          
-          {/* Thunder Sound Effect (Visual) */}
-          <div style={{
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            width: '200px',
-            height: '200px',
-            borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(255, 255, 255, 0.8) 0%, transparent 70%)',
-            animation: 'thunderRipple 0.8s ease-out forwards'
-          }} />
         </div>
       )}
       
       <style dangerouslySetInnerHTML={{
         __html: `
-          @keyframes thunderFlash {
+          @keyframes comboFlash {
             0% {
               opacity: 0;
             }
-            10% {
+            20% {
+              opacity: 0.4;
+            }
+            100% {
+              opacity: 0;
+            }
+          }
+          
+          @keyframes comboGlowPulse {
+            0% {
+              opacity: 0;
+              transform: scale(0.5);
+            }
+            20% {
               opacity: 1;
+              transform: scale(1.2);
+            }
+            70% {
+              opacity: 0.7;
+              transform: scale(1);
+            }
+            100% {
+              opacity: 0;
+              transform: scale(1.5);
+            }
+          }
+          
+          @keyframes comboTextPop {
+            0% {
+              opacity: 0;
+              transform: scale(0) rotate(-5deg);
+            }
+            15% {
+              opacity: 1;
+              transform: scale(1.3) rotate(3deg);
             }
             30% {
-              opacity: 0.8;
+              transform: scale(0.9) rotate(-2deg);
             }
-            100% {
-              opacity: 0;
-            }
-          }
-          
-          @keyframes thunderLightning {
-            0% {
-              opacity: 0;
-              transform: translateX(-50%) scaleY(0);
-            }
-            20% {
-              opacity: 1;
-              transform: translateX(-50%) scaleY(1);
-            }
-            40% {
-              opacity: 0.8;
-              transform: translateX(-50%) scaleY(1.2);
+            45% {
+              transform: scale(1.1) rotate(1deg);
             }
             60% {
-              opacity: 0.6;
-              transform: translateX(-50%) scaleY(0.8);
-            }
-            100% {
-              opacity: 0;
-              transform: translateX(-50%) scaleY(0);
-            }
-          }
-          
-          @keyframes comboThunder {
-            0% {
-              opacity: 0;
-              transform: scale(0.5) rotate(-5deg);
-            }
-            20% {
+              transform: scale(1) rotate(0deg);
               opacity: 1;
-              transform: scale(1.3) rotate(2deg);
             }
-            40% {
+            90% {
               opacity: 1;
               transform: scale(1) rotate(0deg);
-            }
-            60% {
-              opacity: 1;
-              transform: scale(1.1) rotate(-1deg);
-            }
-            80% {
-              opacity: 0.8;
-              transform: scale(1.05) rotate(0deg);
             }
             100% {
               opacity: 0;
@@ -3217,20 +3923,97 @@ Come for my spot or stay mid 😏🏆${improvementText}`;
             }
           }
           
-          @keyframes thunderRipple {
+          @keyframes comboMultiplierPop {
             0% {
-              opacity: 0.8;
-              transform: translate(-50%, -50%) scale(0);
+              opacity: 0;
+              transform: scale(0) rotate(15deg);
             }
-            50% {
-              opacity: 0.6;
-              transform: translate(-50%, -50%) scale(1);
+            15% {
+              opacity: 0;
+            }
+            25% {
+              opacity: 1;
+              transform: scale(1.4) rotate(-5deg);
+            }
+            40% {
+              transform: scale(0.8) rotate(3deg);
+            }
+            55% {
+              transform: scale(1.1) rotate(-2deg);
+            }
+            70% {
+              transform: scale(1) rotate(0deg);
+              opacity: 1;
+            }
+            90% {
+              opacity: 1;
             }
             100% {
               opacity: 0;
-              transform: translate(-50%, -50%) scale(2);
+              transform: scale(1.3) rotate(0deg);
             }
           }
+          
+          /* Generate particle animations dynamically */
+          ${Array.from({length: 16}).map((_, i) => {
+            // Calculate random directions for each particle
+            const angle = (i * (360 / 16)) + (Math.random() * 20 - 10);
+            const distance = 100 + (Math.random() * 50);
+            const x = Math.cos(angle * (Math.PI / 180)) * distance;
+            const y = Math.sin(angle * (Math.PI / 180)) * distance;
+            const delay = Math.random() * 0.2;
+            const duration = 0.7 + (Math.random() * 0.5);
+            
+            return `
+            @keyframes comboParticle${i} {
+              0% {
+                opacity: 0;
+                transform: translate(0, 0) scale(0) rotate(0deg);
+              }
+              10% {
+                opacity: 1;
+                transform: translate(${x * 0.1}px, ${y * 0.1}px) scale(0.8) rotate(${Math.random() * 30}deg);
+              }
+              70% {
+                opacity: 1;
+                transform: translate(${x * 0.6}px, ${y * 0.6}px) scale(1) rotate(${Math.random() * 180}deg);
+              }
+              100% {
+                opacity: 0;
+                transform: translate(${x}px, ${y}px) scale(0.5) rotate(${Math.random() * 360}deg);
+              }
+            }`;
+          }).join('')}
+          
+          /* Generate sparkle animations dynamically */
+          ${Array.from({length: 12}).map((_, i) => {
+            // Position sparkles around the combo text
+            const angle = (i * (360 / 12));
+            const distance = 70 + (i % 3) * 40;
+            const x = Math.cos(angle * (Math.PI / 180)) * distance;
+            const y = Math.sin(angle * (Math.PI / 180)) * distance;
+            const delay = Math.random() * 0.5;
+            
+            return `
+            @keyframes comboSparkle${i} {
+              0% {
+                opacity: 0;
+                transform: translate(${x * 0.5}px, ${y * 0.5}px) scale(0);
+              }
+              ${10 + (delay * 100)}% {
+                opacity: 1;
+                transform: translate(${x}px, ${y}px) scale(1.5);
+              }
+              ${60 + (delay * 100)}% {
+                opacity: 1;
+                transform: translate(${x}px, ${y}px) scale(1);
+              }
+              100% {
+                opacity: 0;
+                transform: translate(${x}px, ${y}px) scale(0.2);
+              }
+            }`;
+          }).join('')}
         `
       }} />
       {/* Full Screen Mint Status Popup */}
