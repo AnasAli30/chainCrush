@@ -302,32 +302,8 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
       setShowInternalLoader(true);
       setLoadingProgress(0);
       
-      // Start internal loading animation
-      const startLoading = async () => {
-        // Step 1: Initialize Phaser (20%)
-        setLoadingProgress(20);
-        await new Promise(resolve => setTimeout(resolve, 200));
-        
-        // Step 2: Load assets (40%)
-        setLoadingProgress(40);
-        await new Promise(resolve => setTimeout(resolve, 300));
-        
-        // Step 3: Create game objects (60%)
-        setLoadingProgress(60);
-        await new Promise(resolve => setTimeout(resolve, 200));
-        
-        // Step 4: Initialize grid (80%)
-        setLoadingProgress(80);
-        await new Promise(resolve => setTimeout(resolve, 200));
-        
-        // Step 5: Final setup (100%)
-        setLoadingProgress(100);
-        await new Promise(resolve => setTimeout(resolve, 300));
-        
-        // Hide loader and start game
-        setShowInternalLoader(false);
-        initGame();
-      };
+      // Initialize game - loader will be hidden by Phaser's loading system
+      initGame();
       
       // Start tracking game time
       setGameStartTime(Date.now());
@@ -342,7 +318,7 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
       //   checkFaucetEligibility();
       // }
       
-      startLoading();
+      // Game initialization is handled directly
     }
     return () => {
       if (gameRef.current) {
@@ -432,6 +408,15 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
     }
 
     function preload(this: Phaser.Scene) {
+      // Set up loading progress tracking
+      this.load.on('progress', (value: number) => {
+        // Convert Phaser's 0-1 progress to percentage (0-100)
+        const progressPercent = Math.floor(value * 100);
+        console.log(`📊 Loading progress: ${progressPercent}%`);
+        
+        // Update React state with the actual loading progress
+        setLoadingProgress(progressPercent);
+      });
       // Load all the meme images from candy folder
       CANDY_TYPES.forEach(type => {
         this.load.image('candy-' + type, `/candy/${type}.png`);
@@ -446,15 +431,22 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
         this.load.audio('invalid-move', ['/sounds/invalid-move.mp3']);
         this.load.audio('candy-crush', ['/sounds/candy-crush.mp3']);
         
-        // Add load complete listener to verify sounds loaded
+        // Add load complete listener to verify sounds loaded and hide loader
         this.load.on('complete', () => {
           console.log('✅ All game assets loaded successfully');
+          
           // Check if level-up sound loaded
           if (this.cache.audio.exists('level-up')) {
             console.log('✅ Level-up sound loaded successfully');
           } else {
             console.error('❌ Level-up sound failed to load!');
           }
+          
+          // Give a small delay before hiding the loader to ensure everything is ready
+          setTimeout(() => {
+            setLoadingProgress(100);
+            setShowInternalLoader(false);
+          }, 500);
         });
       } catch (error) {
         console.error('❌ Error loading sound assets:', error);
@@ -1469,7 +1461,7 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
         // Reset combo when no matches are found
         if (comboCount > 0) {
           console.log('🔄 Combo chain broken - resetting combo counter');
-          setComboCount(0);
+        setComboCount(0);
         }
         
         updateUI(); // Update status
@@ -1573,7 +1565,7 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
         if (comboCount >= 3) {
           // For big combos, we want to delay slightly to let the match animation be seen first
           setTimeout(() => {
-            setShowComboAnimation(true);
+        setShowComboAnimation(true);
             // Vibrate differently for bigger combos
             triggerVibration([100, 50, 150]);
           }, 200);
@@ -2207,17 +2199,17 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
         }
       }
       
-    function finalizeCascade() {
-      // Final validation
-      debugGrid('AFTER CASCADE');
-      validateAndFixGrid();
-      
-      isProcessingCascade = false;
-      
-      // Check for matches after brief delay
-      scene.time.delayedCall(150, () => {
-        console.log('🔍 Cascade complete, checking matches');
-        debugGrid('BEFORE NEXT MATCH CHECK');
+      function finalizeCascade() {
+        // Final validation
+        debugGrid('AFTER CASCADE');
+        validateAndFixGrid();
+        
+        isProcessingCascade = false;
+        
+        // Check for matches after brief delay
+        scene.time.delayedCall(150, () => {
+          console.log('🔍 Cascade complete, checking matches');
+          debugGrid('BEFORE NEXT MATCH CHECK');
         
         // In Candy Crush, automatic matches from cascade count as combos
         // We increment combo count here BEFORE checking for matches
@@ -2230,9 +2222,9 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
           setComboCount(prev => prev + 1);
         }
         
-        checkForMatches();
-      });
-    }
+          checkForMatches();
+        });
+      }
     
     // Helper function to find matches without removing them
     function findMatches() {
@@ -2859,7 +2851,7 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
         </div>
       )}
       
-      {/* Modern Loading Screen */}
+      {/* Enhanced Loading Screen */}
       {showInternalLoader && (
         <div style={{
           position: 'fixed',
@@ -2871,7 +2863,6 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
           alignItems: 'center',
           justifyContent: 'center',
           zIndex: 2000,
-          pointerEvents: 'none',
           background: 'linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%)'
         }}>
           <div style={{
@@ -2879,46 +2870,100 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
             color: 'white',
             padding: '40px',
             borderRadius: '20px',
-            // background: 'rgba(255, 255, 255, 0.1)',
-            // backdropFilter: 'blur(20px)',
-            // border: '1px solid rgba(255, 255, 255, 0.2)',
-            // boxShadow: '0 20px 40px rgba(0, 0, 0, 0.1)'
+            background: 'rgba(255, 255, 255, 0.1)',
+            backdropFilter: 'blur(20px)',
+            border: '1px solid rgba(255, 255, 255, 0.2)',
+            boxShadow: '0 20px 40px rgba(0, 0, 0, 0.1)',
+            animation: 'pulse 1.5s infinite ease-in-out'
           }}>
-            {/* Logo or Icon */}
+            {/* Game Title */}
+            <div style={{
+              fontSize: '32px',
+              fontWeight: 'bold',
+              marginBottom: '20px',
+              color: 'white',
+              textShadow: '0 2px 10px rgba(0, 0, 0, 0.3)'
+            }}>
+              ChainCrush
+            </div>
             
+            {/* Animated Candy Icons */}
+            <div style={{
+              display: 'flex',
+              justifyContent: 'center',
+              gap: '15px',
+              marginBottom: '30px'
+            }}>
+              {['🔴', '🔵', '🟢', '🟡', '🟣'].map((candy, i) => (
+                <div key={i} style={{
+                  fontSize: '24px',
+                  animation: `bounce 1s infinite ${i * 0.1}s ease-in-out`
+                }}>
+                  {candy}
+                </div>
+              ))}
+            </div>
             
-           
-            
-            {/* Modern Progress Bar */}
+            {/* Enhanced Progress Bar */}
             <div style={{
               width: '280px',
-              height: '6px',
-              // backgroundColor: 'rgba(255, 255, 255, 0.2)',
-              borderRadius: '3px',
+              height: '10px',
+              backgroundColor: 'rgba(255, 255, 255, 0.2)',
+              borderRadius: '5px',
               overflow: 'hidden',
-              position: 'relative'
+              position: 'relative',
+              boxShadow: '0 2px 10px rgba(0, 0, 0, 0.2)'
             }}>
               <div style={{
                 width: `${loadingProgress}%`,
                 height: '100%',
                 background: 'linear-gradient(90deg, #ffffff, #f093fb)',
-                borderRadius: '3px',
+                borderRadius: '5px',
                 transition: 'width 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-                // boxShadow: '0 0 8px rgba(255, 255, 255, 0.3)'
+                boxShadow: '0 0 8px rgba(255, 255, 255, 0.5)'
               }}></div>
             </div>
             
-            {/* Progress Percentage */}
+            {/* Loading Text */}
             <div style={{
-              fontSize: '14px',
+              fontSize: '16px',
               marginTop: '16px',
-              color: 'rgba(255, 255, 255, 0.8)',
+              color: 'white',
               fontWeight: '500',
               letterSpacing: '1px'
             }}>
-              {loadingProgress}%
+              Loading Game Assets: {loadingProgress}%
+            </div>
+            
+            {/* Loading Message */}
+            <div style={{
+              fontSize: '14px',
+              marginTop: '10px',
+              color: 'rgba(255, 255, 255, 0.7)',
+              maxWidth: '280px'
+            }}>
+              {loadingProgress < 30 ? 'Preparing candy assets...' : 
+               loadingProgress < 60 ? 'Loading game sounds...' : 
+               loadingProgress < 90 ? 'Setting up the board...' : 
+               'Almost ready to play!'}
             </div>
           </div>
+          
+          {/* Add animation keyframes */}
+          <style dangerouslySetInnerHTML={{
+            __html: `
+              @keyframes pulse {
+                0% { transform: scale(1); }
+                50% { transform: scale(1.03); }
+                100% { transform: scale(1); }
+              }
+              
+              @keyframes bounce {
+                0%, 100% { transform: translateY(0); }
+                50% { transform: translateY(-10px); }
+              }
+            `
+          }} />
         </div>
       )}
       
@@ -3799,8 +3844,8 @@ Come for my spot or stay mid 😏🏆${improvementText}`;
             justifyContent: 'center'
           }}>
             {/* Glow background */}
-            <div style={{
-              position: 'absolute',
+          <div style={{
+            position: 'absolute',
               width: '300px',
               height: '300px',
               borderRadius: '50%',
@@ -3830,11 +3875,11 @@ Come for my spot or stay mid 😏🏆${improvementText}`;
             ))}
             
             {/* Main "COMBO" text */}
-            <div style={{
+          <div style={{
               fontSize: comboCount >= 4 ? '90px' : '80px',
-              fontWeight: 'bold',
+            fontWeight: 'bold',
               color: '#FFFFFF',
-              textAlign: 'center',
+            textAlign: 'center',
               textShadow: '0 0 20px #FF9800, 0 0 40px #FF5722, 0 3px 0 #000000',
               animation: 'comboTextPop 1.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards',
               transform: 'scale(0) rotate(-5deg)',
@@ -3842,11 +3887,11 @@ Come for my spot or stay mid 😏🏆${improvementText}`;
               fontFamily: "'Bangers', cursive" // Candy Crush uses a fun, playful font
             }}>
               COMBO
-            </div>
-            
+          </div>
+          
             {/* Multiplier with special styling for higher combos */}
-            <div style={{
-              position: 'absolute',
+          <div style={{
+            position: 'absolute',
               top: comboCount >= 5 ? '-60px' : '-40px',
               right: comboCount >= 5 ? '-40px' : '-30px',
               fontSize: comboCount >= 5 ? '72px' : '64px',
@@ -3854,7 +3899,7 @@ Come for my spot or stay mid 😏🏆${improvementText}`;
               color: comboCount >= 5 ? '#FFEB3B' : '#FFFFFF',
               textShadow: `0 0 20px ${comboCount >= 5 ? '#FF5722' : '#FF9800'}, 0 0 40px #FF5722, 0 3px 0 #000000`,
               background: `radial-gradient(circle, ${comboCount >= 5 ? 'rgba(255,59,0,0.9)' : 'rgba(255,152,0,0.85)'} 0%, ${comboCount >= 5 ? 'rgba(255,87,34,0.8)' : 'rgba(255,87,34,0.7)'} 100%)`,
-              borderRadius: '50%',
+            borderRadius: '50%',
               width: comboCount >= 5 ? '120px' : '100px',
               height: comboCount >= 5 ? '120px' : '100px',
               display: 'flex',
@@ -4003,9 +4048,9 @@ Come for my spot or stay mid 😏🏆${improvementText}`;
               70% {
                 opacity: 1;
                 transform: translate(${x * 0.6}px, ${y * 0.6}px) scale(1) rotate(${Math.random() * 180}deg);
-              }
-              100% {
-                opacity: 0;
+            }
+            100% {
+              opacity: 0;
                 transform: translate(${x}px, ${y}px) scale(0.5) rotate(${Math.random() * 360}deg);
               }
             }`;
