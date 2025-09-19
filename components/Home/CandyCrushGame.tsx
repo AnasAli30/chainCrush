@@ -303,7 +303,7 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
       setLoadingProgress(0);
       
       // Initialize game - loader will be hidden by Phaser's loading system
-      initGame();
+        initGame();
       
       // Start tracking game time
       setGameStartTime(Date.now());
@@ -1542,14 +1542,14 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
       });
       
       // Play appropriate sound with controlled volume
-      if (comboCount + 1 >= 3) {
-        // For bigger combos, play combo sound
+      if (comboCount >= 2) {
+        // For actual combos (2x or higher), play combo sound
         sounds.combo.play({
           volume: 0.35 * (matches.length / 5), // Scale volume by match size (cap at 5)
           detune: -200 + (comboCount * 50) // Higher combos sound more exciting
         });
       } else {
-        // For regular matches
+        // For regular matches or 1x combo
         sounds.match.play({
           volume: 0.25 + (0.05 * Math.min(matches.length, 5)), // Slight volume increase for bigger matches
           detune: matches.length * 25 // Higher pitch for bigger matches
@@ -1558,14 +1558,14 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
       
       // Show combo animation based on combo count and match size
       // In Candy Crush, combos become more dramatic as they increase
-      if (comboCount >= 1) {  // Only show for actual combos (1x or higher)
+      if (comboCount >= 2) {  // Only show for 2x or higher combos (skip 1x)
         console.log(`🎯 Showing combo animation for combo count: ${comboCount}`);
         
         // Higher combos deserve more emphasis
         if (comboCount >= 3) {
           // For big combos, we want to delay slightly to let the match animation be seen first
           setTimeout(() => {
-        setShowComboAnimation(true);
+            setShowComboAnimation(true);
             // Vibrate differently for bigger combos
             triggerVibration([100, 50, 150]);
           }, 200);
@@ -2283,7 +2283,7 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
       }
       
       return matches;
-    }
+      }
     }
 
     const config: Phaser.Types.Core.GameConfig = {
@@ -2946,7 +2946,7 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
                loadingProgress < 60 ? 'Loading game sounds...' : 
                loadingProgress < 90 ? 'Setting up the board...' : 
                'Almost ready to play!'}
-            </div>
+          </div>
           </div>
           
           {/* Add animation keyframes */}
