@@ -90,6 +90,8 @@ export default function UserStats() {
     timeUntilNextShare: number;
     lastShareTime?: number;
   } | null>(null);
+  const [hasFollowed, setHasFollowed] = useState<boolean>(false);
+  const [followLoading, setFollowLoading] = useState<boolean>(false);
 
   // Get best score from localStorage
   const getBestScoreFromStorage = () => {
@@ -347,6 +349,77 @@ localStorage.setItem('giftBoxTotals', JSON.stringify({
     };
   }, []);
 
+  // Check follow status
+  const checkFollowStatus = async () => {
+    if (!address) return;
+    
+    try {
+      // First check localStorage for immediate UI updates
+      const localFollowStatus = localStorage.getItem('chainCrushFollowed');
+      if (localFollowStatus === 'true') {
+        setHasFollowed(true);
+        return; // Don't need to check database if already followed locally
+      }
+      
+      // Check database for follow status
+      const response = await fetch(`/api/follow-action?userAddress=${address}&platform=x`);
+      const result = await response.json();
+      
+      if (result.success) {
+        setHasFollowed(result.hasFollowed);
+        // If user has followed in database, also store in localStorage
+        if (result.hasFollowed) {
+          localStorage.setItem('chainCrushFollowed', 'true');
+        }
+      }
+    } catch (error) {
+      console.error('Error checking follow status:', error);
+    }
+  };
+
+  // Follow action
+  const handleFollow = async () => {
+    if (!actions || !address || !context?.user?.fid) {
+      console.error('Actions, address, or fid not available');
+      return;
+    }
+
+    setFollowLoading(true);
+    try {
+      // Open X link
+      await actions.openUrl({ url: 'https://x.com/Chain_Crush' });
+      
+      // Record follow action in database and grant +1 gift box claims
+      const response = await authenticatedFetch('/api/follow-action', {
+        method: 'POST',
+        body: JSON.stringify({
+          userAddress: address,
+          fid: context.user.fid,
+          platform: 'x'
+        })
+      });
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        // Store in localStorage to prevent showing button again
+        localStorage.setItem('chainCrushFollowed', 'true');
+        setHasFollowed(true);
+        
+        // Refresh gift box stats to show the new claims
+        await getGiftBoxStatsFromAPI();
+        
+        console.log('Follow action recorded successfully! +1 gift box claims granted');
+      } else {
+        console.error('Failed to record follow action:', result.error);
+      }
+    } catch (error) {
+      console.error('Error handling follow action:', error);
+    } finally {
+      setFollowLoading(false);
+    }
+  };
+
   // Check share reward eligibility
   const checkShareRewardEligibility = async () => {
     if (!address || !context?.user?.fid) return;
@@ -582,7 +655,8 @@ localStorage.setItem('giftBoxTotals', JSON.stringify({
           fetchEthBalance(),
           fetchNftBalance(),
           checkShareRewardEligibility(),
-          getGiftBoxStatsFromAPI()
+          getGiftBoxStatsFromAPI(),
+          checkFollowStatus()
         ]);
       } else {
         // Even without address, try to load token amounts from localStorage
@@ -620,6 +694,14 @@ localStorage.setItem('giftBoxTotals', JSON.stringify({
       getBestScoreFromStorage();
       getGamesPlayedFromStorage();
       getCalculatedStats();
+      
+      // Check follow status even without address (for localStorage check)
+      if (!address) {
+        const localFollowStatus = localStorage.getItem('chainCrushFollowed');
+        if (localFollowStatus === 'true') {
+          setHasFollowed(true);
+        }
+      }
     };
     
     loadData();
@@ -902,6 +984,30 @@ localStorage.setItem('giftBoxTotals', JSON.stringify({
                   )}
         </button>
         </div>
+
+        {/* Follow Button - Only show if user hasn't followed yet */}
+        {!hasFollowed && (
+          <div className='rounded-[13px] mt-4' style={{width:"100%",border:"4px #1da1f2 solid"}}>
+            <button
+              onClick={handleFollow}
+              disabled={followLoading}
+              className="flex flex-col items-center justify-center space-y-1 text-blue-600 bg-white px-3 py-3 rounded-[10px] text-sm font-medium hover:bg-gray-100 transition-colors disabled:opacity-50 w-full text-center"
+            >
+              <div className="flex items-center space-x-2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none">
+                  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" fill="#1da1f2"/>
+                </svg>
+                <span>
+                  {followLoading ? 'Opening...' : 'Follow @Chain_Crush'}
+                </span>
+              </div>
+              <div className="text-base text-green-600">
+                🎁 Get +1 Gift Box Claims!
+              </div>
+            </button>
+          </div>
+        )}
+
       {/* Stats Overview Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-6">
         {/* Total NFTs */}

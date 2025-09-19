@@ -82,8 +82,39 @@ export interface DailyGiftBoxCount {
   lastClaimTime: number;
 }
 
+export interface FollowAction {
+  userAddress: string;
+  fid?: number;
+  platform: 'x' | 'twitter';
+  timestamp: number;
+  rewardClaimed: boolean;
+  createdAt: Date;
+}
+
 const GIFT_BOXES_PER_DAY = 5;
 
+// Follow action tracking functions
+export async function hasUserFollowed(userAddress: string, platform: 'x' | 'twitter' = 'x'): Promise<boolean> {
+  const client = await clientPromise;
+  const db = client.db('chaincrush');
+  
+  const followAction = await db.collection('followActions').findOne({ 
+    userAddress, 
+    platform 
+  });
+  
+  return !!followAction;
+}
+
+export async function saveFollowAction(followData: Omit<FollowAction, 'createdAt'>): Promise<void> {
+  const client = await clientPromise;
+  const db = client.db('chaincrush');
+  
+  await db.collection('followActions').insertOne({
+    ...followData,
+    createdAt: new Date()
+  });
+}
 
 // Authentication key management functions
 export async function isAuthKeyUsed(fusedKey: string): Promise<boolean> {
