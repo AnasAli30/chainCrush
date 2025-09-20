@@ -738,20 +738,45 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
           if (sound.isPlaying) sound.stop();
         });
         
-        if (sounds && sounds.levelUp) {
-          console.log('🔊 Playing level up sound...');
+        // Play level up sound using multiple methods to ensure it works
+        console.log('🔊 Playing level up sound...');
+        
+        // Method 1: Use Phaser's built-in sound manager to create and play a fresh sound
+        scene.time.delayedCall(100, () => {
           try {
-            sounds.levelUp.play({
-              volume: 0.6, // Increased volume for level up sound
-              detune: 0
+            // Create and play a fresh sound instance
+            const levelUpSound = scene.sound.add('level-up', { volume: 0.7, loop: false });
+            levelUpSound.play();
+            levelUpSound.once('complete', () => {
+              levelUpSound.destroy();
             });
-            console.log('✅ Level up sound played successfully');
+            console.log('✅ Level up sound played with fresh instance');
           } catch (error) {
-            console.error('❌ Error playing level up sound:', error);
+            console.error('❌ Fresh sound instance failed:', error);
+            
+            // Method 2: Fallback to the original sound object
+            try {
+              if (sounds && sounds.levelUp && !sounds.levelUp.isPlaying) {
+                sounds.levelUp.play({ volume: 0.7 });
+                console.log('✅ Level up sound played with original instance');
+              }
+            } catch (error) {
+              console.error('❌ Original sound instance failed:', error);
+            }
+            
+            // Method 3: HTML Audio fallback for browsers with Phaser audio issues
+            try {
+              const audio = new Audio('/sounds/level-up.mp3');
+              audio.volume = 0.7;
+              audio.play().catch(e => {
+                console.error('HTML Audio fallback failed:', e);
+              });
+              console.log('✅ Level up sound attempted with HTML Audio');
+            } catch (e) {
+              console.error('❌ HTML Audio creation failed:', e);
+            }
           }
-        } else {
-          console.error('❌ Level up sound not available!', sounds);
-        }
+        });
         
         // Increment level and generate new challenge
         gameLevel++;
