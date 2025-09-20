@@ -1,5 +1,3 @@
-"use client"
-
 import { farcasterMiniApp as miniAppConnector } from '@farcaster/miniapp-wagmi-connector'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { http, WagmiProvider, createConfig } from 'wagmi'
@@ -13,7 +11,13 @@ export const config = createConfig({
   connectors: [miniAppConnector()],
 })
 
-const queryClient = new QueryClient()
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+    },
+  },
+})
 
 export function WalletProvider({
   children,

@@ -25,6 +25,7 @@ import GameLoader from '../GameLoader'
 
 export function Demo() {
   const [showGame, setShowGame] = useState(false)
+  const [initializing, setInitializing] = useState(true)
   const [showNFTs, setShowNFTs] = useState(false)
   const [showStats, setShowStats] = useState(false)
   const { actions } = useMiniAppContext();
@@ -38,6 +39,42 @@ export function Demo() {
   const { connect, connectors } = useConnect()
   const { isConnected, address } = useAccount()
   const { disconnect } = useDisconnect()
+  
+  // Initialize wagmi with a delay to prevent errors and multiple connection attempts
+  useEffect(() => {
+    // Set initializing to true for 3.5 seconds
+    setInitializing(true)
+    
+    // Try connecting multiple times during initialization to ensure proper connection
+    const connectAttempts = [100, 800, 1500, 2500]; // Connection attempt times in milliseconds
+    const connectTimers: NodeJS.Timeout[] = [];
+    
+    // Create multiple connect attempts at different intervals
+    if (connectors && connectors[0]) {
+      connectAttempts.forEach(delay => {
+        const timer = setTimeout(() => {
+          console.log(`Connection attempt at ${delay}ms`);
+          try {
+            connect({ connector: connectors[0] });
+          } catch (err) {
+            console.log('Connection attempt failed:', err);
+          }
+        }, delay);
+        connectTimers.push(timer);
+      });
+    }
+    
+    // Final timeout to end initialization period
+    const finalTimer = setTimeout(() => {
+      setInitializing(false);
+    }, 2000); // 3.5 seconds delay
+    
+    // Clean up all timers
+    return () => {
+      connectTimers.forEach(timer => clearTimeout(timer));
+      clearTimeout(finalTimer);
+    }
+  }, [connect, connectors])
   
   // Blockchain transaction hooks
   const { writeContract, data: hash, error, isPending } = useWriteContract()
@@ -99,6 +136,8 @@ export function Demo() {
 
   // Start game with blockchain transaction
   const handleStartGame = async () => {
+    // No need for connection check here anymore since the buttons are hidden when not connected
+    // But keep it as a safety check just in case
     if (!isConnected) {
       connect({ connector: connectors[0] })
       return
@@ -225,12 +264,21 @@ export function Demo() {
               {isConnected && (
                 <motion.button
                   onClick={handleStartGame}
-                  disabled={isPending || isConfirming}
+                  disabled={isPending || isConfirming || initializing}
                   className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-bold py-4 px-8 rounded-2xl shadow-xl transition-all duration-300 disabled:opacity-70 disabled:cursor-not-allowed"
-                  whileHover={{ scale: isPending || isConfirming ? 1 : 1.05, y: isPending || isConfirming ? 0 : -2 }}
-                  whileTap={{ scale: isPending || isConfirming ? 1 : 0.95 }}
+                  whileHover={{ scale: isPending || isConfirming || initializing ? 1 : 1.05, y: isPending || isConfirming || initializing ? 0 : -2 }}
+                  whileTap={{ scale: isPending || isConfirming || initializing ? 1 : 0.95 }}
                 >
-                  {isPending || isConfirming ? (
+                  {initializing ? (
+                    <>
+                      <motion.div
+                        className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full mr-2"
+                        animate={{ rotate: 360 }}
+                        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                      />
+                      Connecting...
+                    </>
+                  ) : isPending || isConfirming ? (
                     <>
                       <motion.div
                         className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full mr-2"
@@ -356,13 +404,13 @@ export function Demo() {
             >
               <motion.button
                 onClick={handleStartGame}
-                disabled={isPending || isConfirming}
+                disabled={isPending || isConfirming || initializing}
                 className="relative group overflow-hidden gaming-gradient text-white font-black py-6 px-12 rounded-3xl text-xl shadow-lg border border-cyan-500/20 backdrop-blur-sm disabled:opacity-70 disabled:cursor-not-allowed"
                 whileHover={{ 
-                  scale: isPending || isConfirming ? 1 : 1.03,
-                  boxShadow: isPending || isConfirming ? "0 8px 25px -5px rgba(0, 255, 255, 0.25), 0 0 15px rgba(147, 51, 234, 0.15)" : "0 10px 30px -5px rgba(0, 255, 255, 0.3), 0 0 25px rgba(147, 51, 234, 0.2)"
+                  scale: isPending || isConfirming || initializing ? 1 : 1.03,
+                  boxShadow: isPending || isConfirming || initializing ? "0 8px 25px -5px rgba(0, 255, 255, 0.25), 0 0 15px rgba(147, 51, 234, 0.15)" : "0 10px 30px -5px rgba(0, 255, 255, 0.3), 0 0 25px rgba(147, 51, 234, 0.2)"
                 }}
-                whileTap={{ scale: isPending || isConfirming ? 1 : 0.97 }}
+                whileTap={{ scale: isPending || isConfirming || initializing ? 1 : 0.97 }}
                 style={{ 
                   boxShadow: '0 8px 25px -5px rgba(0, 255, 255, 0.25), 0 0 15px rgba(147, 51, 234, 0.15)'
                 }}
@@ -372,7 +420,16 @@ export function Demo() {
                 
                 {/* Content */}
                 <div className="relative z-10 flex items-center justify-center space-x-4">
-                  {isPending || isConfirming ? (
+                  {initializing ? (
+                    <>
+                      <motion.div
+                        className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full"
+                        animate={{ rotate: 360 }}
+                        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                      />
+                      <span>Connecting...</span>
+                    </>
+                  ) : isPending || isConfirming ? (
                     <>
                       <motion.div
                         className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full"
@@ -1452,6 +1509,7 @@ const FeatureCard = ({ icon, title, description, gradient, delay }: {
 );
 
 function BottomNavbar({ activeTab, onTabChange, onShowGame, onShowNFTs, onShowStats, onShowLeaderboard }: BottomNavbarProps) {
+  const { isConnected } = useAccount(); // Add wallet connection check for bottom navbar
   const handleTabClick = (tab: 'home' | 'nfts' | 'stats' | 'leaderboard') => {
     onTabChange(tab)
     
@@ -1484,6 +1542,7 @@ function BottomNavbar({ activeTab, onTabChange, onShowGame, onShowNFTs, onShowSt
     }
   }
 
+  // Show different tabs based on wallet connection status
   const tabs = [
     { id: 'home', icon: faHome, label: 'Home', color: 'from-cyan-400 to-blue-500' },
     // { id: 'nfts', icon: faGem, label: 'NFTs', color: 'from-purple-500 to-pink-500' },
@@ -1493,6 +1552,23 @@ function BottomNavbar({ activeTab, onTabChange, onShowGame, onShowNFTs, onShowSt
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 px-4 pb-4">
+      {/* Central Play Button - Only shown when wallet is connected
+      {isConnected && (
+        <motion.button
+          className="absolute left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 w-16 h-16 rounded-full gaming-gradient flex items-center justify-center shadow-xl border-2 border-white/20"
+          onClick={() => onShowGame(true)}
+          initial={{ scale: 0.8, opacity: 0, y: 0 }}
+          animate={{ scale: 1, opacity: 1, y: -20 }}
+          whileHover={{ scale: 1.1, boxShadow: '0 0 25px rgba(0, 255, 255, 0.4)' }}
+          whileTap={{ scale: 0.95 }}
+          style={{
+            boxShadow: '0 10px 25px -5px rgba(0, 255, 255, 0.3), 0 0 15px rgba(147, 51, 234, 0.2)'
+          }}
+        >
+          <FontAwesomeIcon icon={faGamepad} className="text-xl text-white" />
+        </motion.button>
+      )} */}
+
       <div 
         className="relative overflow-hidden rounded-3xl border backdrop-blur-2xl shadow-2xl mx-auto max-w-md glass-card neon-glow"
         style={{
