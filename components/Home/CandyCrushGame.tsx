@@ -4254,33 +4254,21 @@ Come for my spot or stay mid 😏🏆${improvementText}`;
             pointerEvents: 'none'
           }}>
             
-            {/* AMAZING! Text - Stylish */}
+            {/* AMAZING! Text - Simple Font Change */}
             <div
               style={{
                 position: 'absolute',
                 top: '-60px',
-                fontSize: '28px',
-                fontFamily: '"Impact", "Arial Black", "Helvetica", sans-serif',
-                color: '#FF6B35',
-                textShadow: `
-                  0 0 5px #FFD700,
-                  0 0 10px #FF6B35,
-                  0 0 15px #FF4500,
-                  2px 2px 4px rgba(0, 0, 0, 0.8),
-                  4px 4px 8px rgba(0, 0, 0, 0.6)
-                `,
-                fontWeight: '900',
-                letterSpacing: '3px',
-                textTransform: 'uppercase',
+                fontSize: '24px',
+                fontFamily: '"Impact", "Arial Black", sans-serif',
+                color: '#FFD700',
+                textShadow: '0 0 10px #FFD700, 0 2px 4px rgba(0, 0, 0, 0.3)',
+                fontWeight: 'bold',
+                letterSpacing: '2px',
                 opacity: 0,
                 transform: 'scale(0.1)',
                 animation: 'amazingTextPop 1.2s ease-out forwards',
-                animationDelay: '0.3s',
-                background: 'linear-gradient(45deg, #FFD700, #FF6B35, #FF4500, #FFD700)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
-                filter: 'drop-shadow(0 0 15px rgba(255, 107, 53, 0.8))'
+                animationDelay: '0.3s'
               }}
             >
               AMAZING!
