@@ -244,6 +244,10 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
     setGameKey((k: number) => k + 1); // Increment gameKey to remount game container
     setShowNoMovesPopup(false); // Reset no moves popup
     
+    // Reset reshuffle count
+    setReshuffles(1);
+    setReshuffleError(null);
+    
     // Refresh mint eligibility data
     // if (address) {
     //   checkFaucetEligibility();
