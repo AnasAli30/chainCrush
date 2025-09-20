@@ -387,7 +387,7 @@ localStorage.setItem('giftBoxTotals', JSON.stringify({
     setFollowLoading(true);
     try {
       // Open X link
-      await actions.openUrl({ url: 'https://x.com/Chain_Crush' });
+      await actions.openUrl({ url: 'https://x.com/intent/follow?screen_name=chain_crush' });
       
       // Record follow action in database and grant +1 gift box claims
       const response = await authenticatedFetch('/api/follow-action', {
