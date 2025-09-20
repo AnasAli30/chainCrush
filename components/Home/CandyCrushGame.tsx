@@ -4691,7 +4691,7 @@ Come for my spot or stay mid 😏🏆${improvementText}`;
                       
                       // Handle common error types with user-friendly messages
                       if (errorMessage.includes('User rejected the request') || errorMessage.includes('user rejected')) {
-                        return '❌ Transaction was cancelled by user. Please try again when ready.';
+                        return '⚠️ Something went wrong. Please try again.';
                       } else if (errorMessage.includes('insufficient funds') || errorMessage.includes('insufficient balance')) {
                         return '💰 Insufficient funds for gas fees. Please add more ETH to your wallet.';
                       } else if (errorMessage.includes('network') || errorMessage.includes('Network')) {
@@ -4713,7 +4713,7 @@ Come for my spot or stay mid 😏🏆${improvementText}`;
                         }, 1000);
                         return '🔄 Wallet connector error detected. Refreshing page...';
                       } else if (errorMessage.includes('denied') || errorMessage.includes('denied transaction')) {
-                        return '🚫 Transaction was denied. Please try again.';
+                        return '⚠️ Something went wrong. Please try again.';
                       } else if (errorMessage.includes('already known') || errorMessage.includes('already pending')) {
                         return '⏳ Transaction is already pending. Please wait for confirmation.';
                       } else if (errorMessage.includes('underpriced') || errorMessage.includes('gas price too low')) {
@@ -4769,7 +4769,7 @@ Come for my spot or stay mid 😏🏆${improvementText}`;
                       } else if (errorMessage.includes('provider not found') || errorMessage.includes('no provider')) {
                         return '🔌 No wallet provider found. Please install a wallet and try again.';
                       } else if (errorMessage.includes('user denied') || errorMessage.includes('user cancelled')) {
-                        return '❌ Transaction was cancelled by user. Please try again when ready.';
+                        return '⚠️ Something went wrong. Please try again.';
                       } else if (errorMessage.includes('transaction failed') || errorMessage.includes('failed')) {
                         return '❌ Transaction failed. Please try again.';
                       } else if (errorMessage.includes('unknown error') || errorMessage.includes('Unknown error')) {
@@ -4782,43 +4782,56 @@ Come for my spot or stay mid 😏🏆${improvementText}`;
                   </div>
 
                   {/* Technical details (collapsible) */}
-                  <details style={{ marginTop: '12px' }}>
-                    <summary style={{ 
-                      cursor: 'pointer', 
-                      color: '#f87171', 
-                      fontSize: '13px',
-                      fontWeight: 'bold',
-                      marginBottom: '8px'
-                    }}>
-                      🔧 Show Technical Details
-                    </summary>
-                    <div style={{ 
-                      fontSize: '12px', 
-                      opacity: 0.7,
-                      background: 'rgba(0,0,0,0.3)',
-                      padding: '10px',
-                      borderRadius: '6px',
-                      border: '1px solid rgba(239,68,68,0.2)',
-                      fontFamily: 'monospace',
-                      wordBreak: 'break-all',
-                      maxHeight: '150px',
-                      overflowY: 'auto'
-                    }}>
-                      <div style={{ marginBottom: '8px' }}>
-                        <strong>Error:</strong> {playAgainError.message}
-                      </div>
-                      {playAgainError.cause && (
-                        <div style={{ marginBottom: '8px' }}>
-                          <strong>Cause:</strong> {String(playAgainError.cause).split('.')[0]}
+                  {(() => {
+                    const errorMessage = playAgainError && typeof playAgainError === 'object' && 'message' in playAgainError ? playAgainError.message : '';
+                    // Hide technical details by default for user rejections
+                    const isUserRejection = errorMessage.includes('User rejected the request') || 
+                                           errorMessage.includes('user rejected') ||
+                                           errorMessage.includes('denied') || 
+                                           errorMessage.includes('denied transaction') ||
+                                           errorMessage.includes('user denied') || 
+                                           errorMessage.includes('user cancelled');
+                    
+                    return (
+                      <details style={{ marginTop: '12px' }} open={!isUserRejection}>
+                        <summary style={{ 
+                          cursor: 'pointer', 
+                          color: '#f87171', 
+                          fontSize: '13px',
+                          fontWeight: 'bold',
+                          marginBottom: '8px'
+                        }}>
+                          🔧 {isUserRejection ? 'Show Technical Details' : 'Technical Details'}
+                        </summary>
+                        <div style={{ 
+                          fontSize: '12px', 
+                          opacity: 0.7,
+                          background: 'rgba(0,0,0,0.3)',
+                          padding: '10px',
+                          borderRadius: '6px',
+                          border: '1px solid rgba(239,68,68,0.2)',
+                          fontFamily: 'monospace',
+                          wordBreak: 'break-all',
+                          maxHeight: '150px',
+                          overflowY: 'auto'
+                        }}>
+                          <div style={{ marginBottom: '8px' }}>
+                            <strong>Error:</strong> {isUserRejection ? 'Transaction was cancelled by user' : playAgainError.message}
+                          </div>
+                          {!isUserRejection && playAgainError.cause && (
+                            <div style={{ marginBottom: '8px' }}>
+                              <strong>Cause:</strong> {String(playAgainError.cause).split('.')[0]}
+                            </div>
+                          )}
+                          {!isUserRejection && 'code' in playAgainError && (playAgainError as any).code && (
+                            <div>
+                              <strong>Code:</strong> {String((playAgainError as any).code)}
+                            </div>
+                          )}
                         </div>
-                      )}
-                      {'code' in playAgainError && (playAgainError as any).code && (
-                        <div>
-                          <strong>Code:</strong> {String((playAgainError as any).code)}
-                        </div>
-                      )}
-                    </div>
-                  </details>
+                      </details>
+                    );
+                  })()}
                 </div>
               )}
 
