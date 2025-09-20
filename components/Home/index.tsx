@@ -46,7 +46,7 @@ export function Demo() {
     setInitializing(true)
     
     // Try connecting multiple times during initialization to ensure proper connection
-    const connectAttempts = [100, 800, 1500, 2500]; // Connection attempt times in milliseconds
+    const connectAttempts = [100, 800, 1500]; // Connection attempt times in milliseconds
     const connectTimers: NodeJS.Timeout[] = [];
     
     // Create multiple connect attempts at different intervals

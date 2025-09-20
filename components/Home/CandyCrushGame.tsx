@@ -66,6 +66,11 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
   // Combo system state
   const [comboCount, setComboCount] = useState(0);
   const [showComboAnimation, setShowComboAnimation] = useState(false);
+  const isUserMoveRef = useRef(false); // Track if current match is from user move (not a combo)
+  
+  // Layered bar animation state
+  const [showLayeredBarAnimation, setShowLayeredBarAnimation] = useState(false);
+  const [layeredBarData, setLayeredBarData] = useState<{x: number, y: number, count: number} | null>(null);
   
   // Daily limit countdown state
   const [timeUntilReset, setTimeUntilReset] = useState('');
@@ -227,6 +232,14 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
     setChallengeTarget(10);
     setChallengeProgress(0);
     setAnimatedScore(0);
+    // Reset combo state
+    setComboCount(0);
+    setShowComboAnimation(false);
+    isUserMoveRef.current = false; // Reset the user move flag
+    
+    // Reset layered bar animation state
+    setShowLayeredBarAnimation(false);
+    setLayeredBarData(null);
     setPreviousBestScore(parseInt(localStorage.getItem('candyCrushMaxScore') || '0'));
     setGameKey((k: number) => k + 1); // Increment gameKey to remount game container
     setShowNoMovesPopup(false); // Reset no moves popup
@@ -733,50 +746,36 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
       if (gameChallengeProgress >= gameChallengeTarget) {
         console.log('🎉 Challenge completed! Auto advancing to next level...');
         
-        // Play level up sound - stop any playing sounds first
+        // Play level up sound - simplified approach
+        console.log('🔊 Playing level up sound...');
+        
+        // Stop any currently playing sounds first
         Object.values(sounds).forEach(sound => {
           if (sound.isPlaying) sound.stop();
         });
         
-        // Play level up sound using multiple methods to ensure it works
-        console.log('🔊 Playing level up sound...');
-        
-        // Method 1: Use Phaser's built-in sound manager to create and play a fresh sound
-        scene.time.delayedCall(100, () => {
-          try {
-            // Create and play a fresh sound instance
-            const levelUpSound = scene.sound.add('level-up', { volume: 0.7, loop: false });
-            levelUpSound.play();
-            levelUpSound.once('complete', () => {
-              levelUpSound.destroy();
-            });
-            console.log('✅ Level up sound played with fresh instance');
-          } catch (error) {
-            console.error('❌ Fresh sound instance failed:', error);
+        // Use HTML Audio API for reliable playback
+        try {
+          const audio = new Audio('/sounds/level-up.mp3');
+          audio.volume = 0.6;
+          audio.play().then(() => {
+            console.log('✅ Level up sound played successfully');
+          }).catch(error => {
+            console.error('❌ Level up sound failed:', error);
             
-            // Method 2: Fallback to the original sound object
+            // Fallback to Phaser sound
             try {
-              if (sounds && sounds.levelUp && !sounds.levelUp.isPlaying) {
-                sounds.levelUp.play({ volume: 0.7 });
-                console.log('✅ Level up sound played with original instance');
+              if (sounds && sounds.levelUp) {
+                sounds.levelUp.play({ volume: 0.6 });
+                console.log('✅ Level up sound played with Phaser fallback');
               }
-            } catch (error) {
-              console.error('❌ Original sound instance failed:', error);
+            } catch (phaserError) {
+              console.error('❌ Phaser fallback also failed:', phaserError);
             }
-            
-            // Method 3: HTML Audio fallback for browsers with Phaser audio issues
-            try {
-              const audio = new Audio('/sounds/level-up.mp3');
-              audio.volume = 0.7;
-              audio.play().catch(e => {
-                console.error('HTML Audio fallback failed:', e);
-              });
-              console.log('✅ Level up sound attempted with HTML Audio');
-            } catch (e) {
-              console.error('❌ HTML Audio creation failed:', e);
-            }
-          }
-        });
+          });
+        } catch (error) {
+          console.error('❌ Audio creation failed:', error);
+        }
         
         // Increment level and generate new challenge
         gameLevel++;
@@ -833,8 +832,7 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
                 0 0 10px #00FFFF,
                 0 0 20px #0088FF,
                 2px 2px 2px rgba(0,0,0,0.8);
-              animation: appear 0.5s 0.3s ease-out forwards,
-                         float 2s 0.5s ease-in-out infinite alternate;
+              animation: appear 0.5s 0.3s ease-out forwards;
               opacity: 0;
               margin-top: 10px;
             }
@@ -1095,6 +1093,7 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
       }
     }
 
+
     function areAdjacent(candy1: Candy, candy2: Candy): boolean {
       const dx = Math.abs(candy1.gridX - candy2.gridX);
       const dy = Math.abs(candy1.gridY - candy2.gridY);
@@ -1257,7 +1256,12 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
           
           // Reset combo counter for new move - this is the start of a potential combo chain
           // In Candy Crush, the first match doesn't count as a combo, so we start at 0
+          console.log('🔄 New user move - resetting combo counter to 0');
           setComboCount(0);
+          
+          // Mark this as a user move - initial match should NOT count as combo
+          isUserMoveRef.current = true;
+          console.log('⚠️ Setting isUserMoveRef = true (user initiated match)');
           
           updateUI();
           debugGrid('BEFORE MATCH CHECK');
@@ -1543,16 +1547,29 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
       // We don't increment combo count here anymore
       // Combo count is handled in the cascade completion
       
-      // Calculate combo bonus score
-      // For scoring, we use the actual combo count (not +1)
-      const comboMultiplier = Math.min(comboCount + 1, 5); // Cap at 5x
+      // Calculate score based on combo status
+      // In original Candy Crush:
+      // - User's initial match: base score with no multiplier (comboCount = 0)
+      // - First automatic cascade match: 2x multiplier (comboCount = 1)
+      // - Second automatic cascade match: 3x multiplier (comboCount = 2)
+      // And so on...
       const baseScore = matches.length * 100;
-      const comboBonus = comboCount > 0 ? baseScore * comboCount : 0; // Only apply bonus for actual combos
-      const totalScore = baseScore + comboBonus;
+      
+      // Only apply multiplier for automatic matches (when combo counter > 0)
+      // First automatic match gets 2x, second gets 3x, etc.
+      const comboMultiplier = comboCount > 0 ? comboCount + 1 : 1;
+      
+      // Apply appropriate cap (original game caps around 6x)
+      const cappedMultiplier = Math.min(comboMultiplier, 6);
+      
+      // Calculate total score using the multiplier
+      const totalScore = baseScore * cappedMultiplier;
       
       // Log the score calculation
       if (comboCount > 0) {
-        console.log(`💰 Combo bonus: ${baseScore} × ${comboCount} = ${comboBonus}`);
+        console.log(`💰 Combo ${comboCount} multiplier: ${baseScore} × ${cappedMultiplier}x = ${totalScore}`);
+      } else {
+        console.log(`💰 Regular match score: ${baseScore} (no combo multiplier)`);
       }
       
       gameScore += totalScore;
@@ -1566,47 +1583,126 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
         if (sound.isPlaying) sound.stop();
       });
       
-      // Play appropriate sound with controlled volume
-      if (comboCount >= 2) {
-        // For actual combos (2x or higher), play combo sound
-        sounds.combo.play({
-          volume: 0.35 * (matches.length / 5), // Scale volume by match size (cap at 5)
-          detune: -200 + (comboCount * 50) // Higher combos sound more exciting
-        });
+      // Play appropriate sound based on whether this is a user match or a combo
+      // In the real Candy Crush, only automatic matches from cascades play the combo sound
+      // IMPORTANT: We need to check if this is an automatic match (combo) or user's initial match
+      const isAutoMatch = comboCount > 0;
+      if (isAutoMatch) {
+        // This is an automatic match from a cascade (an actual combo!)
+        try {
+          // Recreate the sound to ensure it plays correctly each time
+          const comboSound = scene.sound.add('combo-sound', { 
+            volume: 0.45 * Math.min(comboCount / 2 + 0.7, 1.3), // Louder with higher combos
+            loop: false 
+          });
+          
+          // The original game increases pitch with higher combos
+          comboSound.play({
+            detune: comboCount * 80 // Higher pitch for bigger combos
+          });
+          
+          // Clean up sound when done
+          comboSound.once('complete', () => {
+            comboSound.destroy();
+          });
+          
+          console.log(`🔊 Playing combo sound for combo #${comboCount}`);
+        } catch (error) {
+          console.error('Failed to play combo sound:', error);
+          
+          // Fallback to the original sound object
+          sounds.combo.play({
+            volume: 0.4,
+            detune: comboCount * 80
+          });
+        }
       } else {
-        // For regular matches or 1x combo
+        // Regular match made by user (not a combo)
         sounds.match.play({
-          volume: 0.25 + (0.05 * Math.min(matches.length, 5)), // Slight volume increase for bigger matches
-          detune: matches.length * 25 // Higher pitch for bigger matches
+          volume: 0.3 + (0.05 * Math.min(matches.length, 5)), // Slight volume increase for bigger matches
+          detune: matches.length * 30 // Higher pitch for bigger matches
         });
+        console.log('🔊 Playing regular match sound (no combo)');
       }
       
-      // Show combo animation based on combo count and match size
-      // In Candy Crush, combos become more dramatic as they increase
-      if (comboCount >= 2) {  // Only show for 2x or higher combos (skip 1x)
+      // Show combo animation based on combo count
+      // In Candy Crush, only automatic matches from cascades trigger combo animations
+      // Re-use the isAutoMatch flag to ensure consistency
+      if (isAutoMatch) {  // Only show for actual combos (not user's initial match)
         console.log(`🎯 Showing combo animation for combo count: ${comboCount}`);
         
-        // Higher combos deserve more emphasis
+        // Higher combos deserve more emphasis - just like in the original game
         if (comboCount >= 3) {
           // For big combos, we want to delay slightly to let the match animation be seen first
           setTimeout(() => {
             setShowComboAnimation(true);
-            // Vibrate differently for bigger combos
-            triggerVibration([100, 50, 150]);
-          }, 200);
+            // Vibrate differently for bigger combos - original game has stronger feedback
+            triggerVibration([100, 50, 200]);
+          }, 150); // Slightly faster to match original game pace
         } else {
-          setShowComboAnimation(true);
+          // For smaller combos, show immediately but with shorter duration
+          setTimeout(() => {
+            setShowComboAnimation(true);
+            // Light vibration for basic combos
+            triggerVibration([80]);
+          }, 50);
         }
         
         // Clear combo animation after the appropriate duration
-        // Longer duration for bigger combos
+        // Longer duration for bigger combos like in the original game
         setTimeout(() => setShowComboAnimation(false), 
-          comboCount >= 3 ? 2200 : 1800);
+          comboCount >= 4 ? 2400 : // Highest combos (like original game)
+          comboCount >= 2 ? 2000 : // Medium combos
+          1600);                   // First combo (automatically matched)
+      }
+      
+      // Special layered bar animation for 5+ candy matches (like original Candy Crush)
+      if (matches.length >= 5) {
+        console.log(`🌟 Creating layered bar animation for ${matches.length} candy match!`);
+        
+        // Calculate the center position of all matched candies
+        let centerX = 0;
+        let centerY = 0;
+        matches.forEach(candy => {
+          centerX += candy.x;
+          centerY += candy.y;
+        });
+        centerX /= matches.length;
+        centerY /= matches.length;
+        
+        // Convert Phaser coordinates to screen coordinates properly
+        // Phaser uses game canvas coordinates, we need to convert to viewport coordinates
+        const canvas = gameRef.current?.querySelector('canvas');
+        if (canvas) {
+          const rect = canvas.getBoundingClientRect();
+          centerX = rect.left + (centerX / canvas.width) * rect.width;
+          centerY = rect.top + (centerY / canvas.height) * rect.height;
+        }
+        
+        // Set the animation data and trigger it
+        setLayeredBarData({
+          x: centerX,
+          y: centerY,
+          count: matches.length
+        });
+        setShowLayeredBarAnimation(true);
+        
+        // Auto-hide after animation duration
+        setTimeout(() => {
+          setShowLayeredBarAnimation(false);
+          setLayeredBarData(null);
+        }, 3000);
       }
       
       // Vibrate based on match size and combo - bigger matches and combos = longer vibration
-      const vibrationIntensity = Math.min(matches.length * 30 + (comboCount * 20), 300);
-      triggerVibration([vibrationIntensity]);
+      // Original Candy Crush has more pronounced feedback for bigger combos
+      const vibrationIntensity = Math.min(matches.length * 25 + (comboCount * 35), 400);
+      
+      // Only trigger this global vibration for non-combo matches
+      // For combos we already have specific vibration patterns above
+      if (comboCount === 0) {
+        triggerVibration([vibrationIntensity]);
+      }
       
       debugGrid('BEFORE MATCH REMOVAL');
       
@@ -2236,15 +2332,33 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
           console.log('🔍 Cascade complete, checking matches');
           debugGrid('BEFORE NEXT MATCH CHECK');
         
-        // In Candy Crush, automatic matches from cascade count as combos
-        // We increment combo count here BEFORE checking for matches
-        // This is the key to the proper combo behavior
+        // ONLY automatic cascade matches should count for combos
+        // Initial user-made matches should NOT count as combo
         const previousMatches = findMatches();
         
         if (previousMatches.length > 0) {
-          // Found automatic matches after cascade - this is a combo!
-          console.log(`🔥 CASCADE COMBO! Found ${previousMatches.length} automatic matches`);
-          setComboCount(prev => prev + 1);
+          // Check if this was triggered by a user move
+          if (isUserMoveRef.current) {
+            // This is the user's initial match - reset the flag for next time
+            console.log('⚠️ User-initiated match detected - NOT counting as combo');
+            isUserMoveRef.current = false;
+          } else {
+            // This is an automatic match after cascade - it SHOULD count as combo
+            console.log(`🔥 CASCADE COMBO! Found ${previousMatches.length} automatic matches`);
+            
+            // First automatic match is combo 1, next is combo 2, etc.
+            // Use a callback to make sure we have the latest value
+            setComboCount(prev => {
+              console.log(`🔢 Combo counter increased to ${prev + 1}`);
+              return prev + 1;
+            });
+          }
+        } else {
+          // No matches, reset the user move flag if it was set
+          if (isUserMoveRef.current) {
+            console.log('⚠️ Resetting user move flag (no matches found)');
+            isUserMoveRef.current = false;
+          }
         }
         
           checkForMatches();
@@ -4112,6 +4226,78 @@ Come for my spot or stay mid 😏🏆${improvementText}`;
           }).join('')}
         `
       }} />
+      
+      {/* Layered Bar Animation for 5+ Candy Matches */}
+      {showLayeredBarAnimation && layeredBarData && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100vw',
+          height: '100vh',
+          zIndex: 3001,
+          pointerEvents: 'none',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}>
+          {/* Position animation at exact candy match location */}
+          <div style={{
+            position: 'absolute',
+            left: `${layeredBarData.x}px`,
+            top: `${layeredBarData.y}px`,
+            transform: 'translate(-50%, -50%)',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            pointerEvents: 'none'
+          }}>
+            
+            {/* AMAZING! Text - Simple */}
+            <div
+              style={{
+                position: 'absolute',
+                top: '-60px',
+                fontSize: '24px',
+                fontFamily: 'Arial Black, sans-serif',
+                color: '#FFD700',
+                textShadow: '0 0 10px #FFD700, 0 2px 4px rgba(0, 0, 0, 0.3)',
+                fontWeight: 'bold',
+                letterSpacing: '2px',
+                opacity: 0,
+                transform: 'scale(0.1)',
+                animation: 'amazingTextPop 1.2s ease-out forwards',
+                animationDelay: '0.3s'
+              }}
+            >
+              AMAZING!
+            </div>
+            
+          </div>
+        </div>
+      )}
+      
+      {/* Layered Bar Animation Styles */}
+      <style dangerouslySetInnerHTML={{
+        __html: `
+          @keyframes amazingTextPop {
+            0% {
+              opacity: 0;
+              transform: scale(0.5);
+            }
+            50% {
+              opacity: 1;
+              transform: scale(1.2);
+            }
+            100% {
+              opacity: 0;
+              transform: scale(1);
+            }
+          }
+        `
+      }} />
+      
       {/* Full Screen Mint Status Popup */}
       {showMintPopup && mintStatus !== 'idle' && (
         <div
