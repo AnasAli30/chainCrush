@@ -4816,18 +4816,9 @@ Come for my spot or stay mid 😏🏆${improvementText}`;
                           overflowY: 'auto'
                         }}>
                           <div style={{ marginBottom: '8px' }}>
-                            <strong>Error:</strong> {isUserRejection ? 'Transaction was cancelled by user' : playAgainError.message}
+                            <strong>Error:</strong> Transaction was cancelled by user
                           </div>
-                          {!isUserRejection && playAgainError.cause && (
-                            <div style={{ marginBottom: '8px' }}>
-                              <strong>Cause:</strong> {String(playAgainError.cause).split('.')[0]}
-                            </div>
-                          )}
-                          {!isUserRejection && 'code' in playAgainError && (playAgainError as any).code && (
-                            <div>
-                              <strong>Code:</strong> {String((playAgainError as any).code)}
-                            </div>
-                          )}
+                       
                         </div>
                       </details>
                     );

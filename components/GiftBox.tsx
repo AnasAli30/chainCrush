@@ -162,9 +162,20 @@ export default function GiftBox({ onClose, onClaimComplete }: GiftBoxProps) {
         functionName: 'claimTokenReward',
         args: [tokenAddress, amountInWei, reward.signature]
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error claiming token:', error);
-      setError('Failed to claim token');
+      
+      // Check if this is a user rejection
+      const errorMessage = error?.message || '';
+      const isUserRejection = 
+        errorMessage.includes('User rejected the request') || 
+        errorMessage.includes('user rejected') ||
+        errorMessage.includes('denied') || 
+        errorMessage.includes('denied transaction') ||
+        errorMessage.includes('user denied') || 
+        errorMessage.includes('user cancelled');
+      
+      setError(isUserRejection ? 'Something went wrong. Please try again.' : 'Failed to claim token');
       setIsClaiming(false);
     }
   };
@@ -226,7 +237,19 @@ export default function GiftBox({ onClose, onClaimComplete }: GiftBoxProps) {
   // Handle token claim error
   useEffect(() => {
     if (claimError && isClaiming) {
-      setError(claimErrorObj?.message || 'Token claim failed');
+      const errorMessage = claimErrorObj?.message || 'Token claim failed';
+      
+      // Check if the error is a user rejection
+      const isUserRejection = 
+        errorMessage.includes('User rejected the request') || 
+        errorMessage.includes('user rejected') ||
+        errorMessage.includes('denied') || 
+        errorMessage.includes('denied transaction') ||
+        errorMessage.includes('user denied') || 
+        errorMessage.includes('user cancelled');
+      
+      // Show a generic message for user rejections, otherwise show the specific error
+      setError(isUserRejection ? 'Something went wrong. Please try again.' : errorMessage);
       setIsClaiming(false);
     }
   }, [claimError, claimErrorObj, isClaiming]);
@@ -508,7 +531,10 @@ export default function GiftBox({ onClose, onClaimComplete }: GiftBoxProps) {
                     initial={{ scale: 0.8, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                   >
-                    {error}
+                    <div className="flex items-center">
+                      <span className="mr-2">⚠️</span>
+                      <span>{error}</span>
+                    </div>
                   </motion.div>
                 )}
 
@@ -652,7 +678,10 @@ export default function GiftBox({ onClose, onClaimComplete }: GiftBoxProps) {
                     initial={{ scale: 0.8, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                   >
-                    {error}
+                    <div className="flex items-center">
+                      <span className="mr-2">⚠️</span>
+                      <span>{error}</span>
+                    </div>
                   </motion.div>
                 )}
 
