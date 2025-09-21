@@ -21,7 +21,9 @@ import {
   faTimes,
   faGift,
   faShuffle,
-  faBurst
+  faBurst,
+  faFire,
+  faTrophy
 } from '@fortawesome/free-solid-svg-icons';
 
 interface CandyCrushGameProps {
@@ -69,6 +71,7 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
   const [partyPoppers, setPartyPoppers] = useState(1);
   const partyPopperRef = useRef<null | (() => void)>(null);
   const [partyPopperError, setPartyPopperError] = useState<string | null>(null);
+  
   
   // Combo system state
   const [comboCount, setComboCount] = useState(0);
@@ -2788,6 +2791,7 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
   useEffect(() => {
     checkRemainingClaims();
   }, [address, context?.user?.fid]); // Only check when address or fid changes
+  
 
   // Check if user is eligible for faucet
   const checkFaucetEligibility = async () => {
@@ -3019,6 +3023,7 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
         ? 'linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%)'
         : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
     }}>
+      
       
       {/* Minimal Elegant Background */}
       {gameInitialized && (

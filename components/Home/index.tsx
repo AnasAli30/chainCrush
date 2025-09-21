@@ -28,13 +28,35 @@ export function Demo() {
   const [initializing, setInitializing] = useState(true)
   const [showNFTs, setShowNFTs] = useState(false)
   const [showStats, setShowStats] = useState(false)
-  const { actions } = useMiniAppContext();
+  const { context, actions } = useMiniAppContext();
   const [showLeaderboard, setShowLeaderboard] = useState(false)
   const [activeTab, setActiveTab] = useState<'home' | 'nfts' | 'stats' | 'leaderboard'>('home')
   const [showRewardPopup, setShowRewardPopup] = useState(false)
   const [showTransactionPopup, setShowTransactionPopup] = useState(false)
   const [transactionStatus, setTransactionStatus] = useState<'idle' | 'pending' | 'confirmed' | 'error'>('idle')
   const [transactionHash, setTransactionHash] = useState<string | null>(null)
+  
+  // Daily streak state
+  const [dailyStreak, setDailyStreak] = useState(0)
+  const [longestStreak, setLongestStreak] = useState(0)
+  const [lastPlayDate, setLastPlayDate] = useState<string | null>(null)
+  
+  // Fetch streak data
+  const fetchStreakData = async () => {
+    if (!(context as any)?.user?.fid) return;
+    
+    try {
+      const response = await fetch(`/api/user-streak?fid=${(context as any).user.fid}`);
+      if (response.ok) {
+        const data = await response.json();
+        setDailyStreak(data.dailyStreak || 0);
+        setLongestStreak(data.longestStreak || 0);
+        setLastPlayDate(data.lastPlayDate);
+      }
+    } catch (error) {
+      console.error('Error fetching streak data:', error);
+    }
+  };
   
   const { connect, connectors } = useConnect()
   const { isConnected, address } = useAccount()
@@ -111,6 +133,11 @@ export function Demo() {
       actions?.addFrame()
     }
   },[isConnected])
+  
+  // Fetch streak data on mount
+  useEffect(() => {
+    fetchStreakData();
+  }, [(context as any)?.user?.fid]);
 
   // Handle transaction status updates
   useEffect(() => {
@@ -477,6 +504,62 @@ export function Demo() {
                   <FontAwesomeIcon icon={faArrowRight} className="text-sm text-purple-300" />
                 </div>
               </motion.button>
+            </motion.div>
+          )}
+
+          {/* Daily Streak Display */}
+          {(context as any)?.user?.fid && (dailyStreak > 0 || longestStreak > 0) && (
+            <motion.div 
+              className="mb-8 max-w-2xl mx-auto"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4, duration: 0.6 }}
+            >
+              <div className="flex justify-center gap-4">
+                {/* Current Streak */}
+                <div className="relative group">
+                  <div className="bg-gradient-to-r from-red-500 to-pink-500 rounded-2xl p-4 shadow-xl border border-white/20 backdrop-blur-sm">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+                        <FontAwesomeIcon 
+                          icon={faFire} 
+                          className="text-white text-lg"
+                        />
+                      </div>
+                      <div>
+                        <div className="text-white font-bold text-lg">
+                          {dailyStreak} Day{dailyStreak !== 1 ? 's' : ''}
+                        </div>
+                        <div className="text-white/80 text-sm">Current Streak</div>
+                      </div>
+                    </div>
+                  </div>
+                  {/* Hover effect */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-red-400 to-pink-400 rounded-2xl opacity-0 group-hover:opacity-20 transition-opacity duration-300" />
+                </div>
+                
+                {/* Longest Streak */}
+                <div className="relative group">
+                  <div className="bg-gradient-to-r from-yellow-500 to-orange-500 rounded-2xl p-4 shadow-xl border border-white/20 backdrop-blur-sm">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+                        <FontAwesomeIcon 
+                          icon={faTrophy} 
+                          className="text-white text-lg"
+                        />
+                      </div>
+                      <div>
+                        <div className="text-white font-bold text-lg">
+                          {longestStreak} Day{longestStreak !== 1 ? 's' : ''}
+                        </div>
+                        <div className="text-white/80 text-sm">Best Streak</div>
+                      </div>
+                    </div>
+                  </div>
+                  {/* Hover effect */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-yellow-400 to-orange-400 rounded-2xl opacity-0 group-hover:opacity-20 transition-opacity duration-300" />
+                </div>
+              </div>
             </motion.div>
           )}
 

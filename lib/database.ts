@@ -34,6 +34,10 @@ export interface GameScore {
   faucetClaimed?: boolean; // Added for faucet tracking
   hasMintedToday?: boolean; // Track if user has minted today
   lastMintDate?: string; // YYYY-MM-DD format of last mint date
+  // Daily streak tracking
+  dailyStreak?: number; // Current daily streak count
+  lastPlayDate?: string; // YYYY-MM-DD format of last play date
+  longestStreak?: number; // Longest streak achieved
 }
 
 export interface FaucetClaim {
@@ -285,12 +289,50 @@ export async function saveGameScore(gameScore: GameScore): Promise<void> {
     const currentSeasonScore = existingPlayer.currentSeasonScore || 0;
     const newCurrentSeasonScore = Math.max(currentSeasonScore, newScore);
     
+    // Calculate daily streak
+    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+    const lastPlayDate = existingPlayer.lastPlayDate;
+    const currentStreak = existingPlayer.dailyStreak || 0;
+    const longestStreak = existingPlayer.longestStreak || 0;
+    
+    let newStreak = currentStreak;
+    let newLongestStreak = longestStreak;
+    
+    if (lastPlayDate === today) {
+      // Already played today, keep current streak
+      newStreak = currentStreak;
+    } else if (lastPlayDate) {
+      // Check if yesterday was played (consecutive day)
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      const yesterdayStr = yesterday.toISOString().split('T')[0];
+      
+      if (lastPlayDate === yesterdayStr) {
+        // Consecutive day, increment streak
+        newStreak = currentStreak + 1;
+      } else {
+        // Streak broken, reset to 1
+        newStreak = 1;
+      }
+    } else {
+      // First time playing, start streak at 1
+      newStreak = 1;
+    }
+    
+    // Update longest streak if current streak is higher
+    if (newStreak > longestStreak) {
+      newLongestStreak = newStreak;
+    }
+    
     // Prepare update fields
     const updateFields: any = {
       pfpUrl: gameScore.pfpUrl,
       username: gameScore.username,
       timestamp: gameScore.timestamp,
-      updatedAt: new Date()
+      updatedAt: new Date(),
+      dailyStreak: newStreak,
+      lastPlayDate: today,
+      longestStreak: newLongestStreak
     };
     
     // Only update currentSeasonScore if it's a new season high
@@ -323,22 +365,26 @@ export async function saveGameScore(gameScore: GameScore): Promise<void> {
     );
     
     if (newScore > currentAth) {
-      console.log(`Updated player ${gameScore.fid} with new ATH: ${newScore}, level: ${gameScore.level}`);
+      console.log(`Updated player ${gameScore.fid} with new ATH: ${newScore}, level: ${gameScore.level}, streak: ${newStreak}`);
     } else if (newScore > currentSeasonScore) {
-      console.log(`Updated player ${gameScore.fid} with new current season score: ${newScore}, level: ${gameScore.level}`);
+      console.log(`Updated player ${gameScore.fid} with new current season score: ${newScore}, level: ${gameScore.level}, streak: ${newStreak}`);
     } else {
-      console.log(`Updated player ${gameScore.fid} profile info - level: ${gameScore.level}`);
+      console.log(`Updated player ${gameScore.fid} profile info - level: ${gameScore.level}, streak: ${newStreak}`);
     }
   } else {
     // Create new player record with both scores initialized
+    const today = new Date().toISOString().split('T')[0];
     const newPlayerData = {
       ...gameScore,
       currentSeasonScore: gameScore.score,
+      dailyStreak: 1,
+      lastPlayDate: today,
+      longestStreak: 1,
       createdAt: new Date()
     };
     
     await db.collection('gameScores').insertOne(newPlayerData);
-    console.log(`Created new player ${gameScore.fid} with score: ${gameScore.score}`);
+    console.log(`Created new player ${gameScore.fid} with score: ${gameScore.score}, streak: 1`);
   }
 }
 
@@ -372,6 +418,27 @@ export async function getUserBestScore(fid: number): Promise<GameScore | null> {
     );
   
   return bestScore as GameScore | null;
+}
+
+// Get user streak data
+export async function getUserStreakData(fid: number): Promise<{ dailyStreak: number; longestStreak: number; lastPlayDate: string | null } | null> {
+  const client = await clientPromise;
+  const db = client.db('chaincrush');
+  
+  const userData = await db.collection('gameScores').findOne(
+    { fid: fid },
+    { projection: { dailyStreak: 1, longestStreak: 1, lastPlayDate: 1 } }
+  );
+  
+  if (!userData) {
+    return null;
+  }
+  
+  return {
+    dailyStreak: userData.dailyStreak || 0,
+    longestStreak: userData.longestStreak || 0,
+    lastPlayDate: userData.lastPlayDate || null
+  };
 } 
 
 // NFT minting tracking functions
