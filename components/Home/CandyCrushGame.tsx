@@ -19,7 +19,9 @@ import {
   faExclamationTriangle, 
   faSpinner,
   faTimes,
-  faGift
+  faGift,
+  faShuffle,
+  faBurst
 } from '@fortawesome/free-solid-svg-icons';
 
 interface CandyCrushGameProps {
@@ -58,10 +60,15 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
   const [showConfirmEnd, setShowConfirmEnd] = useState(false);
   const [showNoMovesPopup, setShowNoMovesPopup] = useState(false);
 
-  // Add reshuffles state
+  // Add power-ups state
   const [reshuffles, setReshuffles] = useState(1);
   const reshuffleGridRef = useRef<null | (() => void)>(null);
   const [reshuffleError, setReshuffleError] = useState<string | null>(null);
+  
+  // Add party popper state
+  const [partyPoppers, setPartyPoppers] = useState(1);
+  const partyPopperRef = useRef<null | (() => void)>(null);
+  const [partyPopperError, setPartyPopperError] = useState<string | null>(null);
   
   // Combo system state
   const [comboCount, setComboCount] = useState(0);
@@ -244,9 +251,11 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
     setGameKey((k: number) => k + 1); // Increment gameKey to remount game container
     setShowNoMovesPopup(false); // Reset no moves popup
     
-    // Reset reshuffle count
+    // Reset power-ups count
     setReshuffles(1);
     setReshuffleError(null);
+    setPartyPoppers(1);
+    setPartyPopperError(null);
     
     // Refresh mint eligibility data
     // if (address) {
@@ -655,6 +664,7 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
       // In initGame, after defining scene, add:
       scene.events.on('levelup', () => {
         setReshuffles(r => r + 1);
+        setPartyPoppers(p => p + 1);
       });
     }
 
@@ -2472,6 +2482,72 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
       (gameRef.current as any).phaserGame = game;
     }
 
+    // Add party popper function in Phaser logic and expose to React
+    function activatePartyPopper() {
+      try {
+        // Vibrate for party popper activation with proper error handling
+        const vibrationSuccess = triggerVibration([100, 100, 200]);
+        if (!vibrationSuccess) {
+          console.log('Vibration failed during party popper activation, continuing without haptic feedback');
+        }
+        
+        // Destroy random candies across the board (25-35% of candies)
+        const totalCandies = GRID_ROWS * GRID_COLS;
+        const numCandiesToDestroy = Math.floor(totalCandies * (0.25 + Math.random() * 0.1));
+        const destroyedPositions = new Set<string>();
+        
+        // Select random positions to destroy
+        while (destroyedPositions.size < numCandiesToDestroy) {
+          const row = Math.floor(Math.random() * GRID_ROWS);
+          const col = Math.floor(Math.random() * GRID_COLS);
+          destroyedPositions.add(`${row}-${col}`);
+        }
+        
+        // Create array of candies to destroy
+        const candiesToDestroy: Candy[] = [];
+        destroyedPositions.forEach((pos: string) => {
+          const [row, col] = pos.split('-').map(Number);
+          if (grid[row] && grid[row][col]) {
+            candiesToDestroy.push(grid[row][col]);
+          }
+        });
+        
+        // Play party popper sound
+        sounds.combo.play({
+          volume: 0.6,
+          detune: 200
+        });
+        
+        // Create special visual effect at center of screen
+        const centerX = game.scale.width / 2;
+        const centerY = game.scale.height / 2;
+        
+        // Create explosion effect using existing particle assets
+        const particles = scene.add.particles(centerX, centerY, 'particle', {
+          speed: { min: 200, max: 400 },
+          angle: { min: 0, max: 360 },
+          scale: { start: 0.6, end: 0 },
+          blendMode: 'ADD',
+          lifespan: 1000,
+          gravityY: 300,
+          quantity: 100
+        });
+        
+        // Destroy the candies with animation - use the same function that handles matches
+        removeMatches(candiesToDestroy);
+        
+        // Schedule cleanup of particle emitter
+        scene.time.delayedCall(2000, () => {
+          particles.destroy();
+        });
+        
+        return true;
+      } catch (error) {
+        console.error('Error in party popper activation:', error);
+        return false;
+      }
+    }
+    
     // Add reshuffleGrid function in Phaser logic and expose to React
     function reshuffleGrid() {
       try {
@@ -2557,6 +2633,7 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
     }
     // Expose to React
     reshuffleGridRef.current = reshuffleGrid;
+    partyPopperRef.current = activatePartyPopper;
   };
 
   // Simplified background animation data for better performance
@@ -3898,58 +3975,168 @@ Come for my spot or stay mid 😏🏆${improvementText}`;
           </div>
         </div>
       )}
-      {/* Modern Reshuffle Button */}
-      {gameInitialized && !gameOver && reshuffles > 0 && (
-        <div style={{ position: 'fixed', bottom: 24, left: 0, width: '100vw', display: 'flex', justifyContent: 'center', zIndex: 2002 }}>
-          <button
-            onClick={() => {
-              if (reshuffleGridRef.current) {
-                try {
-                  setReshuffleError(null); // Clear any previous errors
-                  reshuffleGridRef.current();
-                  setReshuffles(r => r - 1);
-                } catch (error) {
-                  console.error('Reshuffle failed:', error);
-                  setReshuffleError('Reshuffle failed, but grid was updated');
-                  // Fallback: still decrement reshuffles even if animation fails
-                  setReshuffles(r => r - 1);
-                  // Clear error after 3 seconds
+      {/* Power-ups Container */}
+      {gameInitialized && !gameOver && (reshuffles > 0 || partyPoppers > 0) && (
+        <div style={{ 
+          position: 'fixed', 
+          bottom: 13, 
+          left: 0, 
+          width: '100vw', 
+          display: 'flex', 
+          justifyContent: 'center', 
+          gap: '20px', 
+          zIndex: 2002,
+          // padding: '0 20px'
+        }}>
+          {/* Reshuffle Button */}
+          {reshuffles > 0 && (
+            <button
+              onClick={() => {
+                if (reshuffleGridRef.current) {
+                  try {
+                    setReshuffleError(null); // Clear any previous errors
+                    reshuffleGridRef.current();
+                    setReshuffles(r => r - 1);
+                  } catch (error) {
+                    console.error('Reshuffle failed:', error);
+                    setReshuffleError('Reshuffle failed, but grid was updated');
+                    // Fallback: still decrement reshuffles even if animation fails
+                    setReshuffles(r => r - 1);
+                    // Clear error after 3 seconds
+                    setTimeout(() => setReshuffleError(null), 3000);
+                  }
+                } else {
+                  setReshuffleError('Reshuffle not available yet');
                   setTimeout(() => setReshuffleError(null), 3000);
                 }
-              } else {
-                setReshuffleError('Reshuffle not available yet');
-                setTimeout(() => setReshuffleError(null), 3000);
-              }
-            }}
-            style={{
-              background: 'rgba(255, 255, 255, 0.2)',
-              backdropFilter: 'blur(20px)',
-              border: '1px solid rgba(255, 255, 255, 0.3)',
-              color: 'white',
-              fontWeight: '600',
-              fontSize: '14px',
-              borderRadius: '16px',
-              padding: '12px 20px',
-              cursor: 'pointer',
-              transition: 'all 0.3s ease',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              boxShadow: '0 4px 16px rgba(0, 0, 0, 0.1)'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)';
-              e.currentTarget.style.transform = 'translateY(-2px)';
-              e.currentTarget.style.boxShadow = '0 8px 24px rgba(0, 0, 0, 0.15)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
-              e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = '0 4px 16px rgba(0, 0, 0, 0.1)';
-            }}
-          >
-            🔄 Reshuffle ({reshuffles})
-          </button>
+              }}
+              style={{
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                border: '2px solid rgba(255, 255, 255, 0.3)',
+                color: 'white',
+                fontWeight: '700',
+                fontSize: '14px',
+                borderRadius: '24px',
+                padding: '10px 24px',
+               cursor: 'pointer',
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                boxShadow: '0 8px 32px rgba(102, 126, 234, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.1)',
+                // minWidth: '140px',
+                justifyContent: 'center',
+                position: 'relative',
+                overflow: 'hidden'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-4px) scale(1.05)';
+                e.currentTarget.style.boxShadow = '0 12px 40px rgba(102, 126, 234, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.2)';
+                e.currentTarget.style.background = 'linear-gradient(135deg, #7c8ef0 0%, #8a5fb8 100%)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0) scale(1)';
+                e.currentTarget.style.boxShadow = '0 8px 32px rgba(102, 126, 234, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.1)';
+                e.currentTarget.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+              }}
+              onTouchStart={(e) => {
+                e.currentTarget.style.transform = 'translateY(-2px) scale(0.98)';
+              }}
+              onTouchEnd={(e) => {
+                e.currentTarget.style.transform = 'translateY(0) scale(1)';
+              }}
+            >
+              <FontAwesomeIcon 
+                icon={faShuffle} 
+                style={{ 
+                  fontSize: '18px',
+                  filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))'
+                }} 
+              />
+              <span style={{ 
+                fontSize: '18px',
+                fontWeight: '800',
+                textShadow: '0 2px 4px rgba(0,0,0,0.3)'
+              }}>
+                {reshuffles}
+              </span>
+            </button>
+          )}
+          
+          {/* Party Popper Button */}
+          {partyPoppers > 0 && (
+            <button
+              onClick={() => {
+                if (partyPopperRef.current) {
+                  try {
+                    setPartyPopperError(null); // Clear any previous errors
+                    partyPopperRef.current();
+                    setPartyPoppers(p => p - 1);
+                  } catch (error) {
+                    console.error('Party Popper failed:', error);
+                    setPartyPopperError('Party Popper failed');
+                    // Fallback: still decrement party poppers even if animation fails
+                    setPartyPoppers(p => p - 1);
+                    // Clear error after 3 seconds
+                    setTimeout(() => setPartyPopperError(null), 3000);
+                  }
+                } else {
+                  setPartyPopperError('Party Popper not available yet');
+                  setTimeout(() => setPartyPopperError(null), 3000);
+                }
+              }}
+              style={{
+                background: 'linear-gradient(135deg, #ff6b6b 0%, #ff8e8e 50%, #ffa8a8 100%)',
+                border: '2px solid rgba(255, 255, 255, 0.3)',
+                color: 'white',
+                fontWeight: '700',
+                fontSize: '14px',
+                borderRadius: '24px',
+                padding: '10px 24px',
+                cursor: 'pointer',
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                boxShadow: '0 8px 32px rgba(255, 107, 107, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.1)',
+                // minWidth: '140px',
+                justifyContent: 'center',
+                position: 'relative',
+                overflow: 'hidden'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-4px) scale(1.05)';
+                e.currentTarget.style.boxShadow = '0 12px 40px rgba(255, 107, 107, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.2)';
+                e.currentTarget.style.background = 'linear-gradient(135deg, #ff7a7a 0%, #ff9e9e 50%, #ffb8b8 100%)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0) scale(1)';
+                e.currentTarget.style.boxShadow = '0 8px 32px rgba(255, 107, 107, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.1)';
+                e.currentTarget.style.background = 'linear-gradient(135deg, #ff6b6b 0%, #ff8e8e 50%, #ffa8a8 100%)';
+              }}
+              onTouchStart={(e) => {
+                e.currentTarget.style.transform = 'translateY(-2px) scale(0.98)';
+              }}
+              onTouchEnd={(e) => {
+                e.currentTarget.style.transform = 'translateY(0) scale(1)';
+              }}
+            >
+              <FontAwesomeIcon 
+                icon={faBurst} 
+                style={{ 
+                  fontSize: '18px',
+                  filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))'
+                }} 
+              />
+              <span style={{ 
+                fontSize: '18px',
+                fontWeight: '800',
+                textShadow: '0 2px 4px rgba(0,0,0,0.3)'
+              }}>
+                {partyPoppers}
+              </span>
+            </button>
+          )}
         </div>
       )}
       
