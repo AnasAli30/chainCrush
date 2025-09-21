@@ -834,9 +834,9 @@ export async function generateGiftBoxReward(score: number = 0): Promise<{
   } else if (score < 19000) {
     betterLuckProbability = 0.5; // 50% chance for scores 8000-11999
   } else if (score < 25000) {
-    betterLuckProbability = 0.3; // 30% chance for scores 12000-15999
+    betterLuckProbability = 0.4; // 30% chance for scores 12000-15999
   } else if (score < 50000) {
-    betterLuckProbability = 0.2; // 20% chance for scores 16000-19999
+    betterLuckProbability = 0.3; // 20% chance for scores 16000-19999
   } else {
     betterLuckProbability = 0.7; // 10% chance for scores 20000+
   }
