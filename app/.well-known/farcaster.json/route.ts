@@ -5,9 +5,9 @@ export async function GET() {
   const farcasterConfig = {
     
       "accountAssociation": {
-        "header": "eyJmaWQiOjI0OTcwMiwidHlwZSI6ImN1c3RvZHkiLCJrZXkiOiIweEVCNDRFYTBlODBhQzE4MjIwREM5RjY0MjEyRWI3OTAwMzAwMTAxNjUifQ",
+        "header": "eyJmaWQiOjI0OTcwMiwidHlwZSI6ImF1dGgiLCJrZXkiOiIweGU2Q2ZkQWY3NGJGRUMwMEZhZmRFOTcyNEE0NmNiMDUyNTQ4Qzg0ODgifQ",
         "payload": "eyJkb21haW4iOiJjaGFpbi1jcnVzaC1ibGFjay52ZXJjZWwuYXBwIn0",
-        "signature": "MHhlNmM4YzlkNjBhMTJlZTE0NDhmZWEyYjAxODljOTQ2MmEyYjgyNWE1NTQ2N2U1ZGM4N2NjMDM4NzMxNGI4Mzg0NzdmNjZhOWIwYTFlZGE4NWQ4NWQ3YjhiY2E0M2VkOTE1Y2ZhNWQ3YzMwZjU5YTM0NmQ2NDQ1NjlhZWZhNzMzYTFj"
+        "signature": "wUGluVP+21iWt0XUaYBx6sxk1Jtn51YDyq/sSC6cTUsqsLbcNzbFIqMqvBxgbE2Yqie4xBhgqVo6qKNdSsSO0Bs="
       },
     
     frame: {
@@ -24,7 +24,7 @@ export async function GET() {
       splashBackgroundColor: "#ffffff",
       webhookUrl: `${APP_URL}/api/webhook`,
       subtitle: "Chain Crush",
-      description: "Play and Earn",
+      description: "Play. Crush. Earn.",
       tagline:"Play and Earn",
       ogTitle:"Chain Crush",
       ogDescription: "Play and Earn",
