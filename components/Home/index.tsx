@@ -19,6 +19,7 @@ import { ThemeToggle } from '@/components/ThemeToggle'
 import NFTManager from '../NFTManager'
 import UserStats from '../UserStats'
 import Leaderboard from '../Leaderboard'
+import HowToPlayModal from '../HowToPlayModal'
 import { useConnect, useAccount, useDisconnect, useWriteContract, useWaitForTransactionReceipt } from 'wagmi'
 import { motion, AnimatePresence, sync } from 'framer-motion'
 import GameLoader from '../GameLoader'
@@ -35,6 +36,7 @@ export function Demo() {
   const [showTransactionPopup, setShowTransactionPopup] = useState(false)
   const [transactionStatus, setTransactionStatus] = useState<'idle' | 'pending' | 'confirmed' | 'error'>('idle')
   const [transactionHash, setTransactionHash] = useState<string | null>(null)
+  const [showHowToPlay, setShowHowToPlay] = useState(false)
   
   // Daily streak state
   const [dailyStreak, setDailyStreak] = useState(0)
@@ -562,6 +564,32 @@ export function Demo() {
               </div>
             </motion.div>
           )}
+            {/* How to Play Button */}
+            <motion.div 
+            className="text-center mb-6"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.8, duration: 0.6 }}
+          >
+            <motion.button
+              onClick={() => setShowHowToPlay(true)}
+              className="relative group overflow-hidden bg-white/10 hover:bg-white/20 text-white font-bold py-3 px-8 rounded-2xl text-lg shadow-lg border border-white/20 backdrop-blur-sm transition-all duration-300"
+              whileHover={{ scale: 1.02, y: -2 }}
+              whileTap={{ scale: 0.98 }}
+              style={{
+                boxShadow: '0 8px 25px -5px rgba(255,255,255,0.1), 0 0 15px rgba(147, 51, 234, 0.1)'
+              }}
+            >
+              <div className="flex items-center justify-center space-x-3">
+                <FontAwesomeIcon icon={faGamepad} className="text-cyan-300" />
+                <span>How to Play</span>
+                <FontAwesomeIcon icon={faArrowRight} className="text-sm text-purple-300" />
+              </div>
+              
+              {/* Subtle shine effect */}
+              <div className="absolute inset-0 -skew-x-12 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-20" />
+            </motion.button>
+          </motion.div>
 
           {/* Stats Dashboard */}
           <motion.div 
@@ -599,6 +627,8 @@ export function Demo() {
               color="from-green-400 via-cyan-400 to-purple-500"
             />
           </motion.div>
+
+        
 
           {/* Main CTA Button */}
          
@@ -1501,6 +1531,12 @@ export function Demo() {
         onShowNFTs={setShowNFTs} 
         onShowStats={setShowStats} 
         onShowLeaderboard={setShowLeaderboard} 
+      />
+
+      {/* How to Play Modal */}
+      <HowToPlayModal 
+        isOpen={showHowToPlay} 
+        onClose={() => setShowHowToPlay(false)} 
       />
     </div>
   )
