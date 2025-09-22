@@ -2672,7 +2672,7 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
         top: `${Math.random() * 100}%`,
         animationDelay: `${Math.random() * 4}s`,
         opacity: Math.random() * 0.4 + 0.2,
-        size: Math.random() * 4 + 6,
+        size: Math.random() * 10 + 7,
       };
     }),
     []
@@ -3038,11 +3038,25 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
       height: '100vh',
       display: 'flex',
       alignItems: 'center',
-      justifyContent: 'center',
-      background: gameInitialized 
-        ? 'linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%)'
-        : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+      justifyContent: 'center'
     }}>
+      {/* Home-like Background Blobs */}
+      <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', zIndex: 0 }}>
+        <div className="absolute -top-40 -right-32 w-80 h-80 bg-gradient-to-br from-cyan-400/10 to-purple-500/08 rounded-full blur-2xl" />
+        <div className="absolute -bottom-40 -left-32 w-80 h-80 bg-gradient-to-tr from-purple-600/10 to-green-400/08 rounded-full blur-2xl" />
+      </div>
+      {/* Center radial glow */}
+      <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none', zIndex: 0 }}>
+        <div style={{
+          width: '60vw',
+          height: '60vw',
+          maxWidth: 600,
+          maxHeight: 600,
+          borderRadius: '50%',
+          background: 'radial-gradient(closest-side, rgba(255,255,255,0.14), rgba(255,255,255,0.08) 40%, transparent 70%)',
+          filter: 'blur(30px)'
+        }} />
+      </div>
       
       
       {/* Minimal Elegant Background */}
@@ -3097,7 +3111,7 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
       )}
       
       {/* Enhanced Loading Screen */}
-      {showInternalLoader && (
+  {showInternalLoader && (
         <div style={{
           position: 'fixed',
           top: 0,
@@ -3108,8 +3122,26 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
           alignItems: 'center',
           justifyContent: 'center',
           zIndex: 2000,
-          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%)'
+          background: 'transparent',
+          overflow: 'hidden'
         }}>
+          {/* Home-like Background Blobs */}
+          <div className="absolute inset-0 overflow-hidden">
+            <div className="absolute -top-40 -right-32 w-80 h-80 bg-gradient-to-br from-cyan-400/10 to-purple-500/08 rounded-full blur-2xl" />
+            <div className="absolute -bottom-40 -left-32 w-80 h-80 bg-gradient-to-tr from-purple-600/10 to-green-400/08 rounded-full blur-2xl" />
+          </div>
+          {/* Center radial glow */}
+          <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
+            <div style={{
+              width: '60vw',
+              height: '60vw',
+              maxWidth: 600,
+              maxHeight: 600,
+              borderRadius: '50%',
+              background: 'radial-gradient(closest-side, rgba(255,255,255,0.16), rgba(255,255,255,0.10) 40%, transparent 70%)',
+              filter: 'blur(30px)'
+            }} />
+          </div>
           <div style={{
             textAlign: 'center',
             color: 'white',
@@ -4681,7 +4713,7 @@ Come for my spot or stay mid 😏🏆${improvementText}`;
                 marginBottom: '24px',
                 lineHeight: '1.5'
               }}>
-                Please wait while we confirm your transaction on the blockchain.
+                Please wait while we confirm your transaction onChain.
               </p>
               
               {/* Loading Animation */}
@@ -5076,7 +5108,7 @@ Come for my spot or stay mid 😏🏆${improvementText}`;
                 maxWidth: '400px',
                 margin: '0 auto 24px auto'
               }}>
-                {transactionStatus === 'pending' && 'Please wait while we register your new game session on the blockchain...'}
+                {transactionStatus === 'pending' && 'Please wait while we register your new game session onChain...'}
                 {transactionStatus === 'confirmed' && 'Your new game session has been registered! Starting the game now...'}
                 {transactionStatus === 'error' && 'Something went wrong. Please try again or check your wallet connection.'}
               </p>

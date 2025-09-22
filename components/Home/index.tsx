@@ -1254,7 +1254,7 @@ export function Demo() {
                 maxWidth: '400px',
                 margin: '0 auto 24px auto'
               }}>
-                {transactionStatus === 'pending' && 'Please wait while we process your game start transaction on the blockchain...'}
+                {transactionStatus === 'pending' && 'Please wait while we process your game start transaction onChain...'}
                 {transactionStatus === 'confirmed' && 'Your game session has been registered! Starting the game now...'}
                 {transactionStatus === 'error' && 'Something went wrong. Please try again or check your wallet connection.'}
               </p>

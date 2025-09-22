@@ -80,7 +80,7 @@ export default function GiftRewardModal({
           marginBottom: '25px',
           color: '#666'
         }}>
-          Claim your reward on the blockchain
+          Claim your reward onChain
         </p>
         
         <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>

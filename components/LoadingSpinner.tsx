@@ -26,11 +26,24 @@ export default function LoadingSpinner({ progress = 0 }: LoadingSpinnerProps) {
     return 'Get ready to play!'
   }
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center overflow-hidden"
-      style={{
-        background: 'linear-gradient(135deg, #0f0f23 0%, #1a1a3a 50%, #2d1b69 100%)'
-      }}
-    >
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center overflow-hidden">
+      {/* Home-like Background Blobs */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute -top-40 -right-32 w-80 h-80 bg-gradient-to-br from-cyan-400/10 to-purple-500/08 rounded-full blur-2xl" />
+        <div className="absolute -bottom-40 -left-32 w-80 h-80 bg-gradient-to-tr from-purple-600/10 to-green-400/08 rounded-full blur-2xl" />
+      </div>
+      {/* Center radial glow */}
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+        <div style={{
+          width: '60vw',
+          height: '60vw',
+          maxWidth: 600,
+          maxHeight: 600,
+          borderRadius: '50%',
+          background: 'radial-gradient(closest-side, rgba(255,255,255,0.14), rgba(255,255,255,0.08) 40%, transparent 70%)',
+          filter: 'blur(30px)'
+        }} />
+      </div>
       {/* Animated Background Particles */}
       <div className="absolute inset-0">
         {Array.from({ length: 20 }, (_, i) => (
