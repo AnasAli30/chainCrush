@@ -247,7 +247,7 @@ export default function HowToPlayModal({ isOpen, onClose }: HowToPlayModalProps)
                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
                    <FontAwesomeIcon icon={faFlag} style={{ color: '#00ffff', marginTop: '2px', flexShrink: 0 }} />
                    <div>
-                     <strong style={{ color: '#00ffff' }}>Goal:</strong> Reach the target score before running out of moves to advance to the next level.
+                     <strong style={{ color: '#00ffff' }}>Goal:</strong> Match the required number of specific memes before running out of moves to advance to the next level.
                    </div>
                  </div>
                </div>
@@ -364,7 +364,7 @@ export default function HowToPlayModal({ isOpen, onClose }: HowToPlayModalProps)
                </div>
             </motion.div>
 
-            {/* Scoring System */}
+            {/* Level Progression */}
             <motion.div
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
@@ -387,46 +387,102 @@ export default function HowToPlayModal({ isOpen, onClose }: HowToPlayModalProps)
                 gap: '12px'
               }}>
                 <FontAwesomeIcon icon={faTrophy} />
+                Level Progression
+              </h2>
+              
+              <div style={{ fontSize: '16px', lineHeight: '1.6', color: '#fff' }}>
+                <div style={{ marginBottom: '16px' }}>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', marginBottom: '8px' }}>
+                    <FontAwesomeIcon icon={faBullseye} style={{ color: '#ffd700', marginTop: '2px', flexShrink: 0 }} />
+                    <strong style={{ color: '#ffd700' }}>Challenge System:</strong>
+                  </div>
+                  <ul style={{ marginTop: '8px', paddingLeft: '32px' }}>
+                    <li style={{ marginBottom: '4px' }}>Each level requires matching specific meme types</li>
+                    <li style={{ marginBottom: '4px' }}>Level 1: Match 10 specific memes</li>
+                    <li style={{ marginBottom: '4px' }}>Level 2: Match 15 specific memes</li>
+                    <li style={{ marginBottom: '4px' }}>Level 3: Match 20 specific memes</li>
+                    <li>Each level adds +5 more memes to match</li>
+                  </ul>
+                </div>
+                <div style={{ marginBottom: '16px' }}>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', marginBottom: '8px' }}>
+                    <FontAwesomeIcon icon={faCoins} style={{ color: '#ffd700', marginTop: '2px', flexShrink: 0 }} />
+                    <strong style={{ color: '#ffd700' }}>Bonus Moves:</strong>
+                  </div>
+                  <div style={{ marginLeft: '24px' }}>When you complete a level, you get bonus moves equal to the next level's target!</div>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+                  <FontAwesomeIcon icon={faDice} style={{ color: '#ffd700', marginTop: '2px', flexShrink: 0 }} />
+                  <div>
+                    <strong style={{ color: '#ffd700' }}>Random Targets:</strong> Each level randomly selects which meme type you need to match.
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Scoring System */}
+            <motion.div
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.8 }}
+              style={{ 
+                background: 'rgba(255,255,255,0.08)', 
+                borderRadius: '20px', 
+                padding: '24px',
+                marginBottom: '24px',
+                border: '1px solid rgba(255,255,255,0.1)'
+              }}
+            >
+              <h2 style={{ 
+                fontSize: '24px', 
+                fontWeight: 'bold', 
+                marginBottom: '20px',
+                color: '#ff6b35',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px'
+              }}>
+                <FontAwesomeIcon icon={faChartLine} />
                 Scoring System
               </h2>
               
-               <div style={{ fontSize: '16px', lineHeight: '1.6', color: '#fff' }}>
-                 <div style={{ marginBottom: '16px' }}>
-                   <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', marginBottom: '8px' }}>
-                     <FontAwesomeIcon icon={faChartLine} style={{ color: '#ffd700', marginTop: '2px', flexShrink: 0 }} />
-                     <strong style={{ color: '#ffd700' }}>Base Points:</strong>
-                   </div>
-                   <ul style={{ marginTop: '8px', paddingLeft: '32px' }}>
-                     <li style={{ marginBottom: '4px' }}>3-match: 100 points</li>
-                     <li style={{ marginBottom: '4px' }}>4-match: 200 points</li>
-                     <li>5+ match: 300+ points</li>
-                   </ul>
-                 </div>
-                 <div style={{ marginBottom: '16px' }}>
-                   <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', marginBottom: '8px' }}>
-                     <FontAwesomeIcon icon={faFire} style={{ color: '#ffd700', marginTop: '2px', flexShrink: 0 }} />
-                     <strong style={{ color: '#ffd700' }}>Combo Multipliers:</strong>
-                   </div>
-                   <ul style={{ marginTop: '8px', paddingLeft: '32px' }}>
-                     <li style={{ marginBottom: '4px' }}>2x combo: Double points</li>
-                     <li style={{ marginBottom: '4px' }}>3x combo: Triple points</li>
-                     <li>4x+ combo: Massive multipliers!</li>
-                   </ul>
-                 </div>
-                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
-                   <FontAwesomeIcon icon={faTrophy} style={{ color: '#ffd700', marginTop: '2px', flexShrink: 0 }} />
-                   <div>
-                     <strong style={{ color: '#ffd700' }}>Level Progression:</strong> Each level increases the target score and may introduce new challenges.
-                   </div>
-                 </div>
-               </div>
+              <div style={{ fontSize: '16px', lineHeight: '1.6', color: '#fff' }}>
+                <div style={{ marginBottom: '16px' }}>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', marginBottom: '8px' }}>
+                    <FontAwesomeIcon icon={faChartLine} style={{ color: '#ff6b35', marginTop: '2px', flexShrink: 0 }} />
+                    <strong style={{ color: '#ff6b35' }}>Base Points:</strong>
+                  </div>
+                  <ul style={{ marginTop: '8px', paddingLeft: '32px' }}>
+                    <li style={{ marginBottom: '4px' }}>3-match: 100 points</li>
+                    <li style={{ marginBottom: '4px' }}>4-match: 200 points</li>
+                    <li>5+ match: 300+ points</li>
+                  </ul>
+                </div>
+                <div style={{ marginBottom: '16px' }}>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', marginBottom: '8px' }}>
+                    <FontAwesomeIcon icon={faFire} style={{ color: '#ff6b35', marginTop: '2px', flexShrink: 0 }} />
+                    <strong style={{ color: '#ff6b35' }}>Combo Multipliers:</strong>
+                  </div>
+                  <ul style={{ marginTop: '8px', paddingLeft: '32px' }}>
+                    <li style={{ marginBottom: '4px' }}>2x combo: Double points</li>
+                    <li style={{ marginBottom: '4px' }}>3x combo: Triple points</li>
+                    <li>4x+ combo: Massive multipliers!</li>
+                  </ul>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+                  <FontAwesomeIcon icon={faTrophy} style={{ color: '#ff6b35', marginTop: '2px', flexShrink: 0 }} />
+                  <div>
+                    <strong style={{ color: '#ff6b35' }}>Score Tracking:</strong> Your total score is tracked and saved when you complete levels or end the game.
+                  </div>
+                </div>
+              </div>
             </motion.div>
 
             {/* Web3 Rewards */}
             <motion.div
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.8 }}
+              transition={{ delay: 0.9 }}
               style={{ 
                 background: 'linear-gradient(135deg, rgba(255,215,0,0.15), rgba(255,165,0,0.1))', 
                 borderRadius: '20px', 
@@ -500,7 +556,7 @@ export default function HowToPlayModal({ isOpen, onClose }: HowToPlayModalProps)
             <motion.div
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.9 }}
+              transition={{ delay: 1.0 }}
               style={{ 
                 background: 'rgba(255,255,255,0.08)', 
                 borderRadius: '20px', 
@@ -580,7 +636,7 @@ export default function HowToPlayModal({ isOpen, onClose }: HowToPlayModalProps)
             <motion.button
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 1.0 }}
+              transition={{ delay: 1.1 }}
               onClick={onClose}
               style={{
                 background: 'linear-gradient(135deg, #00ffff 0%, #9333ea 50%, #22c55e 100%)',

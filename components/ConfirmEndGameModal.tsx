@@ -10,8 +10,7 @@ interface ConfirmEndGameModalProps {
 export default function ConfirmEndGameModal({ 
   open, 
   onClose, 
-  onConfirm, 
-  message 
+  onConfirm
 }: ConfirmEndGameModalProps) {
   if (!open) return null;
 
@@ -37,8 +36,9 @@ export default function ConfirmEndGameModal({
         color:"black",
         fontWeight:"bold"
       }}>
-        <h3 style={{ marginBottom: '15px' }}>Confirm Action</h3>
-        <p style={{ marginBottom: '20px' }}>{message}</p>
+        <h2 style={{ marginBottom: '15px' ,fontSize:"20px"}}>Confirm Action</h2>
+        <p >Quit game?</p>
+        <p style={{ marginBottom: '20px' }}>Chill, your score’s safe</p>
         <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
           <button
             onClick={onClose}

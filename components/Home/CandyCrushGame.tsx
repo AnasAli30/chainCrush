@@ -381,6 +381,7 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
       levelUp: Phaser.Sound.BaseSound;
       invalidMove: Phaser.Sound.BaseSound;
       candyCrush: Phaser.Sound.BaseSound;
+      amazing: Phaser.Sound.BaseSound;
     };
     let particleEmitters: { [key: string]: any } = {};
     let sparkleEmitter: any;
@@ -459,6 +460,7 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
         this.load.audio('level-up', ['/sounds/level-up.mp3']);
         this.load.audio('invalid-move', ['/sounds/invalid-move.mp3']);
         this.load.audio('candy-crush', ['/sounds/candy-crush.mp3']);
+        this.load.audio('amazing', ['/sounds/Amazing.mp3']);
         
         // Add load complete listener to verify sounds loaded and hide loader
         this.load.on('complete', () => {
@@ -469,6 +471,13 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
             console.log('✅ Level-up sound loaded successfully');
           } else {
             console.error('❌ Level-up sound failed to load!');
+          }
+          
+          // Check if amazing sound loaded
+          if (this.cache.audio.exists('amazing')) {
+            console.log('✅ Amazing sound loaded successfully');
+          } else {
+            console.error('❌ Amazing sound failed to load!');
           }
           
           // Give a small delay before hiding the loader to ensure everything is ready
@@ -536,7 +545,8 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
         combo: this.sound.add('combo-sound', { volume: 0.35, loop: false }),
         levelUp: this.sound.add('level-up', { volume: 0.4, loop: false }),
         invalidMove: this.sound.add('invalid-move', { volume: 0.25, loop: false }),
-        candyCrush: this.sound.add('candy-crush', { volume: 0.35, loop: false })
+        candyCrush: this.sound.add('candy-crush', { volume: 0.35, loop: false }),
+        amazing: this.sound.add('amazing', { volume: 0.4, loop: false })
       };
       
       // Configure the sound system
@@ -1676,6 +1686,16 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
       // Special layered bar animation for 5+ candy matches (like original Candy Crush)
       if (matches.length >= 5) {
         console.log(`🌟 Creating layered bar animation for ${matches.length} candy match!`);
+        
+        // Play amazing sound for 5+ candy matches
+        try {
+          if (sounds && sounds.amazing) {
+            sounds.amazing.play();
+            console.log('🎵 Playing amazing sound for 5+ candy match!');
+          }
+        } catch (error) {
+          console.error('❌ Error playing amazing sound:', error);
+        }
         
         // Calculate the center position of all matched candies
         let centerX = 0;
@@ -4450,21 +4470,28 @@ Come for my spot or stay mid 😏🏆${improvementText}`;
             pointerEvents: 'none'
           }}>
             
-            {/* AMAZING! Text - Simple Font Change */}
+            {/* AMAZING! Text - Enhanced Styling */}
             <div
               style={{
                 position: 'absolute',
-                top: '-60px',
-                fontSize: '24px',
-                fontFamily: '"Impact", "Arial Black", sans-serif',
-                color: '#FFD700',
-                textShadow: '0 0 10px #FFD700, 0 2px 4px rgba(0, 0, 0, 0.3)',
-                fontWeight: 'bold',
-                letterSpacing: '2px',
+                top: '-80px',
+                fontSize: '32px',
+                fontFamily: '"Bebas Neue", "Impact", "Arial Black", sans-serif',
+                background: 'linear-gradient(45deg, #FFD700, #FFA500, #FF6B35, #FFD700)',
+                backgroundSize: '400% 400%',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text',
+                textShadow: '0 0 20px rgba(255, 215, 0, 0.8), 0 0 40px rgba(255, 107, 53, 0.6), 0 4px 8px rgba(0, 0, 0, 0.5)',
+                fontWeight: '900',
+                letterSpacing: '4px',
+                textTransform: 'uppercase',
                 opacity: 0,
                 transform: 'scale(0.1)',
-                animation: 'amazingTextPop 1.2s ease-out forwards',
-                animationDelay: '0.3s'
+                animation: 'amazingTextPop 1.5s ease-out forwards, amazingGradient 2s ease-in-out infinite',
+                animationDelay: '0.3s',
+                filter: 'drop-shadow(0 0 15px rgba(255, 215, 0, 0.7))',
+                WebkitTextStroke: '1px rgba(255, 255, 255, 0.3)'
               }}
             >
               AMAZING!
@@ -4480,15 +4507,39 @@ Come for my spot or stay mid 😏🏆${improvementText}`;
           @keyframes amazingTextPop {
             0% {
               opacity: 0;
-              transform: scale(0.5);
+              transform: scale(0.3) rotate(-5deg);
             }
-            50% {
+            20% {
+              opacity: 0.8;
+              transform: scale(1.3) rotate(2deg);
+            }
+            40% {
               opacity: 1;
-              transform: scale(1.2);
+              transform: scale(1.1) rotate(-1deg);
+            }
+            60% {
+              opacity: 1;
+              transform: scale(1.2) rotate(1deg);
+            }
+            80% {
+              opacity: 0.9;
+              transform: scale(1.05) rotate(0deg);
             }
             100% {
               opacity: 0;
-              transform: scale(1);
+              transform: scale(1) rotate(0deg);
+            }
+          }
+          
+          @keyframes amazingGradient {
+            0% {
+              background-position: 0% 50%;
+            }
+            50% {
+              background-position: 100% 50%;
+            }
+            100% {
+              background-position: 0% 50%;
             }
           }
         `
