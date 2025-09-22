@@ -3867,7 +3867,7 @@ Come for my spot or stay mid 😏🏆${improvementText}`;
           setGameOver(true);
           setGameOverState(true); // show stats overlay if needed
         }}
-        message="Are you sure you want to end this game? Your progress will be lost."
+        message="Quit game? Chill, your score’s safe"
       />
       
       {/* No Moves Left Popup */}
