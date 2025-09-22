@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faGift, faCoins, faTimes, faCheck, faStar } from '@fortawesome/free-solid-svg-icons';
+import { faGift, faCoins, faTimes, faCheck, faStar, faCheckCircle, faExclamationTriangle, faFaceFrown } from '@fortawesome/free-solid-svg-icons';
 import { useAccount } from 'wagmi';
 import { useMiniAppContext } from '@/hooks/use-miniapp-context';
 import { authenticatedFetch } from '@/lib/auth';
@@ -406,7 +406,7 @@ export default function GiftBox({ onClose, onClaimComplete }: GiftBoxProps) {
                     repeatType: "reverse"
                   }}
                 >
-                  ✅
+                  <FontAwesomeIcon icon={faCheckCircle} />
                 </motion.div>
                 
                 <motion.h2 
@@ -470,7 +470,7 @@ export default function GiftBox({ onClose, onClaimComplete }: GiftBoxProps) {
                       rotateZ: boxAnimation === 'shaking' ? [0, 5, -5, 5, -5, 0] : 0
                     }}
                   >
-                    🎁
+                    <FontAwesomeIcon icon={faGift} />
                   </motion.div>
                   
                   {/* Sparkle effects around the box */}
@@ -532,7 +532,7 @@ export default function GiftBox({ onClose, onClaimComplete }: GiftBoxProps) {
                     animate={{ scale: 1, opacity: 1 }}
                   >
                     <div className="flex items-center">
-                      <span className="mr-2">⚠️</span>
+                      <FontAwesomeIcon icon={faExclamationTriangle} className="mr-2" />
                       <span>{error}</span>
                     </div>
                   </motion.div>
@@ -618,7 +618,7 @@ export default function GiftBox({ onClose, onClaimComplete }: GiftBoxProps) {
                         repeatType: "reverse"
                       }}
                     >
-                      😔
+                      <FontAwesomeIcon icon={faFaceFrown} />
                     </motion.div>
                   )}
               </motion.div>

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useAccount } from 'wagmi';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTrophy, faMedal, faAward, faInfoCircle, faCoins, faShare } from '@fortawesome/free-solid-svg-icons';
+import { faTrophy, faMedal, faAward, faInfoCircle, faCoins, faShare, faUser, faStopwatch, faPalette, faBullseye, faFlagCheckered, faGamepad } from '@fortawesome/free-solid-svg-icons';
 import { useMiniAppContext } from '@/hooks/use-miniapp-context';
 import { APP_URL } from '@/lib/constants';
 
@@ -38,6 +38,8 @@ export default function Leaderboard() {
   const [timeLeft, setTimeLeft] = useState<{ days: number; hours: number }>({ days: 0, hours: 0 });
   const [timerLoading, setTimerLoading] = useState<boolean>(false);
   const [timer, setTimer] = useState<number | null>(null); // Unix seconds
+  // View mode: current season or all-time high
+  const [viewMode, setViewMode] = useState<'season' | 'ath'>('season');
 
   // Reward pool (ARB)
   const POOL_ARB = 100; // 100 ARB total pool
@@ -54,22 +56,25 @@ export default function Leaderboard() {
   const per9to10 = distributionAmounts[8];
 
   // Initial fetch and load more function
+  const PAGE_LIMIT = 50;
   const fetchLeaderboard = async (isInitial = true) => {
     if (isInitial) {
       setLoading(true);
       setOffset(0);
       setLeaderboard([]);
+      setHasMore(true);
     } else {
       setLoadingMore(true);
     }
 
     try {
       const currentOffset = isInitial ? 0 : offset;
-      const response = await fetch(`/api/game-leaderboard?limit=50&offset=${currentOffset}`);
+      const endpoint = viewMode === 'ath' ? '/api/ath-leaderboard' : '/api/game-leaderboard';
+      const response = await fetch(`${endpoint}?limit=${PAGE_LIMIT}&offset=${currentOffset}`);
       const result = await response.json();
       
       if (result.success) {
-        const newData = result.data.leaderboard;
+        const newData = result.data.leaderboard || [];
         
         if (isInitial) {
           setLeaderboard(newData);
@@ -88,9 +93,12 @@ export default function Leaderboard() {
           });
         }
         
-        setHasMore(result.data.hasMore);
-        setOffset(currentOffset + 50);
-        setTotalPlayers(result.data.total);
+        const apiHasMore = typeof result.data.hasMore === 'boolean' ? result.data.hasMore : undefined;
+        setHasMore(apiHasMore !== undefined ? apiHasMore : newData.length === PAGE_LIMIT);
+        setOffset(currentOffset + PAGE_LIMIT);
+        if (typeof result.data.total === 'number') {
+          setTotalPlayers(result.data.total);
+        }
       } else {
         console.error('Failed to fetch leaderboard:', result.error);
       }
@@ -110,8 +118,9 @@ export default function Leaderboard() {
     if (!context?.user?.fid) return;
     
     try {
-      // Get all leaderboard data to find user's position
-      const response = await fetch('/api/game-leaderboard?limit=1000');
+      // Get leaderboard data (current mode) to find user's position
+      const endpoint = viewMode === 'ath' ? '/api/ath-leaderboard' : '/api/game-leaderboard';
+      const response = await fetch(`${endpoint}?limit=1000`);
       const result = await response.json();
       
       if (result.success) {
@@ -131,7 +140,7 @@ export default function Leaderboard() {
   useEffect(() => {
     fetchLeaderboard(true);
     fetchUserInfo();
-  }, [context?.user?.fid]);
+  }, [context?.user?.fid, viewMode]);
 
   // Fallback shows 0d 0h when no timer is available
  
@@ -436,6 +445,7 @@ export default function Leaderboard() {
               <div style={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '12px' }}>Click ARB for details</div>
             </div>
           </div>
+       
 
          {displayTime && (
            <div className="text-right">
@@ -455,13 +465,31 @@ export default function Leaderboard() {
         </div>
       </div>
 
+       {/* View mode toggle */}
+       <div className="flex items-center  justify-center gap-2 w-100% m-5">
+          <button
+            style={{width:"50%"}}
+            onClick={() => setViewMode('season')}
+            className={`px-5 py-2 text-xs font-semibold rounded-md transition-colors ${viewMode === 'season' ? 'bg-white text-[#19adff]' : 'bg-white/10 text-white'} border border-white/20`}
+          >
+            Current Season
+          </button>
+          <button
+          style={{width:"50%"}}
+            onClick={() => setViewMode('ath')}
+            className={`px-5 py-2 text-xs font-semibold rounded-md transition-colors ${viewMode === 'ath' ? 'bg-white text-[#19adff]' : 'bg-white/10 text-white'} border border-white/20`}
+          >
+            All Time High
+          </button>
+        </div>
+
       {/* User Info Section */}
       {userInfo && userRank && (
         <div className="mb-4 rounded-xl border border-[#19adff] bg-white/95 backdrop-blur-sm shadow-md overflow-hidden">
           {/* Compact Header */}
           <div className="flex items-center justify-between px-3 py-2 bg-gradient-to-r from-[#19adff] to-[#1590d4] border-b border-[#19adff]/20">
             <div className="flex items-center space-x-2">
-              <div className="text-lg">👤</div>
+              <div className="text-lg"><FontAwesomeIcon icon={faUser} /></div>
               <span className="text-sm font-semibold text-white">Your Rank</span>
               <div className="text-xs bg-white/20 text-white px-2 py-1 rounded-full font-bold">
                 #{userRank}
@@ -496,14 +524,14 @@ export default function Leaderboard() {
                  <p className="font-bold text-[#19adff] text-lg mb-3 truncate">
                    {userInfo.username || context?.user?.username || `User ${userInfo.fid}`}
                  </p>
-                 <div className="flex items-center space-x-2 text-xs text-gray-600">
-                 <p className="text-xs text-gray-500">🏆 ATH: {(userInfo.score || 0).toLocaleString()}</p>
-                   {userInfo.nftCount && userInfo.nftCount > 0 ? (
-                     <span className="text-[#19adff] font-medium">🎨 {userInfo.nftCount} NFT{userInfo.nftCount > 1 ? 's' : ''}</span>
-                   ) : (
-                     ""
-                   )}
-                 </div>
+            <div className="flex items-center space-x-2 text-xs text-gray-600">
+              <p className="text-xs text-gray-500">{viewMode === 'ath' ? (<><FontAwesomeIcon icon={faTrophy} /> ATH: {(userInfo.score || 0).toLocaleString()}</>) : (<><FontAwesomeIcon icon={faBullseye} /> Season: {(userInfo.currentSeasonScore || userInfo.score || 0).toLocaleString()}</>)}</p>
+              {viewMode !== 'ath' && userInfo.nftCount && userInfo.nftCount > 0 ? (
+                <span className="text-[#19adff] font-medium"><FontAwesomeIcon icon={faPalette} /> {userInfo.nftCount} NFT{userInfo.nftCount > 1 ? 's' : ''}</span>
+              ) : (
+                ""
+              )}
+            </div>
                </div>
                
                {/* Score & Level */}
@@ -511,12 +539,12 @@ export default function Leaderboard() {
                  <p className="text-lg font-bold text-[#19adff]">{(userInfo.currentSeasonScore || userInfo.score || 0).toLocaleString()}</p>
                  <p className="text-xs text-gray-600">Level {userInfo.level}</p>
              
-              {userInfo.duration && ((userRank <= 10 && userInfo.duration >= 3000) || (userRank > 10 && userInfo.duration >= 60)) &&   <p className="text-xs text-gray-500">⏱️ {formatDuration(userInfo.duration)}</p>}
+              {userInfo.duration && ((userRank <= 10 && userInfo.duration >= 3000) || (userRank > 10 && userInfo.duration >= 60)) &&   <p className="text-xs text-gray-500"><FontAwesomeIcon icon={faStopwatch} /> {formatDuration(userInfo.duration)}</p>}
                </div>
              </div>
              
              {/* Reward Info */}
-             {userRank <= 10 && userInfo.nftCount && userInfo.nftCount > 0 && (
+            {viewMode !== 'ath' && userRank <= 10 && userInfo.nftCount && userInfo.nftCount > 0 && (
                <div className="mt-2 px-2 py-1 bg-gradient-to-r from-green-50 to-emerald-50 rounded-md border border-green-200">
                  <p className="text-xs font-bold text-green-700 flex items-center">
                    💰 Reward: {formatReward(getRewardAmount(userRank - 1))} ARB
@@ -554,7 +582,7 @@ export default function Leaderboard() {
         
         {leaderboard.length === 0 && !loading ? (
           <div className="text-center py-8">
-            <div className="text-4xl mb-3">🎮</div>
+            <div className="text-4xl mb-3"><FontAwesomeIcon icon={faGamepad} /></div>
             <p className="text-gray-500 font-medium">No scores yet. Be the first to play!</p>
           </div>
         ) : (
@@ -615,20 +643,18 @@ export default function Leaderboard() {
                     <p className={`font-bold mb-3 text-lg ${rankColors.text}`}>
                       {entry.username || `${entry.fid}`}
                     </p>
-                    <p className={`text-xs ${rankColors.text} opacity-70`}>
-                    {entry.score && entry.score > 0 ? `🏆 ATH: ${entry.score.toLocaleString()}` : ''}
-                  </p>
-                    {entry.nftCount && entry.nftCount > 0 ? (
+                 
+                    {viewMode !== 'ath' && entry.nftCount && entry.nftCount > 0 ? (
                       <p className={`text-xs ${index < 10 && entry.nftCount > 0 ? 'text-yellow-300' : rankColors.text} font-medium`}>
-                        🎨 {entry.nftCount} NFT{entry.nftCount > 1 ? 's' : ''}
+                        <FontAwesomeIcon icon={faPalette} /> {entry.nftCount} NFT{entry.nftCount > 1 ? 's' : ''}
                       </p>
                     ) : (
                       ""
                     )}
                     {/* Reward Amount for Top 10 NFT Holders */}
-                    {index < 10 && entry.nftCount && entry.nftCount > 0 && (
+                    {viewMode !== 'ath' && index < 10 && entry.nftCount && entry.nftCount > 0 && (
                       <p className={`text-xs ${index < 3 ? 'text-green-800' : 'text-green-300'} font-bold`}>
-                        💰 {formatReward(getRewardAmount(index))} ARB
+                        <FontAwesomeIcon icon={faCoins} /> {formatReward(getRewardAmount(index))} ARB
                       </p>
                     )}
                   </div>
@@ -636,14 +662,14 @@ export default function Leaderboard() {
 
                 {/* Score */}
                 <div className="text-right">
-                  <p className={`text-2xl font-bold ${rankColors.text}`}>{(entry.currentSeasonScore || entry.score || 0).toLocaleString()}</p>
+                  <p className={`text-2xl font-bold ${rankColors.text}`}>{(viewMode === 'ath' ? (entry.score || 0) : (entry.currentSeasonScore || entry.score || 0)).toLocaleString()}</p>
                   <p className={`text-sm ${rankColors.text} opacity-80`}>
                     Level {entry.level}
                   </p>
                
 
                   {entry.duration && ((index < 10 && entry.duration >= 3000) || (index >= 10 && entry.duration >= 60)) ? <p className={`text-xs ${rankColors.text} opacity-90`}>
-                        ⏱️ {formatDuration(entry?.duration)}
+                        <FontAwesomeIcon icon={faStopwatch} /> {formatDuration(entry?.duration)}
                       </p>:""}
                 </div>
               </div>
@@ -663,7 +689,7 @@ export default function Leaderboard() {
             {/* End of list indicator */}
             {!hasMore && leaderboard.length > 0 && (
               <div className="text-center py-6">
-                <div className="text-2xl mb-2">🏁</div>
+                <div className="text-2xl mb-2"><FontAwesomeIcon icon={faFlagCheckered} /></div>
                 <p className="text-gray-500 font-medium">You've reached the end!</p>
                 <p className="text-sm text-gray-400">Total players: {totalPlayers}</p>
               </div>

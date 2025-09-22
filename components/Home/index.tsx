@@ -5,7 +5,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { 
   faHome, faImages, faChartBar, faTrophy, faPlay, faRocket, 
   faCrown, faCoins, faBolt, faGem, faFire, faUsers,
-  faArrowRight, faStar, faChartLine, faGamepad
+  faArrowRight, faStar, faChartLine, faGamepad, faPalette, faCheckCircle, faTimesCircle
 } from '@fortawesome/free-solid-svg-icons'
 import { useMiniAppContext } from '@/hooks/use-miniapp-context';
 import { useNFTSupply } from '@/hooks/use-nft-supply';
@@ -266,7 +266,7 @@ export function Demo() {
             
             <div className="relative z-10 p-12 text-center">
               <div className="text-8xl mb-6">
-                🎨
+                <FontAwesomeIcon icon={faPalette} />
               </div>
               
               <h2 className="text-3xl font-black bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent mb-4">
@@ -279,12 +279,12 @@ export function Demo() {
               
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
                 <div className="bg-white/5 backdrop-blur-sm border border-white/10 p-6 rounded-2xl">
-                  <div className="text-3xl mb-3">🎮</div>
+                  <div className="text-3xl mb-3"><FontAwesomeIcon icon={faGamepad} /></div>
                   <div className="font-bold text-white mb-2">Play to Earn</div>
                   <div className="text-white/60 text-sm">Every game you play brings you closer to exclusive NFT rewards</div>
                 </div>
                 <div className="bg-white/5 backdrop-blur-sm border border-white/10 p-6 rounded-2xl">
-                  <div className="text-3xl mb-3">🏆</div>
+                  <div className="text-3xl mb-3"><FontAwesomeIcon icon={faTrophy} /></div>
                   <div className="font-bold text-white mb-2">Achievement Badges</div>
                   <div className="text-white/60 text-sm">Unlock rare collectibles by reaching new milestones</div>
                 </div>
@@ -1186,7 +1186,7 @@ export function Demo() {
                   e.currentTarget.style.transform = 'scale(1)'
                 }}
               >
-                ✕
+                <FontAwesomeIcon icon={faTimesCircle} />
               </button>
             )}
 
@@ -1209,17 +1209,17 @@ export function Demo() {
                     animate={{ rotate: 360 }}
                     transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
                   >
-                    ⚡
+                    <FontAwesomeIcon icon={faBolt} />
                   </motion.div>
                 )}
                 {transactionStatus === 'confirmed' && (
                   <div style={{ filter: 'drop-shadow(0 0 20px rgba(34,197,94,0.5))' }}>
-                    ✅
+                    <FontAwesomeIcon icon={faCheckCircle} />
                   </div>
                 )}
                 {transactionStatus === 'error' && (
                   <div style={{ filter: 'drop-shadow(0 0 20px rgba(239,68,68,0.5))' }}>
-                    ❌
+                    <FontAwesomeIcon icon={faTimesCircle} />
                   </div>
                 )}
               </div>

@@ -23,7 +23,9 @@ import {
   faShuffle,
   faBurst,
   faFire,
-  faTrophy
+  faTrophy,
+  faBolt,
+  faTimesCircle
 } from '@fortawesome/free-solid-svg-icons';
 
 interface CandyCrushGameProps {
@@ -4773,7 +4775,7 @@ Come for my spot or stay mid 😏🏆${improvementText}`;
                 animation: 'successPulse 0.6s ease-out',
                 boxShadow: '0 15px 40px rgba(34,197,94,0.4)'
               }}>
-                ✅
+                <FontAwesomeIcon icon={faCheckCircle} />
               </div>
               
               <h2 style={{
@@ -4874,7 +4876,7 @@ Come for my spot or stay mid 😏🏆${improvementText}`;
                 animation: 'shake 0.5s ease-in-out',
                 boxShadow: '0 10px 30px rgba(239,68,68,0.3)'
               }}>
-                ❌
+                <FontAwesomeIcon icon={faTimesCircle} />
               </div>
               
               <h2 style={{
@@ -5063,7 +5065,7 @@ Come for my spot or stay mid 😏🏆${improvementText}`;
                       filter: 'drop-shadow(0 0 20px rgba(0,255,255,0.5))'
                     }}
                   >
-                    ⚡
+                    <FontAwesomeIcon icon={faBolt} />
                   </div>
                 )}
                 {transactionStatus === 'confirmed' && (
