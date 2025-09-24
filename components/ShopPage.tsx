@@ -21,7 +21,7 @@ import { authenticatedFetch } from '@/lib/auth';
 import { sdk } from '@farcaster/miniapp-sdk'
 
 // Contract configuration
-const BOOSTER_SHOP_ADDRESS = '0x3F095701677F65F09E19B48e620f47EE725d3558';
+const BOOSTER_SHOP_ADDRESS = '0x31c72c62aD07f50a51660F39f601ffdA16B427B3';
 const ARB_TOKEN_ADDRESS = '0x912CE59144191C1204E64559FE8253a0e49E6548';
 
 interface BoosterItem {
