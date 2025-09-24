@@ -1,0 +1,249 @@
+{
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_arbToken",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "constructor"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "uint256",
+          "name": "fid",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "enum BoosterShop.BoosterType",
+          "name": "boosterType",
+          "type": "uint8"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "quantity",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "totalCost",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "timestamp",
+          "type": "uint256"
+        }
+      ],
+      "name": "BoosterPurchased",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "previousOwner",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "newOwner",
+          "type": "address"
+        }
+      ],
+      "name": "OwnershipTransferred",
+      "type": "event"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "fid",
+          "type": "uint256"
+        },
+        {
+          "internalType": "enum BoosterShop.BoosterType",
+          "name": "boosterType",
+          "type": "uint8"
+        },
+        {
+          "internalType": "uint256",
+          "name": "quantity",
+          "type": "uint256"
+        }
+      ],
+      "name": "buyBoosters",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "enum BoosterShop.BoosterType",
+          "name": "boosterType",
+          "type": "uint8"
+        },
+        {
+          "internalType": "uint256",
+          "name": "quantity",
+          "type": "uint256"
+        }
+      ],
+      "name": "calculateTotalCost",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "enum BoosterShop.BoosterType",
+          "name": "boosterType",
+          "type": "uint8"
+        }
+      ],
+      "name": "getBoosterPrice",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "arbToken",
+      "outputs": [
+        {
+          "internalType": "contract IERC20",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "enum BoosterShop.BoosterType",
+          "name": "",
+          "type": "uint8"
+        }
+      ],
+      "name": "boosterPrices",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "owner",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "renounceOwnership",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "enum BoosterShop.BoosterType",
+          "name": "boosterType",
+          "type": "uint8"
+        },
+        {
+          "internalType": "uint256",
+          "name": "newPrice",
+          "type": "uint256"
+        }
+      ],
+      "name": "setBoosterPrice",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_newArbToken",
+          "type": "address"
+        }
+      ],
+      "name": "setArbToken",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "newOwner",
+          "type": "address"
+        }
+      ],
+      "name": "transferOwnership",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "amount",
+          "type": "uint256"
+        }
+      ],
+      "name": "withdrawArb",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ],
+  "bytecode": "0x608060405234801561001057600080fd5b50604051610d9c380380610d9c8339818101604052810190610032919061018d565b80600090805190602001906100489291906100d5565b50506101e1565b600082601f83011261006057600080fd5b8151602061007561007083610234565b610203565b82815260059290921b8401810191818101908684111561009457600080fd5b8286015b848110156100af5780518352918301918301610098565b509695505050505050565b600082601f8301126100cb57600080fd5b81516001600160401b038111156100e4576100e4610256565b60206100f8601f8301601f19168201610203565b828152858284870101111561010c57600080fd5b60005b8381101561012a57858101830151828201840152820161010f565b8381111561013b5760008483850101525b5095945050505050565b60008060006060848603121561015957600080fd5b83516001600160401b038082111561017057600080fd5b61017c8783880161004f565b9450602086015191508082111561019257600080fd5b5061019f868287016100ba565b925050604084015190509250925092565b600081518084526101c781602086016020860161025c565b601f01601f19169290920160200192915050565b60006020808301818452808551808352604092508286019150828160051b87010184880160005b8381101561022657603f1989840301855281515180516001600160a01b031684526001600160401b038082168886015285820151878601526060808301518882015260809083015160a089015287015160c088015286015160e0870152506101008501925090506101e2565b5098975050505050505050565b60006001600160401b0382111561024c5761024c610256565b5060051b60200190565b634e487b7160e01b600052604160045260246000fd5b60005b8381101561028757818101518382015260200161026f565b83811115610296576000848401525b5050505056fea2646970667358221220...",
+  "contractName": "BoosterShop"
+}
+

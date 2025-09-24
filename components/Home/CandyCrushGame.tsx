@@ -10,8 +10,10 @@ import { incrementGamesPlayed, addGameScore } from '@/lib/game-counter';
 import { useContractWrite, useContractRead, useAccount, useWaitForTransactionReceipt, useWriteContract } from 'wagmi';
 import { parseEther } from 'viem';
 import { CONTRACT_ADDRESSES, CHAINCRUSH_NFT_ABI, TOKEN_REWARD_ABI } from '@/lib/contracts';
+import { authenticatedFetch } from '@/lib/auth';
 import ConfirmEndGameModal from '../ConfirmEndGameModal';
 import GiftBox from '../GiftBox';
+import Shop from '../Shop';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
   faCoins, 
@@ -25,7 +27,8 @@ import {
   faFire,
   faTrophy,
   faBolt,
-  faTimesCircle
+  faTimesCircle,
+  faStore
 } from '@fortawesome/free-solid-svg-icons';
 
 interface CandyCrushGameProps {
@@ -63,6 +66,7 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
 
   const [showConfirmEnd, setShowConfirmEnd] = useState(false);
   const [showNoMovesPopup, setShowNoMovesPopup] = useState(false);
+  const [showShop, setShowShop] = useState(false);
 
   // Add power-ups state
   const [reshuffles, setReshuffles] = useState(1);
@@ -74,6 +78,17 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
   const partyPopperRef = useRef<null | (() => void)>(null);
   const [partyPopperError, setPartyPopperError] = useState<string | null>(null);
   
+  // Database booster states
+  const [dbBoosters, setDbBoosters] = useState({ shuffle: 0, partyPopper: 0 });
+  const [boosterLoading, setBoosterLoading] = useState(false);
+  
+  // Track when only purchased boosters remain (for permanent color change)
+  const onlyPurchasedReshuffles = reshuffles === 0 && dbBoosters.shuffle > 0;
+  const onlyPurchasedPartyPoppers = partyPoppers === 0 && dbBoosters.partyPopper > 0;
+  
+  // Calculate total available boosters (game + database)
+  const totalReshuffles = reshuffles + dbBoosters.shuffle;
+  const totalPartyPoppers = partyPoppers + dbBoosters.partyPopper;
   
   // Combo system state
   const [comboCount, setComboCount] = useState(0);
@@ -116,6 +131,52 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
       console.error('Failed to check remaining claims:', error);
       setRemainingClaims(5); // Default to 5 on error
       return 5;
+    }
+  };
+
+  // Fetch user's purchased boosters from database
+  const fetchUserBoosters = async () => {
+    if (!context?.user?.fid) {
+      setDbBoosters({ shuffle: 0, partyPopper: 0 });
+      return;
+    }
+
+    setBoosterLoading(true);
+    try {
+      const response = await authenticatedFetch(`/api/purchase-booster?fid=${context.user.fid}`);
+      const data = await response.json();
+      
+      if (data.success) {
+        setDbBoosters(data.data.boosters);
+        console.log('✅ Fetched user boosters:', data.data.boosters);
+      } else {
+        console.error('Failed to fetch boosters:', data.error);
+        setDbBoosters({ shuffle: 0, partyPopper: 0 });
+      }
+    } catch (error) {
+      console.error('Error fetching boosters:', error);
+      setDbBoosters({ shuffle: 0, partyPopper: 0 });
+    } finally {
+      setBoosterLoading(false);
+    }
+  };
+
+  // Update database when purchased boosters are used
+  const updateDatabaseBoosters = async (boosterType: 'shuffle' | 'partyPopper', used: number) => {
+    if (!context?.user?.fid) return;
+
+    try {
+      await authenticatedFetch('/api/purchase-booster', {
+        method: 'PATCH',
+        body: JSON.stringify({
+          fid: context.user.fid,
+          boosterType: boosterType === 'shuffle' ? 0 : 1,
+          used: used
+        }),
+      });
+      console.log(`✅ Updated database: used ${used} ${boosterType} booster(s)`);
+    } catch (error) {
+      console.error(`❌ Error updating ${boosterType} booster in database:`, error);
     }
   };
 
@@ -262,6 +323,9 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
     setPartyPoppers(1);
     setPartyPopperError(null);
     
+    // Fetch user's purchased boosters from database
+    fetchUserBoosters();
+    
     // Refresh mint eligibility data
     // if (address) {
     //   checkFaucetEligibility();
@@ -348,6 +412,9 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
       // if (address) {
       //   checkFaucetEligibility();
       // }
+      
+      // Fetch user's purchased boosters from database
+      fetchUserBoosters();
       
       // Game initialization is handled directly
     }
@@ -648,11 +715,11 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
       const centerX = screenWidth / 2;
       const progressBarWidth = Math.min(screenWidth - 40, 300); // Responsive progress bar width
       
-      scoreText = this.add.text(centerX -60, 10, 'Score:0', { fontSize: '20px', color: 'white', fontStyle: 'bold' });
-      movesText = this.add.text(screenWidth - 20, 10, 'Moves:10', { fontSize: '20px', color: 'white', fontStyle: 'bold' }).setOrigin(1, 0);
+      scoreText = this.add.text(centerX -80, 10, 'Score:0', { fontSize: '20px', color: 'white', fontStyle: 'bold' });
+      movesText = this.add.text(screenWidth - 70, 40, 'Moves:10', { fontSize: '16px', color: 'white', fontStyle: 'bold' }).setOrigin(1, 0);
       
       // Level text above progress bar
-      levelText = this.add.text(centerX, 40, 'Level: 1', { fontSize: '20px', color: 'white', fontStyle: 'bold' }).setOrigin(0.5, 0);
+      
       
       // Challenge display centered
      
@@ -671,7 +738,7 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
        challengeIcon.setDisplaySize(35,35); // Small icon size
         challengeText = this.add.text(centerX + 10, 100, '(0/10)', { fontSize: '17px', color: 'white', fontStyle: 'bold' }).setOrigin(0.5, 0);
       
-    
+        levelText = this.add.text(centerX, 60, 'Level: 1', { fontSize: '20px', color: 'white', fontStyle: 'bold' }).setOrigin(0.5, 0);
       
       // Initialize UI
       updateUI();
@@ -3882,36 +3949,74 @@ Come for my spot or stay mid 😏🏆${improvementText}`;
       `}</style>
 
       { gameInitialized && !gameOver && (
-        <div style={{ position: 'absolute', top: 10, left: 16, zIndex: 2001 }}>
-          <button
-            style={{
-              background: 'rgba(255, 255, 255, 0.2)',
-              backdropFilter: 'blur(10px)',
-              // border: '1px solid rgba(255, 255, 255, 0.3)',
-              color: 'white',
-              fontWeight: '600',
-              borderRadius: '12px',
-              padding: '6px 16px',
-              fontSize: '14px',
-              cursor: 'pointer',
-              transition: 'all 0.2s ease',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)';
-              e.currentTarget.style.transform = 'translateY(-1px)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
-              e.currentTarget.style.transform = 'translateY(0)';
-            }}
-            onClick={() => setShowConfirmEnd(true)}
-          >
-            ← Home
-          </button>
-        </div>
+        <>
+          {/* Home Button */}
+          <div style={{ position: 'absolute', top: 10, left: 16, zIndex: 2001 }}>
+            <button
+              style={{
+                background: 'rgba(255, 255, 255, 0.2)',
+                backdropFilter: 'blur(10px)',
+                // border: '1px solid rgba(255, 255, 255, 0.3)',
+                color: 'white',
+                fontWeight: '600',
+                borderRadius: '12px',
+                padding: '6px 16px',
+                fontSize: '14px',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)';
+                e.currentTarget.style.transform = 'translateY(-1px)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
+                e.currentTarget.style.transform = 'translateY(0)';
+              }}
+              onClick={() => setShowConfirmEnd(true)}
+            >
+              ← Home
+            </button>
+          </div>
+          
+          {/* Shop Button */}
+          <div style={{ position: 'absolute', top: 10, right: 7, zIndex: 2001 }}>
+            <button
+              style={{
+                background: 'linear-gradient(135deg, #ffd700 0%, #ffed4e 100%)',
+                backdropFilter: 'blur(10px)',
+                border: '2px solid rgba(255, 215, 0, 0.6)',
+                color: '#333',
+                fontWeight: '700',
+                borderRadius: '12px',
+                padding: '8px 12px',
+                fontSize: '16px',
+                cursor: 'pointer',
+                transition: 'all 0.3s ease',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                boxShadow: '0 4px 15px rgba(255, 215, 0, 0.4)'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'linear-gradient(135deg, #ffe55c 0%, #fff176 100%)';
+                e.currentTarget.style.transform = 'translateY(-2px) scale(1.05)';
+                e.currentTarget.style.boxShadow = '0 6px 20px rgba(255, 215, 0, 0.6)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'linear-gradient(135deg, #ffd700 0%, #ffed4e 100%)';
+                e.currentTarget.style.transform = 'translateY(0) scale(1)';
+                e.currentTarget.style.boxShadow = '0 4px 15px rgba(255, 215, 0, 0.4)';
+              }}
+              onClick={() => setShowShop(true)}
+            >
+              <FontAwesomeIcon icon={faStore} />
+            </button>
+          </div>
+        </>
       )}
       <ConfirmEndGameModal
         open={showConfirmEnd}
@@ -4035,7 +4140,7 @@ Come for my spot or stay mid 😏🏆${improvementText}`;
         </div>
       )}
       {/* Power-ups Container */}
-      {gameInitialized && !gameOver && (reshuffles > 0 || partyPoppers > 0) && (
+      {gameInitialized && !gameOver && (totalReshuffles > 0 || totalPartyPoppers > 0) && (
         <div style={{ 
           position: 'fixed', 
           bottom: 13, 
@@ -4048,19 +4153,32 @@ Come for my spot or stay mid 😏🏆${improvementText}`;
           // padding: '0 20px'
         }}>
           {/* Reshuffle Button */}
-          {reshuffles > 0 && (
+          {totalReshuffles > 0 && (
             <button
               onClick={() => {
                 if (reshuffleGridRef.current) {
                   try {
                     setReshuffleError(null); // Clear any previous errors
                     reshuffleGridRef.current();
-                    setReshuffles(r => r - 1);
+                    
+                    // Use game boosters first, then database boosters
+                    if (reshuffles > 0) {
+                      setReshuffles(r => r - 1);
+                    } else if (dbBoosters.shuffle > 0) {
+                      setDbBoosters(prev => ({ ...prev, shuffle: prev.shuffle - 1 }));
+                      // Update database immediately
+                      updateDatabaseBoosters('shuffle', 1);
+                    }
                   } catch (error) {
                     console.error('Reshuffle failed:', error);
                     setReshuffleError('Reshuffle failed, but grid was updated');
-                    // Fallback: still decrement reshuffles even if animation fails
-                    setReshuffles(r => r - 1);
+                    // Fallback: still decrement boosters even if animation fails
+                    if (reshuffles > 0) {
+                      setReshuffles(r => r - 1);
+                    } else if (dbBoosters.shuffle > 0) {
+                      setDbBoosters(prev => ({ ...prev, shuffle: prev.shuffle - 1 }));
+                      updateDatabaseBoosters('shuffle', 1);
+                    }
                     // Clear error after 3 seconds
                     setTimeout(() => setReshuffleError(null), 3000);
                   }
@@ -4070,9 +4188,13 @@ Come for my spot or stay mid 😏🏆${improvementText}`;
                 }
               }}
               style={{
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                border: '2px solid rgba(255, 255, 255, 0.3)',
-                color: 'white',
+                background: onlyPurchasedReshuffles 
+                  ? 'linear-gradient(135deg, #ffd700 0%, #ffed4e 100%)'
+                  : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                border: onlyPurchasedReshuffles 
+                  ? '2px solid rgba(255, 215, 0, 0.6)'
+                  : '2px solid rgba(255, 255, 255, 0.3)',
+                color: onlyPurchasedReshuffles ? '#333' : 'white',
                 fontWeight: '700',
                 fontSize: '14px',
                 borderRadius: '24px',
@@ -4082,7 +4204,9 @@ Come for my spot or stay mid 😏🏆${improvementText}`;
                 display: 'flex',
                 alignItems: 'center',
                 gap: '12px',
-                boxShadow: '0 8px 32px rgba(102, 126, 234, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.1)',
+                boxShadow: onlyPurchasedReshuffles 
+                  ? '0 8px 32px rgba(255, 215, 0, 0.6), 0 0 0 1px rgba(255, 215, 0, 0.3)'
+                  : '0 8px 32px rgba(102, 126, 234, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.1)',
                 // minWidth: '140px',
                 justifyContent: 'center',
                 position: 'relative',
@@ -4090,13 +4214,23 @@ Come for my spot or stay mid 😏🏆${improvementText}`;
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.transform = 'translateY(-4px) scale(1.05)';
-                e.currentTarget.style.boxShadow = '0 12px 40px rgba(102, 126, 234, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.2)';
-                e.currentTarget.style.background = 'linear-gradient(135deg, #7c8ef0 0%, #8a5fb8 100%)';
+                if (onlyPurchasedReshuffles) {
+                  e.currentTarget.style.boxShadow = '0 12px 40px rgba(255, 215, 0, 0.8), 0 0 0 1px rgba(255, 215, 0, 0.4)';
+                  e.currentTarget.style.background = 'linear-gradient(135deg, #ffe55c 0%, #fff176 100%)';
+                } else {
+                  e.currentTarget.style.boxShadow = '0 12px 40px rgba(102, 126, 234, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.2)';
+                  e.currentTarget.style.background = 'linear-gradient(135deg, #7c8ef0 0%, #8a5fb8 100%)';
+                }
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.transform = 'translateY(0) scale(1)';
-                e.currentTarget.style.boxShadow = '0 8px 32px rgba(102, 126, 234, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.1)';
-                e.currentTarget.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+                if (onlyPurchasedReshuffles) {
+                  e.currentTarget.style.boxShadow = '0 8px 32px rgba(255, 215, 0, 0.6), 0 0 0 1px rgba(255, 215, 0, 0.3)';
+                  e.currentTarget.style.background = 'linear-gradient(135deg, #ffd700 0%, #ffed4e 100%)';
+                } else {
+                  e.currentTarget.style.boxShadow = '0 8px 32px rgba(102, 126, 234, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.1)';
+                  e.currentTarget.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+                }
               }}
               onTouchStart={(e) => {
                 e.currentTarget.style.transform = 'translateY(-2px) scale(0.98)';
@@ -4117,25 +4251,60 @@ Come for my spot or stay mid 😏🏆${improvementText}`;
                 fontWeight: '800',
                 textShadow: '0 2px 4px rgba(0,0,0,0.3)'
               }}>
-                {reshuffles}
+                {totalReshuffles}
               </span>
+              {/* Show purchased booster indicator */}
+              {dbBoosters.shuffle > 0 && (
+                <div style={{
+                  position: 'absolute',
+                  top: '-5px',
+                  right: '-5px',
+                  width: '12px',
+                  height: '12px',
+                  borderRadius: '50%',
+                  background: 'linear-gradient(45deg, #ffd700, #ffed4e)',
+                  border: '2px solid white',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '8px',
+                  fontWeight: 'bold',
+                  color: '#333',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.3)'
+                }}>
+                  $
+                </div>
+              )}
             </button>
           )}
           
           {/* Party Popper Button */}
-          {partyPoppers > 0 && (
+          {totalPartyPoppers > 0 && (
             <button
               onClick={() => {
                 if (partyPopperRef.current) {
                   try {
                     setPartyPopperError(null); // Clear any previous errors
                     partyPopperRef.current();
-                    setPartyPoppers(p => p - 1);
+                    
+                    // Use game boosters first, then database boosters
+                    if (partyPoppers > 0) {
+                      setPartyPoppers(p => p - 1);
+                    } else if (dbBoosters.partyPopper > 0) {
+                      setDbBoosters(prev => ({ ...prev, partyPopper: prev.partyPopper - 1 }));
+                      // Update database immediately
+                      updateDatabaseBoosters('partyPopper', 1);
+                    }
                   } catch (error) {
                     console.error('Party Popper failed:', error);
                     setPartyPopperError('Party Popper failed');
-                    // Fallback: still decrement party poppers even if animation fails
-                    setPartyPoppers(p => p - 1);
+                    // Fallback: still decrement boosters even if animation fails
+                    if (partyPoppers > 0) {
+                      setPartyPoppers(p => p - 1);
+                    } else if (dbBoosters.partyPopper > 0) {
+                      setDbBoosters(prev => ({ ...prev, partyPopper: prev.partyPopper - 1 }));
+                      updateDatabaseBoosters('partyPopper', 1);
+                    }
                     // Clear error after 3 seconds
                     setTimeout(() => setPartyPopperError(null), 3000);
                   }
@@ -4145,9 +4314,13 @@ Come for my spot or stay mid 😏🏆${improvementText}`;
                 }
               }}
               style={{
-                background: 'linear-gradient(135deg, #ff6b6b 0%, #ff8e8e 50%, #ffa8a8 100%)',
-                border: '2px solid rgba(255, 255, 255, 0.3)',
-                color: 'white',
+                background: onlyPurchasedPartyPoppers 
+                  ? 'linear-gradient(135deg, #ffd700 0%, #ffed4e 100%)'
+                  : 'linear-gradient(135deg, #ff6b6b 0%, #ff8e8e 50%, #ffa8a8 100%)',
+                border: onlyPurchasedPartyPoppers 
+                  ? '2px solid rgba(255, 215, 0, 0.6)'
+                  : '2px solid rgba(255, 255, 255, 0.3)',
+                color: onlyPurchasedPartyPoppers ? '#333' : 'white',
                 fontWeight: '700',
                 fontSize: '14px',
                 borderRadius: '24px',
@@ -4157,7 +4330,9 @@ Come for my spot or stay mid 😏🏆${improvementText}`;
                 display: 'flex',
                 alignItems: 'center',
                 gap: '12px',
-                boxShadow: '0 8px 32px rgba(255, 107, 107, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.1)',
+                boxShadow: onlyPurchasedPartyPoppers 
+                  ? '0 8px 32px rgba(255, 215, 0, 0.6), 0 0 0 1px rgba(255, 215, 0, 0.3)'
+                  : '0 8px 32px rgba(255, 107, 107, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.1)',
                 // minWidth: '140px',
                 justifyContent: 'center',
                 position: 'relative',
@@ -4165,13 +4340,23 @@ Come for my spot or stay mid 😏🏆${improvementText}`;
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.transform = 'translateY(-4px) scale(1.05)';
-                e.currentTarget.style.boxShadow = '0 12px 40px rgba(255, 107, 107, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.2)';
-                e.currentTarget.style.background = 'linear-gradient(135deg, #ff7a7a 0%, #ff9e9e 50%, #ffb8b8 100%)';
+                if (onlyPurchasedPartyPoppers) {
+                  e.currentTarget.style.boxShadow = '0 12px 40px rgba(255, 215, 0, 0.8), 0 0 0 1px rgba(255, 215, 0, 0.4)';
+                  e.currentTarget.style.background = 'linear-gradient(135deg, #ffe55c 0%, #fff176 100%)';
+                } else {
+                  e.currentTarget.style.boxShadow = '0 12px 40px rgba(255, 107, 107, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.2)';
+                  e.currentTarget.style.background = 'linear-gradient(135deg, #ff7a7a 0%, #ff9e9e 50%, #ffb8b8 100%)';
+                }
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.transform = 'translateY(0) scale(1)';
-                e.currentTarget.style.boxShadow = '0 8px 32px rgba(255, 107, 107, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.1)';
-                e.currentTarget.style.background = 'linear-gradient(135deg, #ff6b6b 0%, #ff8e8e 50%, #ffa8a8 100%)';
+                if (onlyPurchasedPartyPoppers) {
+                  e.currentTarget.style.boxShadow = '0 8px 32px rgba(255, 215, 0, 0.6), 0 0 0 1px rgba(255, 215, 0, 0.3)';
+                  e.currentTarget.style.background = 'linear-gradient(135deg, #ffd700 0%, #ffed4e 100%)';
+                } else {
+                  e.currentTarget.style.boxShadow = '0 8px 32px rgba(255, 107, 107, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.1)';
+                  e.currentTarget.style.background = 'linear-gradient(135deg, #ff6b6b 0%, #ff8e8e 50%, #ffa8a8 100%)';
+                }
               }}
               onTouchStart={(e) => {
                 e.currentTarget.style.transform = 'translateY(-2px) scale(0.98)';
@@ -4192,8 +4377,30 @@ Come for my spot or stay mid 😏🏆${improvementText}`;
                 fontWeight: '800',
                 textShadow: '0 2px 4px rgba(0,0,0,0.3)'
               }}>
-                {partyPoppers}
+                {totalPartyPoppers}
               </span>
+              {/* Show purchased booster indicator */}
+              {dbBoosters.partyPopper > 0 && (
+                <div style={{
+                  position: 'absolute',
+                  top: '-5px',
+                  right: '-5px',
+                  width: '12px',
+                  height: '12px',
+                  borderRadius: '50%',
+                  background: 'linear-gradient(45deg, #ffd700, #ffed4e)',
+                  border: '2px solid white',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '8px',
+                  fontWeight: 'bold',
+                  color: '#333',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.3)'
+                }}>
+                  $
+                </div>
+              )}
             </button>
           )}
         </div>
@@ -4936,6 +5143,19 @@ Come for my spot or stay mid 😏🏆${improvementText}`;
             checkRemainingClaims();
             setShowGiftBox(false);
             // Optional: show restart button or other UI
+          }}
+        />
+      )}
+
+      {/* Shop Modal */}
+      {showShop && (
+        <Shop
+          onClose={() => setShowShop(false)}
+          fid={context?.user?.fid}
+          onPurchaseComplete={() => {
+            // Refresh boosters after successful purchase
+            fetchUserBoosters();
+            setShowShop(false);
           }}
         />
       )}

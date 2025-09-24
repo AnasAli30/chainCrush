@@ -5,7 +5,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { 
   faHome, faImages, faChartBar, faTrophy, faPlay, faRocket, 
   faCrown, faCoins, faBolt, faGem, faFire, faUsers,
-  faArrowRight, faStar, faChartLine, faGamepad, faPalette, faCheckCircle, faTimesCircle
+  faArrowRight, faStar, faChartLine, faGamepad, faPalette, faCheckCircle, faTimesCircle, faStore
 } from '@fortawesome/free-solid-svg-icons'
 import { useMiniAppContext } from '@/hooks/use-miniapp-context';
 import { useNFTSupply } from '@/hooks/use-nft-supply';
@@ -20,6 +20,8 @@ import NFTManager from '../NFTManager'
 import UserStats from '../UserStats'
 import Leaderboard from '../Leaderboard'
 import HowToPlayModal from '../HowToPlayModal'
+import Shop from '../Shop'
+import ShopPage from '../ShopPage'
 import { useConnect, useAccount, useDisconnect, useWriteContract, useWaitForTransactionReceipt } from 'wagmi'
 import { motion, AnimatePresence, sync } from 'framer-motion'
 import GameLoader from '../GameLoader'
@@ -31,12 +33,14 @@ export function Demo() {
   const [showStats, setShowStats] = useState(false)
   const { context, actions } = useMiniAppContext();
   const [showLeaderboard, setShowLeaderboard] = useState(false)
-  const [activeTab, setActiveTab] = useState<'home' | 'nfts' | 'stats' | 'leaderboard'>('home')
+  const [activeTab, setActiveTab] = useState<'home' | 'nfts' | 'stats' | 'leaderboard' | 'shop'>('home')
   const [showRewardPopup, setShowRewardPopup] = useState(false)
   const [showTransactionPopup, setShowTransactionPopup] = useState(false)
   const [transactionStatus, setTransactionStatus] = useState<'idle' | 'pending' | 'confirmed' | 'error'>('idle')
   const [transactionHash, setTransactionHash] = useState<string | null>(null)
   const [showHowToPlay, setShowHowToPlay] = useState(false)
+  const [showShop, setShowShop] = useState(false)
+  const [showShopPage, setShowShopPage] = useState(false)
   
   // Daily streak state
   const [dailyStreak, setDailyStreak] = useState(0)
@@ -209,10 +213,12 @@ export function Demo() {
       setActiveTab('stats')
     } else if (showLeaderboard) {
       setActiveTab('leaderboard')
+    } else if (showShopPage) {
+      setActiveTab('shop')
     } else {
       setActiveTab('home')
     }
-  }, [showNFTs, showStats, showLeaderboard])
+  }, [showNFTs, showStats, showLeaderboard, showShopPage])
 
   if (showGame) {
     return (
@@ -328,7 +334,7 @@ export function Demo() {
           </div>
         </motion.div>
       </div>
-      <BottomNavbar activeTab={activeTab} onTabChange={setActiveTab} onShowGame={setShowGame} onShowNFTs={setShowNFTs} onShowStats={setShowStats} onShowLeaderboard={setShowLeaderboard} />
+      <BottomNavbar activeTab={activeTab} onTabChange={setActiveTab} onShowGame={setShowGame} onShowNFTs={setShowNFTs} onShowStats={setShowStats} onShowLeaderboard={setShowLeaderboard} onShowShop={setShowShopPage} />
     </div>
   )
   }
@@ -351,7 +357,7 @@ export function Demo() {
           <UserStats />
         </motion.div>
       </div>
-      <BottomNavbar activeTab={activeTab} onTabChange={setActiveTab} onShowGame={setShowGame} onShowNFTs={setShowNFTs} onShowStats={setShowStats} onShowLeaderboard={setShowLeaderboard} />
+      <BottomNavbar activeTab={activeTab} onTabChange={setActiveTab} onShowGame={setShowGame} onShowNFTs={setShowNFTs} onShowStats={setShowStats} onShowLeaderboard={setShowLeaderboard} onShowShop={setShowShopPage} />
     </div>
   )
   }
@@ -374,9 +380,27 @@ export function Demo() {
           <Leaderboard />
         </motion.div>
       </div>
-      <BottomNavbar activeTab={activeTab} onTabChange={setActiveTab} onShowGame={setShowGame} onShowNFTs={setShowNFTs} onShowStats={setShowStats} onShowLeaderboard={setShowLeaderboard} />
+      <BottomNavbar activeTab={activeTab} onTabChange={setActiveTab} onShowGame={setShowGame} onShowNFTs={setShowNFTs} onShowStats={setShowStats} onShowLeaderboard={setShowLeaderboard} onShowShop={setShowShopPage} />
     </div>
   )
+  }
+
+  if (showShopPage) {
+    return (
+      <div className="min-h-screen overflow-hidden">
+        {/* Shop Header */}
+        <div className="px-4 pb-24 mt-3 mb-8">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+          >
+            <ShopPage fid={(context as any)?.user?.fid} />
+          </motion.div>
+        </div>
+        <BottomNavbar activeTab={activeTab} onTabChange={setActiveTab} onShowGame={setShowGame} onShowNFTs={setShowNFTs} onShowStats={setShowStats} onShowLeaderboard={setShowLeaderboard} onShowShop={setShowShopPage} />
+      </div>
+    )
   }
 
   return (
@@ -564,13 +588,14 @@ export function Demo() {
               </div>
             </motion.div>
           )}
-            {/* How to Play Button */}
+            {/* How to Play and Shop Buttons */}
             <motion.div 
-            className="text-center mb-6"
+            className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-6"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.8, duration: 0.6 }}
           >
+            {/* How to Play Button */}
             <motion.button
               onClick={() => setShowHowToPlay(true)}
               className="relative group overflow-hidden bg-white/10 hover:bg-white/20 text-white font-bold py-3 px-8 rounded-2xl text-lg shadow-lg border border-white/20 backdrop-blur-sm transition-all duration-300"
@@ -589,6 +614,26 @@ export function Demo() {
               {/* Subtle shine effect */}
               <div className="absolute inset-0 -skew-x-12 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-20" />
             </motion.button>
+
+            {/* Shop Button
+            <motion.button
+              onClick={() => setShowShop(true)}
+              className="relative group overflow-hidden bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white font-bold py-3 px-8 rounded-2xl text-lg shadow-lg border border-yellow-400/30 backdrop-blur-sm transition-all duration-300"
+              whileHover={{ scale: 1.02, y: -2 }}
+              whileTap={{ scale: 0.98 }}
+              style={{
+                boxShadow: '0 8px 25px -5px rgba(255,255,255,0.1), 0 0 15px rgba(255, 165, 0, 0.3)'
+              }}
+            >
+              <div className="flex items-center justify-center space-x-3">
+                <FontAwesomeIcon icon={faStore} className="text-white" />
+                <span>Shop</span>
+                <FontAwesomeIcon icon={faArrowRight} className="text-sm text-white" />
+              </div>
+              
+              {/* Subtle shine effect */}
+              {/* <div className="absolute inset-0 -skew-x-12 bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-30" /> */}
+            {/* </motion.button> */} 
           </motion.div>
 
           {/* Stats Dashboard */}
@@ -1530,7 +1575,8 @@ export function Demo() {
         onShowGame={setShowGame} 
         onShowNFTs={setShowNFTs} 
         onShowStats={setShowStats} 
-        onShowLeaderboard={setShowLeaderboard} 
+        onShowLeaderboard={setShowLeaderboard}
+        onShowShop={setShowShopPage}
       />
 
       {/* How to Play Modal */}
@@ -1538,17 +1584,26 @@ export function Demo() {
         isOpen={showHowToPlay} 
         onClose={() => setShowHowToPlay(false)} 
       />
+
+      {/* Shop Modal */}
+      {showShop && (
+        <Shop 
+          onClose={() => setShowShop(false)}
+          fid={(context as any)?.user?.fid}
+        />
+      )}
     </div>
   )
 }
 
 interface BottomNavbarProps {
-  activeTab: 'home' | 'nfts' | 'stats' | 'leaderboard'
-  onTabChange: (tab: 'home' | 'nfts' | 'stats' | 'leaderboard') => void
+  activeTab: 'home' | 'nfts' | 'stats' | 'leaderboard' | 'shop'
+  onTabChange: (tab: 'home' | 'nfts' | 'stats' | 'leaderboard' | 'shop') => void
   onShowGame: (show: boolean) => void
   onShowNFTs: (show: boolean) => void
   onShowStats: (show: boolean) => void
   onShowLeaderboard: (show: boolean) => void
+  onShowShop: (show: boolean) => void
 }
 
 // Stats Card Component
@@ -1627,9 +1682,9 @@ const FeatureCard = ({ icon, title, description, gradient, delay }: {
   </motion.div>
 );
 
-function BottomNavbar({ activeTab, onTabChange, onShowGame, onShowNFTs, onShowStats, onShowLeaderboard }: BottomNavbarProps) {
+function BottomNavbar({ activeTab, onTabChange, onShowGame, onShowNFTs, onShowStats, onShowLeaderboard, onShowShop }: BottomNavbarProps) {
   const { isConnected } = useAccount(); // Add wallet connection check for bottom navbar
-  const handleTabClick = (tab: 'home' | 'nfts' | 'stats' | 'leaderboard') => {
+  const handleTabClick = (tab: 'home' | 'nfts' | 'stats' | 'leaderboard' | 'shop') => {
     onTabChange(tab)
     
     switch (tab) {
@@ -1638,18 +1693,28 @@ function BottomNavbar({ activeTab, onTabChange, onShowGame, onShowNFTs, onShowSt
         onShowNFTs(true)
         onShowStats(false)
         onShowLeaderboard(false)
+        onShowShop(false)
         break
       case 'stats':
         onShowGame(false)
         onShowNFTs(false)
         onShowStats(true)
         onShowLeaderboard(false)
+        onShowShop(false)
         break
       case 'leaderboard':
         onShowGame(false)
         onShowNFTs(false)
         onShowStats(false)
         onShowLeaderboard(true)
+        onShowShop(false)
+        break
+      case 'shop':
+        onShowGame(false)
+        onShowNFTs(false)
+        onShowStats(false)
+        onShowLeaderboard(false)
+        onShowShop(true)
         break
       case 'home':
       default:
@@ -1657,6 +1722,7 @@ function BottomNavbar({ activeTab, onTabChange, onShowGame, onShowNFTs, onShowSt
         onShowNFTs(false)
         onShowStats(false)
         onShowLeaderboard(false)
+        onShowShop(false)
         break
     }
   }
@@ -1664,9 +1730,11 @@ function BottomNavbar({ activeTab, onTabChange, onShowGame, onShowNFTs, onShowSt
   // Show different tabs based on wallet connection status
   const tabs = [
     { id: 'home', icon: faHome, label: 'Home', color: 'from-cyan-400 to-blue-500' },
+    { id: 'shop', icon: faStore, label: 'Shop', color: 'from-orange-400 to-red-500' },
     // { id: 'nfts', icon: faGem, label: 'NFTs', color: 'from-purple-500 to-pink-500' },
     { id: 'stats', icon: faChartBar, label: 'Analytics', color: 'from-green-400 to-cyan-400' },
-    { id: 'leaderboard', icon: faTrophy, label: 'Champions', color: 'from-purple-600 to-cyan-500' }
+    { id: 'leaderboard', icon: faTrophy, label: 'Champions', color: 'from-purple-600 to-cyan-500' },
+   
   ];
 
   return (
