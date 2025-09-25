@@ -35,6 +35,7 @@ export default function Website() {
   const [selectedTokenomicsTab, setSelectedTokenomicsTab] = useState('distribution')
   const [copied, setCopied] = useState(false)
   const contractAddress = "0xe461003E78A7bF4F14F0D30b3ac490701980aB07"
+  const clankerUrl = "https://clanker.world/clanker/0xe461003E78A7bF4F14F0D30b3ac490701980aB07"
 
   // Function to copy contract address
   const copyToClipboard = () => {
@@ -336,21 +337,41 @@ export default function Website() {
                     <FontAwesomeIcon icon={faRocket} className="text-cyan-400 ml-2" />
                   </div>
                   
-                  {/* Contract Address Copy Button */}
-                  <motion.button
-                    onClick={copyToClipboard}
-                    className="inline-flex items-center px-6 py-3 rounded-xl bg-gradient-to-r from-purple-500/20 to-green-400/20 border-2 border-purple-500/40 backdrop-blur-sm hover:bg-white/10 transition-all duration-300 shadow-lg shadow-purple-500/20"
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    <FontAwesomeIcon 
-                      icon={copied ? faCheck : faCopy} 
-                      className={`mr-3 text-lg ${copied ? 'text-green-400' : 'text-purple-400'}`} 
-                    />
-                    <span className="text-white font-bold text-base">
-                      {copied ? "Copied!" : "Copy Contract Address"}
-                    </span>
-                  </motion.button>
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    {/* Contract Address Copy Button */}
+                    <motion.button
+                      onClick={copyToClipboard}
+                      className="inline-flex items-center px-6 py-3 rounded-xl bg-gradient-to-r from-purple-500/20 to-green-400/20 border-2 border-purple-500/40 backdrop-blur-sm hover:bg-white/10 transition-all duration-300 shadow-lg shadow-purple-500/20"
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      <FontAwesomeIcon 
+                        icon={copied ? faCheck : faCopy} 
+                        className={`mr-3 text-lg ${copied ? 'text-green-400' : 'text-purple-400'}`} 
+                      />
+                      <span className="text-white font-bold text-base">
+                        {copied ? "Copied!" : "Copy Contract Address"}
+                      </span>
+                    </motion.button>
+                    
+                    {/* View on Clanker Button */}
+                    <motion.a
+                      href={clankerUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center px-6 py-3 rounded-xl bg-gradient-to-r from-cyan-500/20 to-blue-400/20 border-2 border-cyan-500/40 backdrop-blur-sm hover:bg-white/10 transition-all duration-300 shadow-lg shadow-cyan-500/20"
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      <FontAwesomeIcon 
+                        icon={faExternalLinkAlt} 
+                        className="mr-3 text-lg text-cyan-400" 
+                      />
+                      <span className="text-white font-bold text-base">
+                        View on Clanker
+                      </span>
+                    </motion.a>
+                  </div>
                 </div>
               </motion.div>
 
@@ -877,21 +898,41 @@ export default function Website() {
                               </div>
                             </div>
                             
-                            {/* Prominent Copy Button */}
-                            <motion.button
-                              onClick={copyToClipboard}
-                              className="flex items-center gap-3 px-8 py-4 rounded-xl gaming-gradient border-2 border-purple-500/40 hover:opacity-90 transition-all duration-300 shadow-lg shadow-purple-500/30 w-full sm:w-auto"
-                              whileHover={{ scale: 1.03 }}
-                              whileTap={{ scale: 0.97 }}
-                            >
-                              <FontAwesomeIcon 
-                                icon={copied ? faCheck : faCopy} 
-                                className={`text-xl ${copied ? 'text-green-400' : 'text-white'}`} 
-                              />
-                              <span className="text-white text-lg font-bold">
-                                {copied ? "Address Copied!" : "Copy Contract Address"}
-                              </span>
-                            </motion.button>
+                            <div className="flex flex-col sm:flex-row gap-4 w-full">
+                              {/* Prominent Copy Button */}
+                              <motion.button
+                                onClick={copyToClipboard}
+                                className="flex items-center justify-center gap-3 px-8 py-4 rounded-xl gaming-gradient border-2 border-purple-500/40 hover:opacity-90 transition-all duration-300 shadow-lg shadow-purple-500/30 w-full"
+                                whileHover={{ scale: 1.03 }}
+                                whileTap={{ scale: 0.97 }}
+                              >
+                                <FontAwesomeIcon 
+                                  icon={copied ? faCheck : faCopy} 
+                                  className={`text-xl ${copied ? 'text-green-400' : 'text-white'}`} 
+                                />
+                                <span className="text-white text-lg font-bold">
+                                  {copied ? "Address Copied!" : "Copy Contract Address"}
+                                </span>
+                              </motion.button>
+                              
+                              {/* View on Clanker Button */}
+                              <motion.a
+                                href={clankerUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center justify-center gap-3 px-8 py-4 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 border-2 border-cyan-500/40 hover:opacity-90 transition-all duration-300 shadow-lg shadow-cyan-500/30 w-full"
+                                whileHover={{ scale: 1.03 }}
+                                whileTap={{ scale: 0.97 }}
+                              >
+                                <FontAwesomeIcon 
+                                  icon={faExternalLinkAlt} 
+                                  className="text-xl text-white" 
+                                />
+                                <span className="text-white text-lg font-bold">
+                                  View on Clanker
+                                </span>
+                              </motion.a>
+                            </div>
                           </div>
                         </div>
                         
