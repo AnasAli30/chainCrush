@@ -841,7 +841,7 @@ export default function Website() {
                         </h4>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                           <div className="text-center">
-                            <div className="text-xl sm:text-2xl md:text-3xl font-black text-green-400 mb-1 sm:mb-2">1,000,000,000</div>
+                            <div className="text-xl sm:text-2xl md:text-3xl font-black text-green-400 mb-1 sm:mb-2">100,000,000,000</div>
                             <div className="text-white/60 text-xs sm:text-sm">Total Supply</div>
                           </div>
                           <div className="text-center">
