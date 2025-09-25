@@ -9,7 +9,7 @@ import {
   faBolt, faFire, faRocket, faShield, faStar, faChartBar, faWallet,
   faExchangeAlt, faInfinity, faGlobe,
   faBullseye, faHandshake, faLightbulb, faCog, faPlay, faSpinner,
-  faExternalLinkAlt, faCode, faAward
+  faExternalLinkAlt, faCode, faAward, faBars, faTimes
 } from '@fortawesome/free-solid-svg-icons'
 
 interface GameStats {
@@ -31,6 +31,7 @@ export default function Website() {
   const [loading, setLoading] = useState(true)
   const [activeSection, setActiveSection] = useState('home')
   const [isScrolled, setIsScrolled] = useState(false)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [selectedTokenomicsTab, setSelectedTokenomicsTab] = useState('distribution')
 
   useEffect(() => {
@@ -140,7 +141,7 @@ export default function Website() {
           transition={{ duration: 0.8, ease: "easeOut" }}
         >
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between items-center h-20">
+            <div className="flex justify-between items-center h-16 md:h-20">
               {/* Logo Section */}
               <motion.div 
                 className="flex items-center space-x-3 cursor-pointer"
@@ -149,14 +150,14 @@ export default function Website() {
                 whileTap={{ scale: 0.95 }}
               >
                 <div className="relative">
-                  <img src="/images/icon.jpg" alt="ChainCrush" className="w-12 h-12 rounded-2xl shadow-lg" />
-                  <div className="absolute -top-1 -right-1 w-4 h-4 bg-gradient-to-r from-cyan-400 to-green-400 rounded-full animate-pulse"></div>
+                  <img src="/images/icon.jpg" alt="ChainCrush" className="w-8 h-8 md:w-12 md:h-12 rounded-2xl shadow-lg" />
+                  <div className="absolute -top-1 -right-1 w-3 h-3 md:w-4 md:h-4 bg-gradient-to-r from-cyan-400 to-green-400 rounded-full animate-pulse"></div>
                 </div>
                 <div>
-                  <span className="text-2xl font-black bg-gradient-to-r from-cyan-400 via-purple-500 to-green-400 bg-clip-text text-transparent">
+                  <span className="text-lg md:text-2xl font-black bg-gradient-to-r from-cyan-400 via-purple-500 to-green-400 bg-clip-text text-transparent">
                     ChainCrush
                   </span>
-                  <div className="text-xs text-cyan-300 font-medium tracking-wider">PLAY • EARN • TRADE</div>
+                  <div className="text-xs text-cyan-300 font-medium tracking-wider hidden sm:block">PLAY • EARN • TRADE</div>
                 </div>
               </motion.div>
 
@@ -186,8 +187,19 @@ export default function Website() {
                 ))}
               </div>
 
+              {/* Mobile Navigation Menu */}
+              <div className="md:hidden">
+                <motion.button 
+                  className="p-2 text-white focus:outline-none"
+                  onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <FontAwesomeIcon icon={mobileMenuOpen ? faTimes : faBars} className="text-2xl" />
+                </motion.button>
+              </div>
+
               {/* CTA Buttons */}
-              <div className="flex items-center space-x-4">
+              <div className="hidden sm:flex items-center space-x-4">
                 <motion.button 
                   onClick={() => window.open('https://farcaster.xyz/~/mini-apps/launch?domain=chain-crush-black.vercel.app', '_blank')}
                   className="gaming-gradient text-white px-6 py-3 rounded-xl font-bold text-sm shadow-lg border border-cyan-500/30 backdrop-blur-sm transition-all duration-300"
@@ -203,6 +215,63 @@ export default function Website() {
             </div>
           </div>
         </motion.nav>
+
+        {/* Mobile Menu Overlay */}
+        <AnimatePresence>
+          {mobileMenuOpen && (
+            <motion.div 
+              className="fixed inset-0 z-40 bg-black/95 backdrop-blur-xl"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <div className="flex flex-col items-center justify-center h-full">
+                <div className="space-y-8 text-center">
+                  {[{id: 'home', label: 'Home'}, {id: 'about', label: 'About'}, {id: 'tokenomics', label: 'Tokenomics'}, {id: 'team', label: 'Team'}].map((item) => (
+                    <motion.button 
+                      key={item.id}
+                      onClick={() => {
+                        scrollToSection(item.id);
+                        setMobileMenuOpen(false);
+                      }} 
+                      className={`block text-2xl font-bold ${
+                        activeSection === item.id 
+                          ? 'text-cyan-300' 
+                          : 'text-white hover:text-cyan-300'
+                      }`}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      {item.label}
+                    </motion.button>
+                  ))}
+                  
+                  <motion.button 
+                    onClick={() => {
+                      window.open('https://farcaster.xyz/~/mini-apps/launch?domain=chain-crush-black.vercel.app', '_blank');
+                      setMobileMenuOpen(false);
+                    }}
+                    className="mt-12 gaming-gradient text-white px-8 py-4 rounded-xl font-bold text-lg shadow-lg border border-cyan-500/30 backdrop-blur-sm"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <FontAwesomeIcon icon={faPlay} className="mr-2" />
+                    Play Now
+                  </motion.button>
+                </div>
+                
+                <motion.button 
+                  className="absolute top-6 right-6 text-white p-2"
+                  onClick={() => setMobileMenuOpen(false)}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <FontAwesomeIcon icon={faTimes} className="text-2xl" />
+                </motion.button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Enhanced Hero Section */}
         <section id="home" className="relative pt-24 pb-16 px-4 sm:px-6 lg:px-8 overflow-hidden">
@@ -246,7 +315,7 @@ export default function Website() {
 
               {/* Main Headline */}
               <motion.div variants={fadeInUp} className="mb-8">
-                <h1 className="text-7xl md:text-6xl font-black mb-4 mt-5">
+                <h1 className="text-4xl sm:text-5xl md:text-6xl font-black mb-4 mt-5">
                   <span className="bg-gradient-to-r from-cyan-400 via-purple-500 to-green-400 bg-clip-text text-transparent animate-pulse">
                     ChainCrush
                   </span>
@@ -261,7 +330,7 @@ export default function Website() {
               {/* Value Proposition */}
               <motion.p 
                 variants={fadeInUp}
-                className="text-xl md:text-3xl text-white/80 mb-12 max-w-4xl mx-auto leading-relaxed"
+                className="text-lg sm:text-xl md:text-3xl text-white/80 mb-8 md:mb-12 max-w-4xl mx-auto leading-relaxed px-2"
               >
                 The <span className="text-cyan-400 font-bold">most addictive</span> meme crush game meets 
                 <span className="text-purple-400 font-bold"> DeFi rewards</span>. 
@@ -272,46 +341,46 @@ export default function Website() {
               {/* Enhanced Live Stats Grid */}
               <motion.div 
                 variants={fadeInUp}
-                className="grid grid-cols-3 md:grid-cols-3 gap-4 mb-10 max-w-4xl mx-auto"
+                className="grid grid-cols-2 sm:grid-cols-3 gap-3 md:gap-4 mb-8 md:mb-10 max-w-4xl mx-auto"
 
               >
                 <motion.div 
-                  className="glass-card rounded-2xl p-6 border border-cyan-500/30 text-center group"
+                  className="glass-card rounded-2xl p-3 sm:p-4 md:p-6 border border-cyan-500/30 text-center group"
                   {...scaleOnHover}
                   style={{
                     background: 'linear-gradient(135deg, rgba(0,255,255,0.1), rgba(0,255,255,0.05))',
                     boxShadow: '0 8px 25px -5px rgba(0, 255, 255, 0.2)'
                   }}
                 >
-                  <FontAwesomeIcon icon={faUsers} className="text-4xl text-cyan-300 mb-3 group-hover:animate-bounce" />
-                  <div className="text-3xl font-black text-white mb-2">
+                  <FontAwesomeIcon icon={faUsers} className="text-2xl sm:text-3xl md:text-4xl text-cyan-300 mb-2 md:mb-3 group-hover:animate-bounce" />
+                  <div className="text-xl sm:text-2xl md:text-3xl font-black text-white mb-1 md:mb-2">
                     {loading ? (
                       <div className="flex justify-center items-center">
                         <FontAwesomeIcon icon={faSpinner} className="animate-spin" />
                       </div>
                     ) : stats.totalPlayers.toLocaleString()}
                   </div>
-                  <div className="text-cyan-200 font-medium">Active Players</div>
+                  <div className="text-cyan-200 font-medium text-sm md:text-base">Active Players</div>
                   <div className="text-xs text-green-400 mt-1">+{Math.floor(Math.random() * 20) + 10} today</div>
                 </motion.div>
 
                 <motion.div 
-                  className="glass-card rounded-2xl p-6 border border-purple-500/30 text-center group"
+                  className="glass-card rounded-2xl p-3 sm:p-4 md:p-6 border border-purple-500/30 text-center group"
                   {...scaleOnHover}
                   style={{
                     background: 'linear-gradient(135deg, rgba(147,51,234,0.1), rgba(147,51,234,0.05))',
                     boxShadow: '0 8px 25px -5px rgba(147, 51, 234, 0.2)'
                   }}
                 >
-                  <FontAwesomeIcon icon={faGem} className="text-4xl text-purple-300 mb-3 group-hover:animate-pulse" />
-                  <div className="text-3xl font-black text-white mb-2">
+                  <FontAwesomeIcon icon={faGem} className="text-2xl sm:text-3xl md:text-4xl text-purple-300 mb-2 md:mb-3 group-hover:animate-pulse" />
+                  <div className="text-xl sm:text-2xl md:text-3xl font-black text-white mb-1 md:mb-2">
                     {loading ? (
                       <div className="flex justify-center items-center">
                         <FontAwesomeIcon icon={faSpinner} className="animate-spin" />
                       </div>
                     ) : stats.totalMints.toLocaleString()}
                   </div>
-                  <div className="text-purple-200 font-medium">NFTs Minted</div>
+                  <div className="text-purple-200 font-medium text-sm md:text-base">NFTs Minted</div>
                   <div className="text-xs text-green-400 mt-1">Live minting</div>
                 </motion.div>
 
@@ -360,7 +429,7 @@ export default function Website() {
                 */}
 
                 <motion.div 
-                  className="glass-card rounded-2xl p-6 border border-orange-500/30 text-center group"
+                  className="glass-card rounded-2xl p-3 sm:p-4 md:p-6 border border-orange-500/30 text-center group"
                   {...scaleOnHover}
                   style={{
                     background: 'linear-gradient(135deg, rgba(249,115,22,0.1), rgba(249,115,22,0.05))',
@@ -368,17 +437,17 @@ export default function Website() {
                   }}
                 >
                   <div className="relative">
-                    <FontAwesomeIcon icon={faGamepad} className="text-4xl text-orange-300 mb-3 group-hover:animate-pulse" />
-                    <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
+                    <FontAwesomeIcon icon={faGamepad} className="text-2xl sm:text-3xl md:text-4xl text-orange-300 mb-2 md:mb-3 group-hover:animate-pulse" />
+                    <div className="absolute -top-1 -right-1 w-2 h-2 sm:w-3 sm:h-3 bg-green-400 rounded-full animate-pulse"></div>
                   </div>
-                  <div className="text-3xl font-black text-white mb-2">
+                  <div className="text-xl sm:text-2xl md:text-3xl font-black text-white mb-1 md:mb-2">
                     {loading ? (
                       <div className="flex justify-center items-center">
                         <FontAwesomeIcon icon={faSpinner} className="animate-spin" />
                       </div>
                     ) : stats.activeGames.toLocaleString()}
                   </div>
-                  <div className="text-orange-200 font-medium">Live Games</div>
+                  <div className="text-orange-200 font-medium text-sm md:text-base">Live Games</div>
                   <div className="text-xs text-green-400 mt-1">Playing now</div>
                 </motion.div>
               </motion.div>
@@ -386,11 +455,11 @@ export default function Website() {
               {/* Enhanced CTA Buttons */}
               <motion.div 
                 variants={fadeInUp}
-                className="flex flex-col sm:flex-row gap-6 justify-center items-center"
+                className="flex flex-col sm:flex-row gap-4 md:gap-6 justify-center items-center"
               >
                 <motion.button 
                   onClick={() => window.open('https://farcaster.xyz/~/mini-apps/launch?domain=chain-crush-black.vercel.app', '_blank')}
-                  className="relative group gaming-gradient text-white px-12 py-6 rounded-2xl font-black text-xl shadow-2xl border border-cyan-500/30 backdrop-blur-sm overflow-hidden"
+                  className="relative group gaming-gradient text-white px-6 sm:px-8 md:px-12 py-4 md:py-6 rounded-xl md:rounded-2xl font-bold md:font-black text-lg md:text-xl shadow-xl md:shadow-2xl border border-cyan-500/30 backdrop-blur-sm overflow-hidden"
                   {...scaleOnHover}
                   style={{
                     boxShadow: '0 20px 40px -10px rgba(0, 255, 255, 0.4), 0 0 30px rgba(147, 51, 234, 0.3)'
@@ -400,10 +469,10 @@ export default function Website() {
                   <div className="absolute inset-0 bg-gradient-to-r from-cyan-400/20 via-purple-500/20 to-green-400/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                   
                   {/* Button content */}
-                  <div className="relative z-10 flex items-center justify-center space-x-4">
-                    <FontAwesomeIcon icon={faRocket} className="text-2xl group-hover:animate-bounce" />
+                  <div className="relative z-10 flex items-center justify-center space-x-2 md:space-x-4">
+                    <FontAwesomeIcon icon={faRocket} className="text-xl md:text-2xl group-hover:animate-bounce" />
                     <span>Play & Earn Now</span>
-                    <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                    <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse hidden sm:block"></div>
                   </div>
                   
                   {/* Shine effect */}
@@ -412,10 +481,10 @@ export default function Website() {
 
                 <motion.button 
                   onClick={() => scrollToSection('about')}
-                  className="bg-white/10 hover:bg-white/20 text-white px-10 py-6 rounded-2xl font-bold text-lg border-2 border-white/30 hover:border-cyan-400/50 transition-all duration-300 backdrop-blur-sm"
+                  className="bg-white/10 hover:bg-white/20 text-white px-6 sm:px-8 md:px-10 py-3 sm:py-4 md:py-6 rounded-xl md:rounded-2xl font-bold text-base md:text-lg border border-white/30 hover:border-cyan-400/50 transition-all duration-300 backdrop-blur-sm"
                   {...scaleOnHover}
                 >
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2 md:gap-3">
                     <FontAwesomeIcon icon={faLightbulb} className="text-cyan-300" />
                     <span>Learn More</span>
                     <FontAwesomeIcon icon={faArrowRight} className="transition-transform group-hover:translate-x-1" />
@@ -503,7 +572,7 @@ export default function Website() {
             </motion.div>
 
             {/* Enhanced Features Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-10">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5 mb-8 md:mb-10">
               {[
                 {
                   icon: faGamepad,
@@ -557,7 +626,7 @@ export default function Website() {
                   transition={{ delay: feature.delay, duration: 0.6 }}
                 >
                   <div 
-                    className="glass-card rounded-3xl p-8 border border-white/10 h-full group-hover:border-cyan-400/30 transition-all duration-500 relative overflow-hidden"
+                    className="glass-card rounded-2xl md:rounded-3xl p-4 sm:p-6 md:p-8 border border-white/10 h-full group-hover:border-cyan-400/30 transition-all duration-500 relative overflow-hidden"
                     style={{
                       background: 'linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02))'
                     }}
@@ -566,16 +635,16 @@ export default function Website() {
                     <div className="absolute inset-0 bg-gradient-to-br from-cyan-400/5 via-purple-500/5 to-green-400/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                     
                     {/* Icon */}
-                    <div className={`relative z-10 w-20 h-20 rounded-3xl bg-gradient-to-r ${feature.color} flex items-center justify-center mb-6 group-hover:scale-110 group-hover:rotate-6 transition-all duration-300`}>
-                      <FontAwesomeIcon icon={feature.icon} className="text-3xl text-white" />
+                    <div className={`relative z-10 w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-2xl md:rounded-3xl bg-gradient-to-r ${feature.color} flex items-center justify-center mb-4 md:mb-6 group-hover:scale-110 group-hover:rotate-6 transition-all duration-300`}>
+                      <FontAwesomeIcon icon={feature.icon} className="text-xl sm:text-2xl md:text-3xl text-white" />
                     </div>
 
                     {/* Content */}
                     <div className="relative z-10">
-                      <h3 className="text-2xl font-bold text-white mb-4 group-hover:text-cyan-300 transition-colors duration-300">
+                      <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-white mb-2 md:mb-4 group-hover:text-cyan-300 transition-colors duration-300">
                         {feature.title}
                       </h3>
-                      <p className="text-white/70 leading-relaxed group-hover:text-white/90 transition-colors duration-300">
+                      <p className="text-sm md:text-base text-white/70 leading-relaxed group-hover:text-white/90 transition-colors duration-300">
                         {feature.description}
                       </p>
                     </div>
@@ -623,29 +692,29 @@ export default function Website() {
                     Why <span className="text-cyan-400">Smart Traders</span> Choose ChainCrush?
                   </h3>
                   
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-12">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 md:gap-8 mt-6 md:mt-12">
                     <div className="text-center">
-                      <div className="w-16 h-16 bg-gradient-to-r from-green-400 to-emerald-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                        <FontAwesomeIcon icon={faBolt} className="text-2xl text-white" />
+                      <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 bg-gradient-to-r from-green-400 to-emerald-500 rounded-xl md:rounded-2xl flex items-center justify-center mx-auto mb-3 md:mb-4">
+                        <FontAwesomeIcon icon={faBolt} className="text-lg sm:text-xl md:text-2xl text-white" />
                       </div>
-                      <h4 className="text-xl font-bold text-white mb-3">Instant Liquidity</h4>
-                      <p className="text-white/70">All rewards are immediately tradeable with built-in DEX integration</p>
+                      <h4 className="text-base sm:text-lg md:text-xl font-bold text-white mb-2 md:mb-3">Instant Liquidity</h4>
+                      <p className="text-sm md:text-base text-white/70">All rewards are immediately tradeable with built-in DEX integration</p>
                     </div>
                     
                     <div className="text-center">
-                      <div className="w-16 h-16 bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                        <FontAwesomeIcon icon={faShield} className="text-2xl text-white" />
+                      <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl md:rounded-2xl flex items-center justify-center mx-auto mb-3 md:mb-4">
+                        <FontAwesomeIcon icon={faShield} className="text-lg sm:text-xl md:text-2xl text-white" />
                       </div>
-                      <h4 className="text-xl font-bold text-white mb-3">Audited & Safe</h4>
-                      <p className="text-white/70">Smart contracts audited by leading security firms</p>
+                      <h4 className="text-base sm:text-lg md:text-xl font-bold text-white mb-2 md:mb-3">Audited & Safe</h4>
+                      <p className="text-sm md:text-base text-white/70">Smart contracts audited by leading security firms</p>
                     </div>
                     
                     <div className="text-center">
-                      <div className="w-16 h-16 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                        <FontAwesomeIcon icon={faChartBar} className="text-2xl text-white" />
+                      <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-xl md:rounded-2xl flex items-center justify-center mx-auto mb-3 md:mb-4">
+                        <FontAwesomeIcon icon={faChartBar} className="text-lg sm:text-xl md:text-2xl text-white" />
                       </div>
-                      <h4 className="text-xl font-bold text-white mb-3">Growing Returns</h4>
-                      <p className="text-white/70">Deflationary tokenomics designed for long-term value growth</p>
+                      <h4 className="text-base sm:text-lg md:text-xl font-bold text-white mb-2 md:mb-3">Growing Returns</h4>
+                      <p className="text-sm md:text-base text-white/70">Deflationary tokenomics designed for long-term value growth</p>
                     </div>
                   </div>
                 </div>
@@ -683,11 +752,11 @@ export default function Website() {
                 <br />
                 <span className="text-cyan-400">Economics</span>
               </h2>
-              <p className="text-xl text-white/80 max-w-4xl mx-auto leading-relaxed">
-                Our revolutionary tokenomics model is designed for <span className="text-green-400 font-bold">sustainable growth </span> 
-                and <span className="text-yellow-400 font-bold">long-term value creation</span>. 
-                Built with <span className="text-cyan-400 font-bold">deflationary mechanisms</span> that reward early adopters!
-              </p>
+                <p className="text-xl text-white/80 max-w-4xl mx-auto leading-relaxed">
+                  Our revolutionary tokenomics model is designed for <span className="text-green-400 font-bold">sustainable growth </span> 
+                  and <span className="text-yellow-400 font-bold">long-term value creation</span>. 
+                  Built with <span className="text-cyan-400 font-bold">deflationary mechanisms</span> that reward our community!
+                </p>
             </motion.div>
 
             {/* Tokenomics Tabs */}
@@ -730,10 +799,10 @@ export default function Website() {
                     <div className="glass-card rounded-3xl p-10 border border-green-500/30">
                       <h3 className="text-3xl font-bold text-white mb-8 text-center">Token Distribution</h3>
                       <div className="space-y-6">
-                        {[
-                          { label: 'Airdrop (50% at launch, rest 2–4 weeks)', percentage: 6, color: 'bg-green-500', desc: 'Initial community distribution' },
+                            {[
+                          { label: 'OG Users', percentage: 6, color: 'bg-green-500', desc: 'Initial community distribution' },
                           { label: 'Vaulted (30 days)', percentage: 30, color: 'bg-cyan-500', desc: 'Time-locked vault to stabilize supply' },
-                          { label: 'Community (airdrops, events, partnerships)', percentage: 20, color: 'bg-purple-500', desc: 'Growth, campaigns, community expansion' },
+                          { label: 'Community (rewards, events, partnerships)', percentage: 20, color: 'bg-purple-500', desc: 'Growth, campaigns, community expansion' },
                           { label: 'Team (6-month vesting)', percentage: 10, color: 'bg-yellow-500', desc: 'Core contributors with vesting' }
                         ].map((item, index) => (
                           <motion.div 
@@ -766,26 +835,26 @@ export default function Website() {
                     {/* Key Metrics */}
                     <div className="space-y-8">
                       <motion.div className="glass-card rounded-3xl p-8 border border-cyan-500/30">
-                        <h4 className="text-2xl font-bold text-white mb-6 flex items-center gap-3">
+                        <h4 className="text-xl sm:text-2xl font-bold text-white mb-4 sm:mb-6 flex items-center gap-2 sm:gap-3">
                           <FontAwesomeIcon icon={faVault} className="text-cyan-400" />
                           Token Metrics
                         </h4>
-                        <div className="grid grid-cols-2 gap-6">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                           <div className="text-center">
-                            <div className="text-3xl font-black text-green-400 mb-2">1,000,000,000</div>
-                            <div className="text-white/60 text-sm">Total Supply</div>
+                            <div className="text-xl sm:text-2xl md:text-3xl font-black text-green-400 mb-1 sm:mb-2">1,000,000,000</div>
+                            <div className="text-white/60 text-xs sm:text-sm">Total Supply</div>
                           </div>
                           <div className="text-center">
-                            <div className="text-3xl font-black text-cyan-400 mb-2">10 ETH</div>
-                            <div className="text-white/60 text-sm">Launch Market Cap (Clank)</div>
+                            <div className="text-xl sm:text-2xl md:text-3xl font-black text-cyan-400 mb-1 sm:mb-2">10 ETH</div>
+                            <div className="text-white/60 text-xs sm:text-sm">Launch Market Cap (Clank)</div>
                           </div>
                           <div className="text-center">
-                            <div className="text-3xl font-black text-purple-400 mb-2">Deflationary</div>
-                            <div className="text-white/60 text-sm">Fee & Burn Mechanics</div>
+                            <div className="text-xl sm:text-2xl md:text-3xl font-black text-purple-400 mb-1 sm:mb-2">Deflationary</div>
+                            <div className="text-white/60 text-xs sm:text-sm">Fee & Burn Mechanics</div>
                           </div>
                           <div className="text-center">
-                            <div className="text-3xl font-black text-yellow-400 mb-2">≥ 200k</div>
-                            <div className="text-white/60 text-sm">Holder Requirement (Leaderboard)</div>
+                            <div className="text-xl sm:text-2xl md:text-3xl font-black text-yellow-400 mb-1 sm:mb-2">≥ 200k</div>
+                            <div className="text-white/60 text-xs sm:text-sm">Holder Requirement (Leaderboard)</div>
                           </div>
                         </div>
                       </motion.div>
@@ -814,7 +883,7 @@ export default function Website() {
                           Daily Rewards
                         </h4>
                         <div className="space-y-3 text-white/80">
-                          <div>• 5 gift boxes per user → total $0.15/day → 1,500 $CRUSH/day</div>
+                          <div>• 5 gift boxes per user → 1,500 $CRUSH/day</div>
                           <div>• Solo Mode: 100 $CRUSH/game</div>
                           <div>• Multiplayer Winners: 1,000 $CRUSH</div>
                           <div>• Multiplayer Losers: 300 $CRUSH</div>
@@ -873,7 +942,7 @@ export default function Website() {
                   exit={{ opacity: 0, y: -20 }}
                   transition={{ duration: 0.5 }}
                 >
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 lg:gap-8">
                     {[
                       {
                         icon: faGamepad,
@@ -920,11 +989,11 @@ export default function Website() {
                         transition={{ delay: index * 0.1, duration: 0.6 }}
                         whileHover={{ scale: 1.02, y: -5 }}
                       >
-                        <div className={`w-16 h-16 rounded-2xl bg-gradient-to-r ${utility.color} flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300`}>
-                          <FontAwesomeIcon icon={utility.icon} className="text-2xl text-white" />
+                        <div className={`w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-xl md:rounded-2xl bg-gradient-to-r ${utility.color} flex items-center justify-center mb-3 md:mb-6 group-hover:scale-110 transition-transform duration-300`}>
+                          <FontAwesomeIcon icon={utility.icon} className="text-lg sm:text-xl md:text-2xl text-white" />
                         </div>
-                        <h4 className="text-xl font-bold text-white mb-4">{utility.title}</h4>
-                        <p className="text-white/70 leading-relaxed">{utility.description}</p>
+                        <h4 className="text-base sm:text-lg md:text-xl font-bold text-white mb-2 md:mb-4">{utility.title}</h4>
+                        <p className="text-sm md:text-base text-white/70 leading-relaxed">{utility.description}</p>
                       </motion.div>
                     ))}
                   </div>
@@ -1162,7 +1231,7 @@ export default function Website() {
             >
               <motion.button 
                 onClick={() => window.open('https://farcaster.xyz/~/mini-apps/launch?domain=chain-crush-black.vercel.app', '_blank')}
-                className="relative group gaming-gradient text-white px-16 py-8 rounded-3xl font-black text-2xl shadow-2xl border-2 border-cyan-500/40 backdrop-blur-sm overflow-hidden"
+                className="relative group gaming-gradient text-white px-6 sm:px-10 md:px-16 py-5 sm:py-6 md:py-8 rounded-xl sm:rounded-2xl md:rounded-3xl font-bold md:font-black text-lg sm:text-xl md:text-2xl shadow-xl md:shadow-2xl border md:border-2 border-cyan-500/40 backdrop-blur-sm overflow-hidden"
                 whileHover={{ scale: 1.05, y: -8 }}
                 whileTap={{ scale: 0.95 }}
                 style={{
@@ -1174,14 +1243,14 @@ export default function Website() {
                 <div className="absolute inset-0 bg-gradient-to-r from-green-400/10 via-cyan-400/10 to-purple-500/10 animate-pulse"></div>
                 
                 {/* Button content */}
-                <div className="relative z-10 flex items-center justify-center space-x-4">
-                  <FontAwesomeIcon icon={faRocket} className="text-3xl group-hover:animate-bounce" />
-                  <span>PLAY & EARN NOW</span>
-                  <div className="flex items-center gap-1">
-                    <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
-                    <div className="w-3 h-3 bg-yellow-400 rounded-full animate-pulse" style={{animationDelay: '0.2s'}}></div>
-                    <div className="w-3 h-3 bg-cyan-400 rounded-full animate-pulse" style={{animationDelay: '0.4s'}}></div>
-                  </div>
+                  <div className="relative z-10 flex items-center justify-center space-x-2 sm:space-x-3 md:space-x-4">
+                    <FontAwesomeIcon icon={faRocket} className="text-xl sm:text-2xl md:text-3xl group-hover:animate-bounce" />
+                    <span>PLAY & EARN NOW</span>
+                    <div className="hidden sm:flex items-center gap-1">
+                      <div className="w-2 h-2 md:w-3 md:h-3 bg-green-400 rounded-full animate-pulse"></div>
+                      <div className="w-2 h-2 md:w-3 md:h-3 bg-yellow-400 rounded-full animate-pulse" style={{animationDelay: '0.2s'}}></div>
+                      <div className="w-2 h-2 md:w-3 md:h-3 bg-cyan-400 rounded-full animate-pulse" style={{animationDelay: '0.4s'}}></div>
+                    </div>
                 </div>
                 
                 {/* Epic shine effect */}
@@ -1192,7 +1261,7 @@ export default function Website() {
                 <div className="text-white/60 text-sm mb-2">Or learn more about tokenomics</div>
                 <motion.button 
                   onClick={() => scrollToSection('tokenomics')}
-                  className="bg-white/10 hover:bg-white/20 text-white px-8 py-4 rounded-2xl font-bold text-lg border-2 border-white/30 hover:border-cyan-400/50 transition-all duration-300 backdrop-blur-sm"
+                  className="bg-white/10 hover:bg-white/20 text-white px-5 sm:px-6 md:px-8 py-3 md:py-4 rounded-xl md:rounded-2xl font-bold text-base md:text-lg border md:border-2 border-white/30 hover:border-cyan-400/50 transition-all duration-300 backdrop-blur-sm"
                   whileHover={{ scale: 1.05, y: -2 }}
                   whileTap={{ scale: 0.95 }}
                 >
@@ -1355,11 +1424,7 @@ export default function Website() {
             {/* Bottom Section */}
             <div className="border-t border-white/10 pt-8">
               <div className="flex flex-col md:flex-row justify-between items-center gap-6">
-                <div className="flex flex-wrap items-center gap-6 text-white/60 text-sm">
-                  <span>© 2024 ChainCrush. All rights reserved.</span>
-                  <div className="hidden md:block w-px h-4 bg-white/20"></div>
-                  <span>Built with ❤️ for the GameFi community</span>
-                </div>
+              
                 
                 <div className="flex items-center gap-4">
                   <div className="flex items-center gap-2 text-green-400 text-sm">
