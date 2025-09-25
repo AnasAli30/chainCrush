@@ -37,11 +37,12 @@ export default function TokenLaunchPopup({ isOpen, onClose, clankerUrl }: TokenL
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          className="fixed inset-0 z-[9000] flex items-center justify-center p-4"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.3 }}
+          onClick={(e) => e.stopPropagation()}
         >
           {/* Backdrop */}
           <motion.div 
@@ -49,12 +50,16 @@ export default function TokenLaunchPopup({ isOpen, onClose, clankerUrl }: TokenL
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            onClick={onClose}
+            onClick={(e) => {
+              e.stopPropagation();
+              onClose();
+            }}
           />
           
           {/* Popup */}
           <motion.div
-            className="relative z-10 w-full max-w-md bg-gradient-to-br from-gray-900 to-black border border-purple-500/30 rounded-3xl overflow-hidden shadow-2xl"
+            className="relative z-[9500] w-full max-w-md bg-gradient-to-br from-gray-900 to-black border border-purple-500/30 rounded-3xl overflow-hidden shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
             initial={{ y: 100, opacity: 0, scale: 0.9 }}
             animate={{ y: 0, opacity: 1, scale: 1 }}
             exit={{ y: 100, opacity: 0, scale: 0.9 }}
@@ -66,8 +71,12 @@ export default function TokenLaunchPopup({ isOpen, onClose, clankerUrl }: TokenL
           >
             {/* Close button */}
             <button 
-              className="absolute top-4 right-4 text-white/70 hover:text-white z-10"
-              onClick={onClose}
+              className="absolute top-4 right-4 text-white/70 hover:text-white z-[9999] cursor-pointer p-3"
+              onClick={(e) => {
+                e.stopPropagation();
+                onClose();
+              }}
+              style={{ pointerEvents: 'auto' }}
             >
               <FontAwesomeIcon icon={faTimes} className="text-xl" />
             </button>
