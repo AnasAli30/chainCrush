@@ -1036,7 +1036,7 @@ export default function Website() {
                         {
                           phase: 'Q3 2025',
                           title: 'Token Launch & Initial Distribution (done)',
-                          items: ['$CRSH token deployment', 'Initial liquidity provision', 'Community airdrop'],
+                          items: ['$CRSH token deployment', 'Initial liquidity provision', 'Reward distribution'],
                           status: 'active',
                           color: 'from-green-400 to-emerald-500'
                         },
