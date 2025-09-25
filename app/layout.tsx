@@ -30,6 +30,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <link rel="icon" type="image/png" href="/images/icon-svg.jpg" />
+      </head>
       <body className={inter.className}>
         <ThemeProvider>
           <Providers>{children}</Providers>
