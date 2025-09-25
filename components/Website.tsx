@@ -9,7 +9,7 @@ import {
   faBolt, faFire, faRocket, faShield, faStar, faChartBar, faWallet,
   faExchangeAlt, faInfinity, faGlobe,
   faBullseye, faHandshake, faLightbulb, faCog, faPlay, faSpinner,
-  faExternalLinkAlt, faCode, faAward, faBars, faTimes
+  faExternalLinkAlt, faCode, faAward, faBars, faTimes, faCopy, faCheck
 } from '@fortawesome/free-solid-svg-icons'
 
 interface GameStats {
@@ -33,6 +33,15 @@ export default function Website() {
   const [isScrolled, setIsScrolled] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [selectedTokenomicsTab, setSelectedTokenomicsTab] = useState('distribution')
+  const [copied, setCopied] = useState(false)
+  const contractAddress = "0xe461003E78A7bF4F14F0D30b3ac490701980aB07"
+
+  // Function to copy contract address
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(contractAddress)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -320,10 +329,28 @@ export default function Website() {
                     ChainCrush
                   </span>
                 </h1>
-                <div className="inline-flex items-center px-6 py-2 rounded-full bg-gradient-to-r from-cyan-400/20 to-purple-500/20 border border-cyan-400/30 backdrop-blur-sm mb-6">
-                  <FontAwesomeIcon icon={faFire} className="text-orange-400 mr-2 animate-pulse" />
-                  <span className="text-white font-bold text-lg">Next-Gen GameFi on Farcaster</span>
-                  <FontAwesomeIcon icon={faRocket} className="text-cyan-400 ml-2" />
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-6">
+                  <div className="inline-flex items-center px-6 py-2 rounded-full bg-gradient-to-r from-cyan-400/20 to-purple-500/20 border border-cyan-400/30 backdrop-blur-sm">
+                    <FontAwesomeIcon icon={faFire} className="text-orange-400 mr-2 animate-pulse" />
+                    <span className="text-white font-bold text-lg">Next-Gen GameFi on Farcaster</span>
+                    <FontAwesomeIcon icon={faRocket} className="text-cyan-400 ml-2" />
+                  </div>
+                  
+                  {/* Contract Address Copy Button */}
+                  <motion.button
+                    onClick={copyToClipboard}
+                    className="inline-flex items-center px-6 py-3 rounded-xl bg-gradient-to-r from-purple-500/20 to-green-400/20 border-2 border-purple-500/40 backdrop-blur-sm hover:bg-white/10 transition-all duration-300 shadow-lg shadow-purple-500/20"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <FontAwesomeIcon 
+                      icon={copied ? faCheck : faCopy} 
+                      className={`mr-3 text-lg ${copied ? 'text-green-400' : 'text-purple-400'}`} 
+                    />
+                    <span className="text-white font-bold text-base">
+                      {copied ? "Copied!" : "Copy Contract Address"}
+                    </span>
+                  </motion.button>
                 </div>
               </motion.div>
 
@@ -800,9 +827,9 @@ export default function Website() {
                       <h3 className="text-3xl font-bold text-white mb-8 text-center">Token Distribution</h3>
                       <div className="space-y-6">
                             {[
-                          { label: 'OG Users', percentage: 6, color: 'bg-green-500', desc: 'Initial community distribution' },
-                          { label: 'Vaulted (30 days)', percentage: 30, color: 'bg-cyan-500', desc: 'Time-locked vault to stabilize supply' },
-                          { label: 'Community (rewards, events, partnerships)', percentage: 20, color: 'bg-purple-500', desc: 'Growth, campaigns, community expansion' },
+                          { label: 'OG Users', percentage: 7, color: 'bg-green-500', desc: 'Initial community distribution' },
+                          { label: 'Vaulted (90 days lock, 30 days vested)', percentage: 50, color: 'bg-cyan-500', desc: 'Time-locked vault to stabilize supply' },
+                          { label: 'Community (rewards, events, partnerships)', percentage: 33, color: 'bg-purple-500', desc: 'Growth, campaigns, community expansion' },
                           { label: 'Team (6-month vesting)', percentage: 10, color: 'bg-yellow-500', desc: 'Core contributors with vesting' }
                         ].map((item, index) => (
                           <motion.div 
@@ -835,10 +862,39 @@ export default function Website() {
                     {/* Key Metrics */}
                     <div className="space-y-8">
                       <motion.div className="glass-card rounded-3xl p-8 border border-cyan-500/30">
-                        <h4 className="text-xl sm:text-2xl font-bold text-white mb-4 sm:mb-6 flex items-center gap-2 sm:gap-3">
+                        <h4 className="text-xl sm:text-2xl font-bold text-white flex items-center gap-2 sm:gap-3 mb-6">
                           <FontAwesomeIcon icon={faVault} className="text-cyan-400" />
                           Token Metrics
                         </h4>
+                        
+                        {/* Separate Contract Address Section */}
+                        <div className="mb-8 glass-card rounded-2xl p-6 border-2 border-purple-500/30 bg-gradient-to-r from-purple-500/10 to-cyan-400/10">
+                          <div className="flex flex-col items-center gap-4">
+                            <div className="text-center">
+                              <h5 className="text-xl font-bold text-white mb-2">Contract Address</h5>
+                              <div className="text-purple-300 font-mono bg-black/30 px-4 py-2 rounded-lg">
+                                {contractAddress}
+                              </div>
+                            </div>
+                            
+                            {/* Prominent Copy Button */}
+                            <motion.button
+                              onClick={copyToClipboard}
+                              className="flex items-center gap-3 px-8 py-4 rounded-xl gaming-gradient border-2 border-purple-500/40 hover:opacity-90 transition-all duration-300 shadow-lg shadow-purple-500/30 w-full sm:w-auto"
+                              whileHover={{ scale: 1.03 }}
+                              whileTap={{ scale: 0.97 }}
+                            >
+                              <FontAwesomeIcon 
+                                icon={copied ? faCheck : faCopy} 
+                                className={`text-xl ${copied ? 'text-green-400' : 'text-white'}`} 
+                              />
+                              <span className="text-white text-lg font-bold">
+                                {copied ? "Address Copied!" : "Copy Contract Address"}
+                              </span>
+                            </motion.button>
+                          </div>
+                        </div>
+                        
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                           <div className="text-center">
                             <div className="text-xl sm:text-2xl md:text-3xl font-black text-green-400 mb-1 sm:mb-2">100,000,000,000</div>

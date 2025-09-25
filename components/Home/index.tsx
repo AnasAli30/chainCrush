@@ -22,6 +22,7 @@ import Leaderboard from '../Leaderboard'
 import HowToPlayModal from '../HowToPlayModal'
 import Shop from '../Shop'
 import ShopPage from '../ShopPage'
+import TokenLaunchPopup, { FloatingTokenIcon } from '../TokenLaunchPopup'
 import { useConnect, useAccount, useDisconnect, useWriteContract, useWaitForTransactionReceipt } from 'wagmi'
 import { motion, AnimatePresence, sync } from 'framer-motion'
 import GameLoader from '../GameLoader'
@@ -41,6 +42,8 @@ export function Demo() {
   const [showHowToPlay, setShowHowToPlay] = useState(false)
   const [showShop, setShowShop] = useState(false)
   const [showShopPage, setShowShopPage] = useState(false)
+  const [showTokenPopup, setShowTokenPopup] = useState(true)
+  const [clankerUrl, setClankerUrl] = useState("https://clanker.world/clanker/0xe461003E78A7bF4F14F0D30b3ac490701980aB07")
   
   // Daily streak state
   const [dailyStreak, setDailyStreak] = useState(0)
@@ -143,6 +146,13 @@ export function Demo() {
   // Fetch streak data on mount
   useEffect(() => {
     fetchStreakData();
+    
+    // Show token popup after a short delay when user is identified
+    const tokenPopupTimer = setTimeout(() => {
+      setShowTokenPopup(true)
+    }, 2000)
+    
+    return () => clearTimeout(tokenPopupTimer)
   }, [(context as any)?.user?.fid]);
 
   // Handle transaction status updates
@@ -232,6 +242,18 @@ export function Demo() {
   if (showNFTs) {
   return (
     <div className="min-h-screen overflow-hidden">
+      {/* Token Launch Popup */}
+      <TokenLaunchPopup 
+        isOpen={showTokenPopup} 
+        onClose={() => setShowTokenPopup(false)} 
+        clankerUrl={clankerUrl} 
+      />
+      
+      {/* Floating Token Icon */}
+      {!showTokenPopup && (
+        <FloatingTokenIcon onClick={() => setShowTokenPopup(true)} />
+      )}
+      
       {/* Enhanced NFT Header */}
       <div className="relative">
         <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 via-pink-500/10 to-indigo-500/10" />
@@ -405,6 +427,18 @@ export function Demo() {
 
   return (
     <div className="min-h-screen overflow-hidden">
+      {/* Token Launch Popup */}
+      <TokenLaunchPopup 
+        isOpen={showTokenPopup} 
+        onClose={() => setShowTokenPopup(false)} 
+        clankerUrl={clankerUrl} 
+      />
+      
+      {/* Floating Token Icon */}
+      {!showTokenPopup && (
+        <FloatingTokenIcon onClick={() => setShowTokenPopup(true)} />
+      )}
+      
       {/* Hero Header Section */}
       <div className="relative">
         {/* Simplified Background */}
