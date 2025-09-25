@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faTimes, faCoins, faRocket, faClock } from '@fortawesome/free-solid-svg-icons'
+import { faTimes, faCoins, faRocket, faClock, faExternalLinkAlt } from '@fortawesome/free-solid-svg-icons'
 import { useMiniAppContext } from '@/hooks/use-miniapp-context'
 
 interface TokenLaunchPopupProps {
@@ -18,6 +18,13 @@ export default function TokenLaunchPopup({ isOpen, onClose, clankerUrl }: TokenL
   // Handle button actions
   const handleTradeClick = () => {
     actions?.openUrl(clankerUrl)
+    onClose()
+  }
+  
+  const handleViewOnFarcaster = () => {
+    // Format for Arbitrum ERC20 token: eip155:42161/erc20:0xe461003e78a7bf4f14f0d30b3ac490701980ab07
+    const tokenFormat = "eip155:42161/erc20:0xe461003e78a7bf4f14f0d30b3ac490701980ab07"
+    actions?.viewToken({ token: tokenFormat })
     onClose()
   }
   
@@ -90,6 +97,15 @@ export default function TokenLaunchPopup({ isOpen, onClose, clankerUrl }: TokenL
               
               {/* Buttons */}
               <div className="space-y-3">
+                {/* View Token on Farcaster - New Button at Top */}
+                <button
+                  onClick={handleViewOnFarcaster}
+                  className="w-full py-3 px-4 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl font-bold text-white hover:shadow-lg hover:shadow-indigo-500/30 transition-all duration-300 flex items-center justify-center gap-2"
+                >
+                  <FontAwesomeIcon icon={faExternalLinkAlt} />
+                  <span>View Token on Farcaster</span>
+                </button>
+                
                 <button
                   onClick={handleTradeClick}
                   className="w-full py-3 px-4 bg-gradient-to-r from-purple-600 to-cyan-500 rounded-xl font-bold text-white hover:shadow-lg hover:shadow-purple-500/30 transition-all duration-300 flex items-center justify-center gap-2"
