@@ -5,7 +5,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { 
   faHome, faImages, faChartBar, faTrophy, faPlay, faRocket, 
   faCrown, faCoins, faBolt, faGem, faFire, faUsers,
-  faArrowRight, faStar, faChartLine, faGamepad, faPalette, faCheckCircle, faTimesCircle, faStore
+  faArrowRight, faStar, faChartLine, faGamepad, faPalette, faCheckCircle, faTimesCircle, faStore, faGift
 } from '@fortawesome/free-solid-svg-icons'
 import { useMiniAppContext } from '@/hooks/use-miniapp-context';
 import { useNFTSupply } from '@/hooks/use-nft-supply';
@@ -22,6 +22,7 @@ import Leaderboard from '../Leaderboard'
 import HowToPlayModal from '../HowToPlayModal'
 import Shop from '../Shop'
 import ShopPage from '../ShopPage'
+import Airdrop from '../Airdrop'
 import TokenLaunchPopup, { FloatingTokenIcon } from '../TokenLaunchPopup'
 import { useConnect, useAccount, useDisconnect, useWriteContract, useWaitForTransactionReceipt } from 'wagmi'
 import { motion, AnimatePresence, sync } from 'framer-motion'
@@ -34,7 +35,7 @@ export function Demo() {
   const [showStats, setShowStats] = useState(false)
   const { context, actions } = useMiniAppContext();
   const [showLeaderboard, setShowLeaderboard] = useState(false)
-  const [activeTab, setActiveTab] = useState<'home' | 'nfts' | 'stats' | 'leaderboard' | 'shop'>('home')
+  const [activeTab, setActiveTab] = useState<'home' | 'nfts' | 'stats' | 'leaderboard' | 'shop' | 'airdrop'>('home')
   const [showRewardPopup, setShowRewardPopup] = useState(false)
   const [showTransactionPopup, setShowTransactionPopup] = useState(false)
   const [transactionStatus, setTransactionStatus] = useState<'idle' | 'pending' | 'confirmed' | 'error'>('idle')
@@ -42,7 +43,8 @@ export function Demo() {
   const [showHowToPlay, setShowHowToPlay] = useState(false)
   const [showShop, setShowShop] = useState(false)
   const [showShopPage, setShowShopPage] = useState(false)
-  const [showTokenPopup, setShowTokenPopup] = useState(true)
+  const [showAirdrop, setShowAirdrop] = useState(false)
+  const [showTokenPopup, setShowTokenPopup] = useState(false)
   const [clankerUrl, setClankerUrl] = useState("https://clanker.world/clanker/0xe461003E78A7bF4F14F0D30b3ac490701980aB07")
   
   // Daily streak state
@@ -146,13 +148,6 @@ export function Demo() {
   // Fetch streak data on mount
   useEffect(() => {
     fetchStreakData();
-    
-    // Show token popup after a short delay when user is identified
-    const tokenPopupTimer = setTimeout(() => {
-      setShowTokenPopup(true)
-    }, 2000)
-    
-    return () => clearTimeout(tokenPopupTimer)
   }, [(context as any)?.user?.fid]);
 
   // Handle transaction status updates
@@ -225,10 +220,12 @@ export function Demo() {
       setActiveTab('leaderboard')
     } else if (showShopPage) {
       setActiveTab('shop')
+    } else if (showAirdrop) {
+      setActiveTab('airdrop')
     } else {
       setActiveTab('home')
     }
-  }, [showNFTs, showStats, showLeaderboard, showShopPage])
+  }, [showNFTs, showStats, showLeaderboard, showShopPage, showAirdrop])
 
   if (showGame) {
     return (
@@ -356,7 +353,7 @@ export function Demo() {
           </div>
         </motion.div>
       </div>
-      <BottomNavbar activeTab={activeTab} onTabChange={setActiveTab} onShowGame={setShowGame} onShowNFTs={setShowNFTs} onShowStats={setShowStats} onShowLeaderboard={setShowLeaderboard} onShowShop={setShowShopPage} />
+      <BottomNavbar activeTab={activeTab} onTabChange={setActiveTab} onShowGame={setShowGame} onShowNFTs={setShowNFTs} onShowStats={setShowStats} onShowLeaderboard={setShowLeaderboard} onShowShop={setShowShopPage} onShowAirdrop={setShowAirdrop} />
     </div>
   )
   }
@@ -379,7 +376,7 @@ export function Demo() {
           <UserStats />
         </motion.div>
       </div>
-      <BottomNavbar activeTab={activeTab} onTabChange={setActiveTab} onShowGame={setShowGame} onShowNFTs={setShowNFTs} onShowStats={setShowStats} onShowLeaderboard={setShowLeaderboard} onShowShop={setShowShopPage} />
+      <BottomNavbar activeTab={activeTab} onTabChange={setActiveTab} onShowGame={setShowGame} onShowNFTs={setShowNFTs} onShowStats={setShowStats} onShowLeaderboard={setShowLeaderboard} onShowShop={setShowShopPage} onShowAirdrop={setShowAirdrop} />
     </div>
   )
   }
@@ -402,7 +399,7 @@ export function Demo() {
           <Leaderboard />
         </motion.div>
       </div>
-      <BottomNavbar activeTab={activeTab} onTabChange={setActiveTab} onShowGame={setShowGame} onShowNFTs={setShowNFTs} onShowStats={setShowStats} onShowLeaderboard={setShowLeaderboard} onShowShop={setShowShopPage} />
+      <BottomNavbar activeTab={activeTab} onTabChange={setActiveTab} onShowGame={setShowGame} onShowNFTs={setShowNFTs} onShowStats={setShowStats} onShowLeaderboard={setShowLeaderboard} onShowShop={setShowShopPage} onShowAirdrop={setShowAirdrop} />
     </div>
   )
   }
@@ -420,7 +417,25 @@ export function Demo() {
             <ShopPage fid={(context as any)?.user?.fid} />
           </motion.div>
         </div>
-        <BottomNavbar activeTab={activeTab} onTabChange={setActiveTab} onShowGame={setShowGame} onShowNFTs={setShowNFTs} onShowStats={setShowStats} onShowLeaderboard={setShowLeaderboard} onShowShop={setShowShopPage} />
+        <BottomNavbar activeTab={activeTab} onTabChange={setActiveTab} onShowGame={setShowGame} onShowNFTs={setShowNFTs} onShowStats={setShowStats} onShowLeaderboard={setShowLeaderboard} onShowShop={setShowShopPage} onShowAirdrop={setShowAirdrop} />
+      </div>
+    )
+  }
+
+  if (showAirdrop) {
+    return (
+      <div className="min-h-screen overflow-hidden">
+        {/* Airdrop Header */}
+        <div className="px-4 pb-24 mt-3 mb-8">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+          >
+            <Airdrop fid={(context as any)?.user?.fid} />
+          </motion.div>
+        </div>
+        <BottomNavbar activeTab={activeTab} onTabChange={setActiveTab} onShowGame={setShowGame} onShowNFTs={setShowNFTs} onShowStats={setShowStats} onShowLeaderboard={setShowLeaderboard} onShowShop={setShowShopPage} onShowAirdrop={setShowAirdrop} />
       </div>
     )
   }
@@ -1611,6 +1626,7 @@ export function Demo() {
         onShowStats={setShowStats} 
         onShowLeaderboard={setShowLeaderboard}
         onShowShop={setShowShopPage}
+        onShowAirdrop={setShowAirdrop}
       />
 
       {/* How to Play Modal */}
@@ -1631,13 +1647,14 @@ export function Demo() {
 }
 
 interface BottomNavbarProps {
-  activeTab: 'home' | 'nfts' | 'stats' | 'leaderboard' | 'shop'
-  onTabChange: (tab: 'home' | 'nfts' | 'stats' | 'leaderboard' | 'shop') => void
+  activeTab: 'home' | 'nfts' | 'stats' | 'leaderboard' | 'shop' | 'airdrop'
+  onTabChange: (tab: 'home' | 'nfts' | 'stats' | 'leaderboard' | 'shop' | 'airdrop') => void
   onShowGame: (show: boolean) => void
   onShowNFTs: (show: boolean) => void
   onShowStats: (show: boolean) => void
   onShowLeaderboard: (show: boolean) => void
   onShowShop: (show: boolean) => void
+  onShowAirdrop: (show: boolean) => void
 }
 
 // Stats Card Component
@@ -1716,9 +1733,9 @@ const FeatureCard = ({ icon, title, description, gradient, delay }: {
   </motion.div>
 );
 
-function BottomNavbar({ activeTab, onTabChange, onShowGame, onShowNFTs, onShowStats, onShowLeaderboard, onShowShop }: BottomNavbarProps) {
+function BottomNavbar({ activeTab, onTabChange, onShowGame, onShowNFTs, onShowStats, onShowLeaderboard, onShowShop, onShowAirdrop }: BottomNavbarProps) {
   const { isConnected } = useAccount(); // Add wallet connection check for bottom navbar
-  const handleTabClick = (tab: 'home' | 'nfts' | 'stats' | 'leaderboard' | 'shop') => {
+  const handleTabClick = (tab: 'home' | 'nfts' | 'stats' | 'leaderboard' | 'shop' | 'airdrop') => {
     onTabChange(tab)
     
     switch (tab) {
@@ -1728,6 +1745,7 @@ function BottomNavbar({ activeTab, onTabChange, onShowGame, onShowNFTs, onShowSt
         onShowStats(false)
         onShowLeaderboard(false)
         onShowShop(false)
+        onShowAirdrop(false)
         break
       case 'stats':
         onShowGame(false)
@@ -1735,6 +1753,7 @@ function BottomNavbar({ activeTab, onTabChange, onShowGame, onShowNFTs, onShowSt
         onShowStats(true)
         onShowLeaderboard(false)
         onShowShop(false)
+        onShowAirdrop(false)
         break
       case 'leaderboard':
         onShowGame(false)
@@ -1742,6 +1761,7 @@ function BottomNavbar({ activeTab, onTabChange, onShowGame, onShowNFTs, onShowSt
         onShowStats(false)
         onShowLeaderboard(true)
         onShowShop(false)
+        onShowAirdrop(false)
         break
       case 'shop':
         onShowGame(false)
@@ -1749,6 +1769,15 @@ function BottomNavbar({ activeTab, onTabChange, onShowGame, onShowNFTs, onShowSt
         onShowStats(false)
         onShowLeaderboard(false)
         onShowShop(true)
+        onShowAirdrop(false)
+        break
+      case 'airdrop':
+        onShowGame(false)
+        onShowNFTs(false)
+        onShowStats(false)
+        onShowLeaderboard(false)
+        onShowShop(false)
+        onShowAirdrop(true)
         break
       case 'home':
       default:
@@ -1757,6 +1786,7 @@ function BottomNavbar({ activeTab, onTabChange, onShowGame, onShowNFTs, onShowSt
         onShowStats(false)
         onShowLeaderboard(false)
         onShowShop(false)
+        onShowAirdrop(false)
         break
     }
   }
@@ -1765,10 +1795,9 @@ function BottomNavbar({ activeTab, onTabChange, onShowGame, onShowNFTs, onShowSt
   const tabs = [
     { id: 'home', icon: faHome, label: 'Home', color: 'from-cyan-400 to-blue-500' },
     { id: 'shop', icon: faStore, label: 'Shop', color: 'from-orange-400 to-red-500' },
-    // { id: 'nfts', icon: faGem, label: 'NFTs', color: 'from-purple-500 to-pink-500' },
-    { id: 'stats', icon: faChartBar, label: 'Analytics', color: 'from-green-400 to-cyan-400' },
-    { id: 'leaderboard', icon: faTrophy, label: 'Champions', color: 'from-purple-600 to-cyan-500' },
-   
+    { id: 'airdrop', icon: faGift, label: 'Rewards', color: 'from-yellow-400 to-orange-500' },
+    { id: 'stats', icon: faChartBar, label: 'Stats', color: 'from-green-400 to-cyan-400' },
+    { id: 'leaderboard', icon: faTrophy, label: 'Top', color: 'from-purple-600 to-cyan-500' },
   ];
 
   return (
@@ -1791,35 +1820,35 @@ function BottomNavbar({ activeTab, onTabChange, onShowGame, onShowNFTs, onShowSt
       )} */}
 
       <div 
-        className="relative overflow-hidden rounded-3xl border backdrop-blur-2xl shadow-2xl mx-auto max-w-md glass-card neon-glow"
+        className="relative overflow-hidden rounded-2xl border backdrop-blur-xl shadow-xl mx-auto max-w-lg"
         style={{
-          background: 'var(--glass-background)',
-          borderColor: 'var(--glass-border)',
-          boxShadow: '0 8px 25px -5px rgba(0, 255, 255, 0.2), 0 0 20px rgba(147, 51, 234, 0.15), 0 15px 35px rgba(0, 0, 0, 0.3)'
+          background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05))',
+          borderColor: 'rgba(255, 255, 255, 0.2)',
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.1)'
         }}
       >
-        {/* Enhanced background glow */}
-        <div className="absolute inset-0 bg-gradient-to-r from-cyan-400/08 via-purple-500/08 to-green-400/08 blur-xl" />
+        {/* Subtle background glow */}
+        <div className="absolute inset-0 bg-gradient-to-r from-cyan-400/5 via-purple-500/5 to-green-400/5" />
         
-        <div className="relative z-10 flex justify-around items-center py-2">
+        <div className="relative z-10 flex justify-between items-center px-2 py-3">
           {tabs.map((tab) => {
             const isActive = activeTab === tab.id;
             return (
               <motion.button
                 key={tab.id}
                 onClick={() => handleTabClick(tab.id as any)}
-                className="relative flex flex-col items-center justify-center px-5 py-2 rounded-2xl transition-all duration-300"
-                whileHover={{ scale: 1.05, y: -2 }}
+                className="relative flex flex-col items-center justify-center px-3 py-2 rounded-xl transition-all duration-300 min-w-0 flex-1"
+                whileHover={{ scale: 1.05, y: -1 }}
                 whileTap={{ scale: 0.95 }}
                 animate={{
-                  backgroundColor: isActive ? 'rgba(255, 255, 255, 0.1)' : 'transparent'
+                  backgroundColor: isActive ? 'rgba(255, 255, 255, 0.15)' : 'transparent'
                 }}
               >
                 {/* Active indicator */}
                 <AnimatePresence>
                   {isActive && (
                     <motion.div
-                      className={`absolute inset-0 rounded-2xl bg-gradient-to-r ${tab.color}`}
+                      className={`absolute inset-0 rounded-xl bg-gradient-to-r ${tab.color} opacity-20`}
                       initial={{ opacity: 0, scale: 0.8 }}
                       animate={{ opacity: 0.2, scale: 1 }}
                       exit={{ opacity: 0, scale: 0.8 }}
@@ -1831,23 +1860,24 @@ function BottomNavbar({ activeTab, onTabChange, onShowGame, onShowNFTs, onShowSt
                 {/* Icon */}
                 <motion.div
                   animate={{
-                    color: isActive ? '#ffffff' : 'rgba(255, 255, 255, 0.6)',
+                    color: isActive ? '#ffffff' : 'rgba(255, 255, 255, 0.7)',
                     scale: isActive ? 1.1 : 1
                   }}
                   transition={{ duration: 0.2 }}
+                  className="mb-1"
                 >
                   <FontAwesomeIcon 
                     icon={tab.icon} 
-                    className="text-lg mb-1 relative z-10" 
+                    className="text-lg relative z-10" 
                   />
                 </motion.div>
                 
                 {/* Label */}
                 <motion.div 
-                  className="text-xs font-medium relative z-10"
+                  className="text-xs font-semibold relative z-10 text-center leading-tight"
                   animate={{
-                    color: isActive ? '#ffffff' : 'rgba(255, 255, 255, 0.6)',
-                    fontWeight: isActive ? 600 : 500
+                    color: isActive ? '#ffffff' : 'rgba(255, 255, 255, 0.7)',
+                    fontWeight: isActive ? 700 : 500
                   }}
                   transition={{ duration: 0.2 }}
                 >
@@ -1858,7 +1888,7 @@ function BottomNavbar({ activeTab, onTabChange, onShowGame, onShowNFTs, onShowSt
                 <AnimatePresence>
                   {isActive && (
                     <motion.div
-                      className={`absolute -top-1 w-1.5 h-1.5 rounded-full bg-gradient-to-r ${tab.color}`}
+                      className={`absolute -top-1 left-1/2 transform -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-gradient-to-r ${tab.color}`}
                       initial={{ opacity: 0, y: 5 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: 5 }}
