@@ -473,7 +473,7 @@ Go claim yours now! 🚀`;
                </div>
                <div>
                  <div className="text-white font-semibold text-sm">Daily Streak Players</div>
-                 <div className="text-gray-300 text-xs">Players maintaining a daily streak of 3+ days</div>
+                 <div className="text-gray-300 text-xs">Players maintaining a daily streak of 2+ days</div>
                </div>
              </div>
            </div>
