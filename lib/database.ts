@@ -71,7 +71,7 @@ export interface GameSession {
 export interface GiftBoxClaim {
   userAddress: string;
   fid?: number;
-  tokenType: 'arb' | 'pepe' | 'boop' | 'none';
+  tokenType: 'arb' | 'pepe' | 'crsh' | 'none';
   amount: number;
   timestamp: number;
   signature?: string;
@@ -898,7 +898,7 @@ export async function canUserSeeGiftBox(userAddress: string, fid?: number): Prom
 }
 
 export async function generateGiftBoxReward(score: number = 0): Promise<{
-  tokenType: 'arb' | 'pepe' | 'boop' | 'none';
+  tokenType: 'arb' | 'pepe' | 'crsh' | 'none';
   amount: number;
 }> {
   // Calculate "better luck next time" probability based on score
@@ -940,16 +940,16 @@ export async function generateGiftBoxReward(score: number = 0): Promise<{
     console.log(`🎁 Gift Box: PEPE reward! (${(tokenChance * 100).toFixed(1)}% chance) - Amount: ${pepeAmount.toLocaleString()} - Score: ${score.toLocaleString()}`);
     return { tokenType: 'pepe', amount: pepeAmount };
   } else {
-    // BOOP: 711 - 1000 (halved from 1423 - 2000)
-    const boopAmount = 511 + Math.floor(Math.random() * (1000 - 411 + 1));
-    console.log(`🎁 Gift Box: BOOP reward! (${(tokenChance * 100).toFixed(1)}% chance) - Amount: ${boopAmount.toLocaleString()} - Score: ${score.toLocaleString()}`);
-    return { tokenType: 'boop', amount: boopAmount };
+    // CRSH: 80000 - 130000
+    const crshAmount = 80000 + Math.floor(Math.random() * (130000 - 80000 + 1));
+    console.log(`🎁 Gift Box: CRSH reward! (${(tokenChance * 100).toFixed(1)}% chance) - Amount: ${crshAmount.toLocaleString()} - Score: ${score.toLocaleString()}`);
+    return { tokenType: 'crsh', amount: crshAmount };
   }
 }
 
 export async function claimGiftBox(userAddress: string, fid?: number): Promise<{
   success: boolean;
-  tokenType: 'arb' | 'pepe' | 'boop' | 'none';
+  tokenType: 'arb' | 'pepe' | 'crsh' | 'none';
   amount: number;
   amountInWei?: string;
   signature?: string;
@@ -1106,15 +1106,15 @@ export async function claimGiftBox(userAddress: string, fid?: number): Promise<{
   };
 }
 
-function getTokenAddress(tokenType: 'arb' | 'pepe' | 'boop' | 'none'): string {
+function getTokenAddress(tokenType: 'arb' | 'pepe' | 'crsh' | 'none'): string {
   // These should match your actual token contract addresses
   switch (tokenType) {
     case 'arb':
       return '0x912CE59144191C1204E64559FE8253a0e49E6548'; // Arbitrum token address
     case 'pepe':
       return '0x25d887Ce7a35172C62FeBFD67a1856F20FaEbB00'; // PEPE token address
-    case 'boop':
-      return '0x13A7DeDb7169a17bE92B0E3C7C2315B46f4772B3'; // Replace with actual BOOP address
+    case 'crsh':
+      return '0xe461003E78A7bF4F14F0D30b3ac490701980aB07';
     case 'none':
       throw new Error('Cannot get token address for "none" type');
     default:
@@ -1133,7 +1133,7 @@ export async function getUserGiftBoxStats(userAddress: string, fid?: number): Pr
   totalClaims: number;
   totalArb: number;
   totalPepe: number;
-  totalBoop: number;
+  totalCrsh: number;
   claimsToday: number;
   remainingClaims: number;
   totalRewardsClaimed: number;
@@ -1170,19 +1170,19 @@ export async function getUserGiftBoxStats(userAddress: string, fid?: number): Pr
   
   let totalArb = 0;
   let totalPepe = 0;
-  let totalBoop = 0;
+  let totalCrsh = 0;
   
   allClaims.forEach(claim => {
     if (claim.tokenType === 'arb') totalArb += claim.amount;
     else if (claim.tokenType === 'pepe') totalPepe += claim.amount;
-    else if (claim.tokenType === 'boop') totalBoop += claim.amount;
+    else if (claim.tokenType === 'crsh') totalCrsh += claim.amount;
   });
   
   return {
     totalClaims: allClaims.length,
     totalArb,
     totalPepe,
-    totalBoop,
+    totalCrsh,
     claimsToday,
     remainingClaims: Math.max(0, GIFT_BOXES_PER_DAY - claimsToday),
     totalRewardsClaimed: userData?.totalRewardsClaimed || 0

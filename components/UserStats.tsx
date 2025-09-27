@@ -59,7 +59,7 @@ interface UserStats {
   giftBoxStats?: {
     totalArb: number;
     totalPepe: number;
-    totalBoop: number;
+    totalCrsh: number;
     totalClaims: number;
     claimsToday: number;
     remainingClaims: number;
@@ -131,30 +131,30 @@ export default function UserStats() {
   };
 
   // Get token amounts from localStorage (from GiftBox component)
-  const getTokenAmountsFromStorage = (): { totalArb: number; totalPepe: number; totalBoop: number } | null => {
+  const getTokenAmountsFromStorage = (): { totalArb: number; totalPepe: number; totalCrsh: number } | null => {
     if (typeof window === 'undefined') return null;
     
     try {
       // Get token totals from localStorage (stored by GiftBox component)
-      const totals = JSON.parse(localStorage.getItem('giftBoxTotals') || '{"arb": 0, "pepe": 0, "boop": 0, "totalClaims": 0}');
+      const totals = JSON.parse(localStorage.getItem('giftBoxTotals') || '{"arb": 0, "pepe": 0, "crsh": 0, "totalClaims": 0}');
       
       console.log('Token amounts from localStorage (giftBoxTotals):', totals);
       
       // If no data found, add test data for demonstration
-      if (totals.arb === 0 && totals.pepe === 0 && totals.boop === 0) {
+      if (totals.arb === 0 && totals.pepe === 0 && totals.crsh === 0) {
         console.log('No token data found. You can add test data by running this in console:');
         console.log(`
 localStorage.setItem('giftBoxTotals', JSON.stringify({
   "arb": 0,
-  "pepe": 0, 
-  "boop": 1545,
+  "pepe": 0,
+  "crsh": 1545,
   "totalClaims": 3
 }));
         `);
       }
       
       // If totals are empty, try to calculate from claims array
-      if (totals.arb === 0 && totals.pepe === 0 && totals.boop === 0) {
+      if (totals.arb === 0 && totals.pepe === 0 && totals.crsh === 0) {
         const claims = JSON.parse(localStorage.getItem('giftBoxClaims') || '[]');
         console.log('Totals empty, calculating from claims:', claims);
         
@@ -162,7 +162,7 @@ localStorage.setItem('giftBoxTotals', JSON.stringify({
           const calculatedTotals = {
             arb: 0,
             pepe: 0,
-            boop: 0
+            crsh: 0
           };
           
           claims.forEach((claim: any) => {
@@ -170,8 +170,8 @@ localStorage.setItem('giftBoxTotals', JSON.stringify({
               calculatedTotals.arb += claim.amount || 0;
             } else if (claim.tokenType === 'pepe') {
               calculatedTotals.pepe += claim.amount || 0;
-            } else if (claim.tokenType === 'boop') {
-              calculatedTotals.boop += claim.amount || 0;
+            } else if (claim.tokenType === 'crsh') {
+              calculatedTotals.crsh += claim.amount || 0;
             }
           });
           
@@ -179,7 +179,7 @@ localStorage.setItem('giftBoxTotals', JSON.stringify({
           return {
             totalArb: calculatedTotals.arb,
             totalPepe: calculatedTotals.pepe,
-            totalBoop: calculatedTotals.boop
+            totalCrsh: calculatedTotals.crsh
           };
         }
       }
@@ -187,7 +187,7 @@ localStorage.setItem('giftBoxTotals', JSON.stringify({
       return {
         totalArb: totals.arb || 0,
         totalPepe: totals.pepe || 0,
-        totalBoop: totals.boop || 0
+        totalCrsh: totals.crsh || 0
       };
     } catch (error) {
       console.error('Failed to get token amounts from localStorage:', error);
@@ -214,7 +214,7 @@ localStorage.setItem('giftBoxTotals', JSON.stringify({
         const apiStats = {
           totalArb: data.stats.totalArb || 0,
           totalPepe: data.stats.totalPepe || 0,
-          totalBoop: data.stats.totalBoop || 0,
+          totalCrsh: data.stats.totalCrsh || 0,
           totalClaims: data.stats.totalClaims || 0,
           claimsToday: data.stats.claimsToday || 0,
           remainingClaims: data.stats.remainingClaims || 0,
@@ -236,7 +236,7 @@ localStorage.setItem('giftBoxTotals', JSON.stringify({
           // Use localStorage data for token amounts (from GiftBox claims)
           totalArb: tokenAmounts?.totalArb || 0,
           totalPepe: tokenAmounts?.totalPepe || 0,
-          totalBoop: tokenAmounts?.totalBoop || 0
+          totalCrsh: tokenAmounts?.totalCrsh || 0
         };
         
         console.log('Combined gift box stats:', giftBoxStats);
@@ -272,7 +272,7 @@ localStorage.setItem('giftBoxTotals', JSON.stringify({
             lastGiftBoxUpdate: null,
             totalArb: tokenAmounts.totalArb || 0,
             totalPepe: tokenAmounts.totalPepe || 0,
-            totalBoop: tokenAmounts.totalBoop || 0
+            totalCrsh: tokenAmounts.totalCrsh || 0
           };
           console.log('Using localStorage token amounts as fallback:', fallbackStats);
           setStats(prevStats => {
@@ -306,7 +306,7 @@ localStorage.setItem('giftBoxTotals', JSON.stringify({
           lastGiftBoxUpdate: null,
           totalArb: tokenAmounts.totalArb || 0,
           totalPepe: tokenAmounts.totalPepe || 0,
-          totalBoop: tokenAmounts.totalBoop || 0
+          totalCrsh: tokenAmounts.totalCrsh || 0
         };
         console.log('API failed, using localStorage token amounts:', fallbackStats);
         setStats(prevStats => {
@@ -503,7 +503,7 @@ localStorage.setItem('giftBoxTotals', JSON.stringify({
       
       // Add token rewards if available
       const tokenAmounts = getTokenAmountsFromStorage();
-      if (tokenAmounts && (tokenAmounts.totalArb > 0 || tokenAmounts.totalPepe > 0 || tokenAmounts.totalBoop > 0)) {
+      if (tokenAmounts && (tokenAmounts.totalArb > 0 || tokenAmounts.totalPepe > 0 || tokenAmounts.totalCrsh > 0)) {
         const tokenRewards = [];
         if (tokenAmounts.totalArb > 0) {
           tokenRewards.push(`🟢 ${tokenAmounts.totalArb.toFixed(2)} ARB`);
@@ -511,8 +511,8 @@ localStorage.setItem('giftBoxTotals', JSON.stringify({
         if (tokenAmounts.totalPepe > 0) {
           tokenRewards.push(`🐸 ${tokenAmounts.totalPepe.toLocaleString()} PEPE`);
         }
-        if (tokenAmounts.totalBoop > 0) {
-          tokenRewards.push(`🎁 ${tokenAmounts.totalBoop.toLocaleString()} BOOP`);
+        if (tokenAmounts.totalCrsh > 0) {
+          tokenRewards.push(`🎁 ${tokenAmounts.totalCrsh.toLocaleString()} CRSH`);
         }
         if (tokenRewards.length > 0) {
           statsArray.push(`💰 ${tokenRewards.join(' + ')} Rewards Claimed`);
@@ -669,7 +669,7 @@ localStorage.setItem('giftBoxTotals', JSON.stringify({
             lastGiftBoxUpdate: null,
             totalArb: tokenAmounts.totalArb || 0,
             totalPepe: tokenAmounts.totalPepe || 0,
-            totalBoop: tokenAmounts.totalBoop || 0
+            totalCrsh: tokenAmounts.totalCrsh || 0
           };
           console.log('No address but found localStorage token amounts:', fallbackStats);
           setStats(prevStats => {
@@ -957,7 +957,7 @@ localStorage.setItem('giftBoxTotals', JSON.stringify({
                     <span>
                       {sharing ? 'Sharing...' : (() => {
                         const tokenAmounts = getTokenAmountsFromStorage();
-                        const hasTokenRewards = tokenAmounts && (tokenAmounts.totalArb > 0 || tokenAmounts.totalPepe > 0 || tokenAmounts.totalBoop > 0);
+                        const hasTokenRewards = tokenAmounts && (tokenAmounts.totalArb > 0 || tokenAmounts.totalPepe > 0 || tokenAmounts.totalCrsh > 0);
                         return hasTokenRewards ? 'Share Rewards! 💰' : 'Share Stats';
                       })()}
                     </span>
@@ -971,7 +971,7 @@ localStorage.setItem('giftBoxTotals', JSON.stringify({
                           🎁 Share to earn +2 gift box claims!
                           {(() => {
                             const tokenAmounts = getTokenAmountsFromStorage();
-                            const hasTokenRewards = tokenAmounts && (tokenAmounts.totalArb > 0 || tokenAmounts.totalPepe > 0 || tokenAmounts.totalBoop > 0);
+                            const hasTokenRewards = tokenAmounts && (tokenAmounts.totalArb > 0 || tokenAmounts.totalPepe > 0 || tokenAmounts.totalCrsh > 0);
                             return hasTokenRewards ? ' + Show off your rewards! 💰' : '';
                           })()}
                         </div>
@@ -1177,7 +1177,7 @@ localStorage.setItem('giftBoxTotals', JSON.stringify({
       {/* Gift Box Analytics */}
       {(() => {
         const tokenAmounts = getTokenAmountsFromStorage();
-        const hasTokenData = tokenAmounts && (tokenAmounts.totalArb > 0 || tokenAmounts.totalPepe > 0 || tokenAmounts.totalBoop > 0);
+        const hasTokenData = tokenAmounts && (tokenAmounts.totalArb > 0 || tokenAmounts.totalPepe > 0 || tokenAmounts.totalCrsh > 0);
         const hasApiData = stats.giftBoxStats && (stats.giftBoxStats.claimsToday > 0 || stats.giftBoxStats.totalClaims > 0);
         
         // Show if we have either token data OR API data OR stats.giftBoxStats exists
@@ -1191,7 +1191,7 @@ localStorage.setItem('giftBoxTotals', JSON.stringify({
           lastGiftBoxUpdate: null,
           totalArb: tokenAmounts?.totalArb || 0,
           totalPepe: tokenAmounts?.totalPepe || 0,
-          totalBoop: tokenAmounts?.totalBoop || 0
+          totalCrsh: tokenAmounts?.totalCrsh || 0
         } : null);
         
         console.log('Gift Box Analytics render check:', { 
@@ -1381,10 +1381,10 @@ localStorage.setItem('giftBoxTotals', JSON.stringify({
                 transition={{ type: "spring", stiffness: 300 }}
               >
                 <div className="w-8 h-8 mx-auto mb-1">
-                  <img src="/candy/1.png" alt="BOOP" className="w-full h-full object-contain" />
+                  <img src="/images/icon.jpg" alt="CRSH" className="w-full h-full object-contain rounded-full" />
                 </div>
-                <p className="text-xs text-green-400">BOOP</p>
-                <p className="text-lg font-bold text-white">{(stats.giftBoxStats?.totalBoop || 0).toLocaleString()}</p>
+                <p className="text-xs text-green-400">CRSH</p>
+                <p className="text-lg font-bold text-white">{(stats.giftBoxStats?.totalCrsh || 0).toLocaleString()}</p>
               </motion.div>
             </div>
           </div>
