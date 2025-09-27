@@ -675,7 +675,7 @@ export async function migrateToNewScoringSystem(): Promise<void> {
 }
 
 // Get all-time high leaderboard
-export async function getAllTimeHighLeaderboard(limit: number = 50): Promise<GameScore[]> {
+export async function getAllTimeHighLeaderboard(limit: number = 50, offset: number = 0): Promise<GameScore[]> {
   const client = await clientPromise;
   const db = client.db('chaincrush');
   
@@ -685,10 +685,23 @@ export async function getAllTimeHighLeaderboard(limit: number = 50): Promise<Gam
       score: { $exists: true, $gt: 0 }
     })
     .sort({ score: -1 })
+    .skip(offset)
     .limit(limit)
     .toArray();
   
   return leaderboard as unknown as GameScore[];
+}
+
+// Get total ATH players count
+export async function getTotalAthPlayersCount(): Promise<number> {
+  const client = await clientPromise;
+  const db = client.db('chaincrush');
+  
+  // Get unique player count by counting distinct fids who have ATH scores
+  const totalPlayers = await db.collection('gameScores').distinct('fid', { 
+    score: { $exists: true, $gt: 0 }
+  });
+  return totalPlayers.length;
 }
 
 // Get user's game data by address

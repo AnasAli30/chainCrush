@@ -119,7 +119,11 @@ export default function Leaderboard() {
     try {
       // Get leaderboard data (current mode) to find user's position
       const endpoint = viewMode === 'ath' ? '/api/ath-leaderboard' : '/api/game-leaderboard';
-      const response = await fetch(`${endpoint}?limit=1000`);
+      
+      // For ATH mode, we need to get all players to find the correct rank
+      // For current season, we can use a reasonable limit
+      const limit = viewMode === 'ath' ? 10000 : 1000;
+      const response = await fetch(`${endpoint}?limit=${limit}`);
       const result = await response.json();
       
       if (result.success) {
@@ -129,6 +133,10 @@ export default function Leaderboard() {
         if (userIndex !== -1) {
           setUserRank(userIndex + 1);
           setUserInfo(allPlayers[userIndex]);
+        } else {
+          // User not found in leaderboard, reset rank
+          setUserRank(null);
+          setUserInfo(null);
         }
       }
     } catch (error) {
