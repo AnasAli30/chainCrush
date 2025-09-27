@@ -9,6 +9,6 @@ if (!APP_URL) {
 // Blockchain configuration
 export const ARBITRUM_RPC_URL = process.env.ARBITRUM_RPC_URL || 'https://arb1.arbitrum.io/rpc';
 export const BOOSTER_SHOP_ADDRESS = '0x31c72c62aD07f50a51660F39f601ffdA16B427B3';
-export const ARB_TOKEN_ADDRESS = '0x912CE59144191C1204E64559FE8253a0e49E6548';
+export const CRSH_TOKEN_ADDRESS = '0xe461003E78A7bF4F14F0D30b3ac490701980aB07';
 
 export { APP_URL };

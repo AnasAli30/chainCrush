@@ -13,7 +13,8 @@ import {
   faShoppingCart,
   faMinus,
   faPlus,
-  faWallet
+  faWallet,
+  faBolt
 } from '@fortawesome/free-solid-svg-icons';
 import { useAccount, useWalletClient, useBalance } from 'wagmi';
 import { erc20Abi, encodeFunctionData, parseUnits, formatUnits } from 'viem';
@@ -22,7 +23,7 @@ import { sdk } from '@farcaster/miniapp-sdk'
 
 // Contract configuration
 const BOOSTER_SHOP_ADDRESS = '0x31c72c62aD07f50a51660F39f601ffdA16B427B3';
-const ARB_TOKEN_ADDRESS = '0x912CE59144191C1204E64559FE8253a0e49E6548';
+const CRSH_TOKEN_ADDRESS = '0xe461003E78A7bF4F14F0D30b3ac490701980aB07';
 
 interface BoosterItem {
   id: number;
@@ -64,10 +65,10 @@ const ShopPage: React.FC<ShopPageProps> = ({ fid }) => {
   const { address } = useAccount();
   const { data: walletClient } = useWalletClient();
   
-  // Check ARB token balance
-  const { data: arbBalance } = useBalance({
+  // Check CRSH token balance
+  const { data: crshBalance } = useBalance({
     address: address,
-    token: ARB_TOKEN_ADDRESS as `0x${string}`,
+    token: CRSH_TOKEN_ADDRESS as `0x${string}`,
   });
 
   const boosterItems: BoosterItem[] = [
@@ -75,7 +76,7 @@ const ShopPage: React.FC<ShopPageProps> = ({ fid }) => {
       id: 0,
       name: 'Shuffle',
       description: 'Rearrange all candies on the board for a fresh start',
-      price: 0.2,
+      price: 30000,
       icon: faShuffle,
       type: 0
     },
@@ -83,7 +84,7 @@ const ShopPage: React.FC<ShopPageProps> = ({ fid }) => {
       id: 1,
       name: 'Party Popper',
       description: 'Destroy a large area of candies with explosive power',
-      price: 0.1,
+      price: 30000,
       icon: faBurst,
       type: 1
     }
@@ -114,16 +115,16 @@ const ShopPage: React.FC<ShopPageProps> = ({ fid }) => {
     }
   };
 
-  const handleSwapToken = async (requiredArb: number) => {
+  const handleSwapToken = async (requiredCrsh: number) => {
     try {
-      // Calculate required USDC amount (1 USDC = 0.4 ARB, so 1 ARB = 2.5 USDC)
-      const requiredUsdc = requiredArb * 2.5; // More than needed to ensure enough ARB
+      // Calculate required USDC amount (1 USDC = 0.4 CRSH, so 1 CRSH = 2.5 USDC)
+      const requiredUsdc = requiredCrsh * 2.5; // More than needed to ensure enough CRSH
       const sellAmount = (requiredUsdc * 1e6).toString(); // USDC has 6 decimals
       
       // Use Farcaster SDK to open swap
       await sdk.actions.swapToken({
         sellToken: "eip155:8453/erc20:0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913", // USDC on Base
-        buyToken: `eip155:42161/erc20:${ARB_TOKEN_ADDRESS}`, // ARB on Arbitrum
+        buyToken: `eip155:42161/erc20:${CRSH_TOKEN_ADDRESS}`, // CRSH on CRSHitrum
         sellAmount: sellAmount,
       });
     } catch (error) {
@@ -158,11 +159,11 @@ const ShopPage: React.FC<ShopPageProps> = ({ fid }) => {
       const totalCost = selectedBooster.price * quantity;
       const totalCostWei = parseUnits(totalCost.toString(), 18);
       
-      // Check if user has enough ARB balance
-      const currentBalance = arbBalance ? parseFloat(formatUnits(arbBalance.value, arbBalance.decimals)) : 0;
+      // Check if user has enough CRSH balance
+      const currentBalance = crshBalance ? parseFloat(formatUnits(crshBalance.value, crshBalance.decimals)) : 0;
       
       if (currentBalance < totalCost) {
-        // Not enough ARB, show popup to ask user what to do
+        // Not enough CRSH, show popup to ask user what to do
         setRequiredAmount(totalCost);
         setShowInsufficientFundsPopup(true);
         setLoading(false);
@@ -173,9 +174,9 @@ const ShopPage: React.FC<ShopPageProps> = ({ fid }) => {
       const { id } = await walletClient.sendCalls({
         account: address as `0x${string}`,
         calls: [
-          // Approve ARB tokens
+          // Approve CRSH tokens
           {
-            to: ARB_TOKEN_ADDRESS as `0x${string}`,
+            to: CRSH_TOKEN_ADDRESS as `0x${string}`,
             data: encodeFunctionData({
               abi: erc20Abi,
               functionName: 'approve',
@@ -241,7 +242,7 @@ const ShopPage: React.FC<ShopPageProps> = ({ fid }) => {
       if (error.message && error.message.includes('User rejected the request')) {
         setErrorMessage('Transaction was cancelled. You can try again when ready.');
       } else if (error.message && error.message.includes('insufficient funds')) {
-        setErrorMessage('Insufficient ARB balance. Please add more tokens to your wallet.');
+        setErrorMessage('Insufficient CRSH balance. Please add more tokens to your wallet.');
       } else if (error.message && error.message.includes('gas')) {
         setErrorMessage('Transaction failed due to gas issues. Please try again.');
       } else {
@@ -305,6 +306,30 @@ const ShopPage: React.FC<ShopPageProps> = ({ fid }) => {
 
   return (
     <div className="space-y-6">
+      {/* Special Discount Banner */}
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-red-500/20 to-orange-500/20 p-4 border border-red-400/30 backdrop-blur-sm"
+      >
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-gradient-to-r from-red-500 to-orange-500 flex items-center justify-center">
+              <FontAwesomeIcon icon={faBolt} className="text-white text-lg" />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-white">🔥 Special Discount!</h3>
+              <p className="text-red-200 text-sm">Limited time offer</p>
+            </div>
+          </div>
+          <div className="text-right">
+            <div className="text-2xl font-bold text-white">30K</div>
+            <div className="text-red-200 text-xs">CRSH each</div>
+          </div>
+        </div>
+      </motion.div>
+
       {/* User Boosters Display */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -408,7 +433,7 @@ const ShopPage: React.FC<ShopPageProps> = ({ fid }) => {
         <div className="absolute inset-0 bg-gradient-to-r from-purple-500/5 to-blue-500/5 opacity-0 hover:opacity-100 transition-opacity duration-300" />
       </motion.div>
 
-      {/* ARB Balance Display */}
+      {/* CRSH Balance Display */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -422,19 +447,19 @@ const ShopPage: React.FC<ShopPageProps> = ({ fid }) => {
                 <FontAwesomeIcon icon={faCoins} className="text-xl text-yellow-400" />
               </div>
               <div>
-                <div className="text-white font-semibold text-sm">ARB Balance</div>
+                <div className="text-white font-semibold text-sm">CRSH Balance</div>
                 <div className="text-gray-300 text-xs">
-                  {arbBalance ? `${parseFloat(formatUnits(arbBalance.value, arbBalance.decimals)).toFixed(2)} ARB` : 'Loading...'}
+                  {crshBalance ? `${parseFloat(formatUnits(crshBalance.value, crshBalance.decimals)).toFixed(0)} CRSH` : 'Loading...'}
                 </div>
               </div>
             </div>
-            {arbBalance && selectedBooster && (
+            {crshBalance && selectedBooster && (
               <div className="text-right">
                 <div className="text-white font-bold text-sm">
-                  Need: {(selectedBooster.price * quantity).toFixed(2)} ARB
+                  Need: {(selectedBooster.price * quantity).toFixed(0)} CRSH
                 </div>
-                <div className={`text-xs ${parseFloat(formatUnits(arbBalance.value, arbBalance.decimals)) >= (selectedBooster.price * quantity) ? 'text-green-400' : 'text-red-400'}`}>
-                  {parseFloat(formatUnits(arbBalance.value, arbBalance.decimals)) >= (selectedBooster.price * quantity) ? 'Sufficient' : 'Insufficient'}
+                <div className={`text-xs ${parseFloat(formatUnits(crshBalance.value, crshBalance.decimals)) >= (selectedBooster.price * quantity) ? 'text-green-400' : 'text-red-400'}`}>
+                  {parseFloat(formatUnits(crshBalance.value, crshBalance.decimals)) >= (selectedBooster.price * quantity) ? 'Sufficient' : 'Insufficient'}
                 </div>
               </div>
             )}
@@ -479,7 +504,7 @@ const ShopPage: React.FC<ShopPageProps> = ({ fid }) => {
                     <h3 className="text-xl font-bold text-white">{booster.name}</h3>
                     <div className="flex items-center gap-2 text-yellow-400">
                       <FontAwesomeIcon icon={faCoins} />
-                      <span className="font-semibold">{booster.price} ARB</span>
+                      <span className="font-semibold">{booster.price} CRSH</span>
                     </div>
                   </div>
                 </div>
@@ -521,7 +546,7 @@ const ShopPage: React.FC<ShopPageProps> = ({ fid }) => {
               </button>
             </div>
             <div className="text-center mt-4 text-gray-300">
-              Total: <span className="text-yellow-400 font-semibold">{(selectedBooster.price * quantity).toFixed(1)} ARB</span>
+              Total: <span className="text-yellow-400 font-semibold">{(selectedBooster.price * quantity).toFixed(1)} CRSH</span>
             </div>
           </div>
         </motion.div>
@@ -624,7 +649,7 @@ const ShopPage: React.FC<ShopPageProps> = ({ fid }) => {
                 You bought <span className="font-bold">{purchasedBooster.quantity}x {purchasedBooster.name}</span> booster{purchasedBooster.quantity > 1 ? 's' : ''}
               </p>
               <p className="text-sm text-green-100">
-                Total: <span className="font-semibold">{purchasedBooster.totalCost.toFixed(1)} ARB</span>
+                Total: <span className="font-semibold">{purchasedBooster.totalCost.toFixed(1)} CRSH</span>
               </p>
               {transactionHash && (
                 <p className="text-xs text-green-200 mt-2">
@@ -747,13 +772,13 @@ const ShopPage: React.FC<ShopPageProps> = ({ fid }) => {
               <h2 className="text-xl font-bold text-white mb-2" style={{
                 textShadow: '0 2px 4px rgba(0, 0, 0, 0.3)'
               }}>
-                Insufficient ARB Balance
+                Insufficient CRSH Balance
               </h2>
               <p className="text-red-200 text-sm mb-2">
-                You need <span className="font-bold text-white">{requiredAmount.toFixed(2)} ARB</span> to purchase this booster
+                You need <span className="font-bold text-white">{requiredAmount.toFixed(0)} CRSH</span> to purchase this booster
               </p>
               <p className="text-red-300 text-xs mb-4">
-                Current balance: <span className="font-bold text-yellow-400">{arbBalance ? parseFloat(formatUnits(arbBalance.value, arbBalance.decimals)).toFixed(2) : '0.00'} ARB</span>
+                Current balance: <span className="font-bold text-yellow-400">{crshBalance ? parseFloat(formatUnits(crshBalance.value, crshBalance.decimals)).toFixed(0) : '0'} CRSH</span>
               </p>
             </motion.div>
 

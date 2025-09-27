@@ -76,7 +76,7 @@ export async function POST(request: NextRequest) {
       blockNumber: verificationResult.transactionDetails?.blockNumber,
       from: verificationResult.transactionDetails?.from,
       totalCost: verificationResult.boosterPurchase?.totalCost,
-      arbTransferred: verificationResult.arbTransfer?.amount
+      crshTransferred: verificationResult.crshTransfer?.amount
     });
 
     // 3. Find the user's game score document
@@ -141,7 +141,7 @@ console.log(existingUser)
           blockNumber: verificationResult.transactionDetails?.blockNumber?.toString(),
           from: verificationResult.transactionDetails?.from,
           totalCost: verificationResult.boosterPurchase?.totalCost?.toString(),
-          arbTransferred: verificationResult.arbTransfer?.amount?.toString()
+          crshTransferred: verificationResult.crshTransfer?.amount?.toString()
         }
       }
     });

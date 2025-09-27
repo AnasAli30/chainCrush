@@ -1,6 +1,6 @@
 import { createPublicClient, createWalletClient, http, parseEther, formatEther } from 'viem';
 import { arbitrum } from 'viem/chains';
-import { ARBITRUM_RPC_URL, BOOSTER_SHOP_ADDRESS, ARB_TOKEN_ADDRESS } from './constants';
+import { ARBITRUM_RPC_URL, BOOSTER_SHOP_ADDRESS, CRSH_TOKEN_ADDRESS } from './constants';
 
 // Create public client for reading blockchain data
 const publicClient = createPublicClient({
@@ -75,7 +75,7 @@ export interface TransactionVerificationResult {
     pricePerUnit: bigint;
     totalCost: bigint;
   };
-  arbTransfer?: {
+  crshTransfer?: {
     from: string;
     to: string;
     amount: bigint;
@@ -170,24 +170,24 @@ export async function verifyTransaction(
       };
     }
 
-    // 6. Verify ARB transfer to contract
+    // 6. Verify CRSH transfer to contract
     console.log("receipt",receipt)
-    const arbTransfer = await findARBTransfer(receipt.logs, tx.from);
+    const crshTransfer = await findCRSHTransfer(receipt.logs, tx.from);
     
-    if (!arbTransfer) {
+    if (!crshTransfer) {
       return {
         isValid: false,
-        error: 'No ARB transfer found to contract'
+        error: 'No CRSH transfer found to contract'
       };
     }
 
-    // 7. Verify ARB transfer amount matches expected cost
+    // 7. Verify CRSH transfer amount matches expected cost
     const expectedCost = await getExpectedCost(expectedBoosterType, expectedQuantity);
     
-    if (arbTransfer.amount !== expectedCost) {
+    if (crshTransfer.amount !== expectedCost) {
       return {
         isValid: false,
-        error: `ARB transfer amount mismatch: expected ${formatEther(expectedCost)} ARB, got ${formatEther(arbTransfer.amount)} ARB`
+        error: `CRSH transfer amount mismatch: expected ${formatEther(expectedCost)} CRSH, got ${formatEther(crshTransfer.amount)} CRSH`
       };
     }
 
@@ -209,7 +209,7 @@ export async function verifyTransaction(
         pricePerUnit: buyBoostersCall.pricePerUnit,
         totalCost: buyBoostersCall.totalCost
       },
-      arbTransfer: arbTransfer
+      crshTransfer: crshTransfer
     };
 
   } catch (error) {
@@ -273,16 +273,16 @@ async function parseBuyBoostersCall(input: `0x${string}`) {
 }
 
 /**
- * Find ARB transfer event in transaction logs
+ * Find CRSH transfer event in transaction logs
  */
-function findARBTransfer(logs: any[], fromAddress: string) {
-  console.log('Searching for ARB transfer in logs:', logs.length);
+function findCRSHTransfer(logs: any[], fromAddress: string) {
+  console.log('Searching for CRSH transfer in logs:', logs.length);
   
   for (const log of logs) {
-    // Check if this is a Transfer event from ARB token contract
-    if (log.address.toLowerCase() === ARB_TOKEN_ADDRESS.toLowerCase()) {
+    // Check if this is a Transfer event from CRSH token contract
+    if (log.address.toLowerCase() === CRSH_TOKEN_ADDRESS.toLowerCase()) {
       try {
-        console.log('Found ARB token log:', {
+        console.log('Found CRSH token log:', {
           address: log.address,
           topics: log.topics,
           data: log.data

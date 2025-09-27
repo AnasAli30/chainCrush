@@ -23,13 +23,13 @@ import { authenticatedFetch } from '@/lib/auth';
 
 // Contract configuration
 const BOOSTER_SHOP_ADDRESS = '0x31c72c62aD07f50a51660F39f601ffdA16B427B3'; // Replace with deployed contract address
-const ARB_TOKEN_ADDRESS = '0x912CE59144191C1204E64559FE8253a0e49E6548'; // Arbitrum mainnet ARB
+const CRSH_TOKEN_ADDRESS = '0xe461003E78A7bF4F14F0D30b3ac490701980aB07';
 
 interface BoosterItem {
   id: number;
   name: string;
   description: string;
-  price: number; // in ARB
+  price: number; // in CRSH
   icon: any;
   type: number; // 0 = SHUFFLE, 1 = PARTY_POPPER
 }
@@ -63,7 +63,7 @@ const Shop: React.FC<ShopProps> = ({ onClose, fid, onPurchaseComplete }) => {
       id: 0,
       name: 'Shuffle',
       description: 'Rearrange all candies',
-      price: 0.2,
+      price: 30000,
       icon: faShuffle,
       type: 0
     },
@@ -71,7 +71,7 @@ const Shop: React.FC<ShopProps> = ({ onClose, fid, onPurchaseComplete }) => {
       id: 1,
       name: 'Party Popper',
       description: 'Destroy large area',
-      price: 0.1,
+      price: 30000,
       icon: faBurst,
       type: 1
     }
@@ -115,9 +115,9 @@ const Shop: React.FC<ShopProps> = ({ onClose, fid, onPurchaseComplete }) => {
       const { id } = await walletClient.sendCalls({
         account: address as `0x${string}`,
         calls: [
-          // Approve ARB tokens
+          // Approve CRSH tokens
           {
-            to: ARB_TOKEN_ADDRESS as `0x${string}`,
+            to: CRSH_TOKEN_ADDRESS as `0x${string}`,
             data: encodeFunctionData({
               abi: erc20Abi,
               functionName: 'approve',
@@ -171,7 +171,7 @@ const Shop: React.FC<ShopProps> = ({ onClose, fid, onPurchaseComplete }) => {
       if (error.message?.includes('User rejected')) {
         setErrorMessage('Transaction cancelled by user');
       } else if (error.message?.includes('insufficient funds')) {
-        setErrorMessage('Insufficient ARB balance');
+        setErrorMessage('Insufficient CRSH balance');
       } else if (error.message?.includes('gas')) {
         setErrorMessage('Transaction failed - try again');
       } else {
@@ -301,7 +301,7 @@ const Shop: React.FC<ShopProps> = ({ onClose, fid, onPurchaseComplete }) => {
               You bought <span className="font-bold text-white">{quantity}</span> {selectedBooster?.name} booster(s)
             </p>
             <p className="text-green-300 text-xs mb-4">
-              for <span className="font-bold text-yellow-400">{selectedBooster && (selectedBooster.price * quantity).toFixed(1)} ARB</span>
+              for <span className="font-bold text-yellow-400">{selectedBooster && (selectedBooster.price * quantity).toFixed(1)} CRSH</span>
             </p>
           </motion.div>
 
@@ -566,7 +566,7 @@ const Shop: React.FC<ShopProps> = ({ onClose, fid, onPurchaseComplete }) => {
                     <h3 className="text-sm font-bold text-white">{item.name}</h3>
                     <div className="flex items-center gap-1 text-yellow-400 font-semibold text-xs">
                       <FontAwesomeIcon icon={faCoins} className="text-xs" />
-                      {item.price} ARB
+                      {item.price} CRSH
                     </div>
                   </div>
                 </div>
@@ -638,7 +638,7 @@ const Shop: React.FC<ShopProps> = ({ onClose, fid, onPurchaseComplete }) => {
                 <div className="text-xs text-white mb-1">Total Cost:</div>
                 <div className="text-xl font-bold text-yellow-400 flex items-center justify-center gap-1">
                   <FontAwesomeIcon icon={faCoins} className="text-sm" />
-                  {selectedBooster ? (selectedBooster.price * quantity).toFixed(1) : 0} ARB
+                  {selectedBooster ? (selectedBooster.price * quantity).toFixed(1) : 0} CRSH
                 </div>
               </div>
               
