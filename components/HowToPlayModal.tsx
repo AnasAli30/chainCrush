@@ -528,8 +528,11 @@ export default function HowToPlayModal({ isOpen, onClose }: HowToPlayModalProps)
                      <ul style={{ marginTop: '8px', paddingLeft: '32px' }}>
                        <li style={{ marginBottom: '4px' }}>ARB tokens</li>
                        <li style={{ marginBottom: '4px' }}>PEPE tokens</li>
-                       <li style={{ marginBottom: '4px' }}>BOOP tokens</li>
+                       <li style={{ marginBottom: '4px' }}>CRSH tokens (up to 130,000 per box)</li>
                      </ul>
+                     <div style={{ marginTop: '8px', marginLeft: '24px', fontSize: '14px', color: '#ffd700' }}>
+                       <strong>💡 Tip:</strong> Higher scores = better chances to get tokens instead of "Better Luck Next Time"!
+                     </div>
                    </div>
                    <div style={{ marginBottom: '16px' }}>
                      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', marginBottom: '8px' }}>

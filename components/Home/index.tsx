@@ -695,21 +695,21 @@ export function Demo() {
             <StatsCard 
               icon={faUsers} 
               title="Active Players" 
-              value="3.5K" 
+              value="6K" 
               trend="+23%" 
               color="from-cyan-400 via-blue-500 to-purple-600"
             />
             <StatsCard 
               icon={faCoins} 
               title="Rewards Pool" 
-              value="100 ARB" 
+              value="150$ CRSH" 
               trend="LIVE" 
               color="from-purple-500 via-cyan-400 to-green-400"
             />
             <StatsCard 
               icon={faFire} 
               title="Games Today" 
-              value="5K" 
+              value="5.5K" 
               trend="+12%" 
               color="from-pink-500 via-purple-500 to-cyan-400"
             />
@@ -1067,7 +1067,19 @@ export function Demo() {
                         fontSize: '12px',
                         fontWeight: 'bold'
                       }}>3</span>
-                      <span><strong>Claim Tokens</strong> - Get ARB, PEPE, BOOP, or try again!</span>
+                      <span><strong>Claim Tokens</strong> - Get ARB, PEPE, CRSH (up to 130K)</span>
+                    </div>
+                    
+                    <div style={{ 
+                      marginBottom: '12px',
+                      padding: '8px 12px',
+                      background: 'rgba(255, 215, 0, 0.1)',
+                      borderRadius: '8px',
+                      border: '1px solid rgba(255, 215, 0, 0.3)',
+                      fontSize: '12px',
+                      color: '#ffd700'
+                    }}>
+                      <strong>💡 Tip:</strong> Higher scores = better chances to get tokens instead of "Better Luck Next Time"!
                     </div>
                     
                     <div style={{ 
