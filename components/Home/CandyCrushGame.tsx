@@ -67,6 +67,8 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
   const [showConfirmEnd, setShowConfirmEnd] = useState(false);
   const [showNoMovesPopup, setShowNoMovesPopup] = useState(false);
   const [showShop, setShowShop] = useState(false);
+  const [showBoosterPopup, setShowBoosterPopup] = useState(false);
+  const [boosterPopupShown, setBoosterPopupShown] = useState(false);
 
   // Add power-ups state
   const [reshuffles, setReshuffles] = useState(1);
@@ -204,6 +206,21 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
       return () => clearInterval(timer);
     }
   }, [score, gameOver]);
+
+  // Check for no boosters left (show popup once per game)
+  useEffect(() => {
+    if (gameInitialized && !gameOver && !boosterPopupShown && totalReshuffles === 0 && totalPartyPoppers === 0) {
+      setShowBoosterPopup(true);
+      setBoosterPopupShown(true);
+    }
+  }, [totalReshuffles, totalPartyPoppers, gameInitialized, gameOver, boosterPopupShown]);
+
+  // Reset booster popup for new game
+  useEffect(() => {
+    if (gameKey > 0) {
+      setBoosterPopupShown(false);
+    }
+  }, [gameKey]);
 
   // Daily limit countdown timer
   useEffect(() => {
@@ -4026,8 +4043,113 @@ Come for my spot or stay mid 😏🏆${improvementText}`;
           setGameOver(true);
           setGameOverState(true); // show stats overlay if needed
         }}
-        message="Quit game? Chill, your score’s safe"
+        message="Quit game? Chill, your score's safe"
       />
+
+      {/* No Boosters Left Popup */}
+      {showBoosterPopup && (
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4" style={{ zIndex: 10000 }}>
+          <div 
+            className="relative rounded-xl p-4 max-w-sm w-full text-center border border-white/20"
+            style={{
+              background: `
+                linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(34, 197, 94, 0.15) 50%, rgba(59, 130, 246, 0.15) 100%),
+                linear-gradient(45deg, rgba(16, 185, 129, 0.08) 0%, rgba(34, 197, 94, 0.08) 50%, rgba(59, 130, 246, 0.08) 100%)
+              `,
+              backdropFilter: 'blur(20px)',
+              boxShadow: '0 25px 50px rgba(0, 0, 0, 0.25)'
+            }}
+          >
+            {/* Close button */}
+            <button
+              onClick={() => setShowBoosterPopup(false)}
+              className="absolute top-2 right-2 w-6 h-6 rounded-full bg-white/20 border-none text-white text-xs cursor-pointer flex items-center justify-center hover:bg-white/30 transition-all"
+            >
+              <FontAwesomeIcon icon={faTimes} />
+            </button>
+
+            {/* Header */}
+            <div className="mb-3">
+              {/* <div className="text-3xl mb-2 animate-bounce">🔥</div> */}
+              <h2 className="text-yellow-400 text-lg font-bold mb-1">
+                BOOSTERS DEPLETED!
+              </h2>
+              <p className="text-white text-sm leading-relaxed">
+                No more power-ups left! 💥<br/>
+                <span className="text-yellow-400 font-bold">
+                  Grab EPIC boosters at CRAZY prices!
+                </span>
+              </p>
+            </div>
+
+            {/* Discount banner */}
+            <div 
+              className="rounded-lg p-3 mb-4 border border-white/30"
+              style={{
+                background: 'linear-gradient(45deg, rgba(255, 107, 107, 0.2), rgba(255, 215, 61, 0.2))',
+                animation: 'glow 2s infinite alternate'
+              }}
+            >
+              <div className="flex items-center justify-center gap-2 mb-1">
+                <FontAwesomeIcon icon={faBolt} className="text-white text-sm" />
+                <span className="text-white text-sm font-bold">
+                  LIMITED TIME OFFER!
+                </span>
+                <FontAwesomeIcon icon={faBolt} className="text-white text-sm" />
+              </div>
+              <p className="text-white text-xs font-bold">
+                Both boosters for just 30K CRSH each! 🚀
+              </p>
+            </div>
+
+            {/* Action buttons */}
+            <div className="flex flex-col gap-2 mb-3">
+              <button
+                onClick={() => {
+                  setShowBoosterPopup(false);
+                  setShowShop(true);
+                }}
+                className="w-full py-2 px-4 rounded-lg font-bold text-sm transition-all duration-200 hover:shadow-lg hover:scale-105"
+                style={{
+                  background: 'linear-gradient(135deg, #ffd700 0%, #ffed4e 100%)',
+                  color: '#333',
+                  boxShadow: '0 4px 15px rgba(255, 215, 0, 0.3)'
+                }}
+              >
+                🛒 BUY BOOSTERS NOW!
+              </button>
+              
+              <button
+                onClick={() => setShowBoosterPopup(false)}
+                className="w-full py-2 px-4 rounded-lg font-bold text-sm transition-all duration-200 hover:bg-white/30"
+                style={{
+                  background: 'rgba(255, 255, 255, 0.1)',
+                  color: 'white',
+                  border: '1px solid rgba(255, 255, 255, 0.2)'
+                }}
+              >
+                Maybe Later 🤔
+              </button>
+            </div>
+
+            {/* Pro tip */}
+            <div 
+              className="rounded-lg p-2 border border-white/20"
+              style={{
+                background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%)'
+              }}
+            >
+              <p className="text-yellow-400 text-xs font-bold m-0">
+                💡 PRO TIP: You can buy boosters anytime from the shop icon at the top right!
+              </p>
+            </div>
+
+            {/* Decorative Elements */}
+            <div className="absolute -top-1 -right-1 w-2 h-2 bg-yellow-400 rounded-full animate-ping opacity-75"></div>
+            <div className="absolute -bottom-1 -left-1 w-1.5 h-1.5 bg-blue-400 rounded-full animate-pulse"></div>
+          </div>
+        </div>
+      )}
       
       {/* No Moves Left Popup */}
       {showNoMovesPopup && (
