@@ -259,11 +259,11 @@ export default function Leaderboard() {
     try {
           const isRewardEligible = userRank <= 15 && userInfo.nftCount && userInfo.nftCount > 0;
     const rewardText = isRewardEligible
-    ? `\n💰 Loot Secured: $${formatReward(getRewardAmount(userRank - 1))} worth of $CRSH`
+    ? `\n💰 Loot Secured: $${formatReward(getRewardAmount(userRank - 1))} $CRSH`
     : '';
     
     await actions?.composeCast({
-      text: `🥇 Just locked in Rank #${userRank} on ChainCrush  😎\n\n🎯 Current Season: ${(userInfo.currentSeasonScore || userInfo.score || 0).toLocaleString()}\n🏆 All-Time High: ${(userInfo.score || 0).toLocaleString()}\n⚡ Level: ${userInfo.level || 0}${userInfo.duration && ((userRank <= 10 && userInfo.duration >= 3000) || (userRank > 10 && userInfo.duration >= 60)) ? `\n⏱️ Time: ${formatDuration(userInfo.duration)}` : ''}${rewardText}\n\nThink you can smoke me? Pull up and prove it 🕹️🔥`,
+      text: `🥇 Just locked in Rank #${userRank} on ChainCrush  😎\n\n🎯 Current Season: ${(userInfo.currentSeasonScore || userInfo.score || 0).toLocaleString()}\n🏆 All-Time High: ${(userInfo.score || 0).toLocaleString()}\n⚡ Level: ${userInfo.level || 0}${userInfo.duration && ((userRank <= 15 && userInfo.duration >= 3000) || (userRank > 15 && userInfo.duration >= 60)) ? `\n⏱️ Time: ${formatDuration(userInfo.duration)}` : ''}${rewardText}\n\nThink you can smoke me? Pull up and prove it 🕹️🔥`,
       embeds: [APP_URL || ""]
     });
     
@@ -272,7 +272,7 @@ export default function Leaderboard() {
     }
   };
 
-  // Dynamic colors for top 10 ranks
+  // Dynamic colors for top 15 ranks
   const getRankColors = (rank: number) => {
     const colors = [
       // 1st - Gold
@@ -294,7 +294,17 @@ export default function Leaderboard() {
       // 9th - Cyan
       { bg: 'bg-gradient-to-r from-cyan-400 to-cyan-600', border: 'border-cyan-500', text: 'text-white' },
       // 10th - Rose
-      { bg: 'bg-gradient-to-r from-rose-400 to-rose-600', border: 'border-rose-500', text: 'text-white' }
+      { bg: 'bg-gradient-to-r from-rose-400 to-rose-600', border: 'border-rose-500', text: 'text-white' },
+      // 11th - Emerald
+      { bg: 'bg-gradient-to-r from-emerald-400 to-emerald-600', border: 'border-emerald-500', text: 'text-white' },
+      // 12th - Sky
+      { bg: 'bg-gradient-to-r from-sky-400 to-sky-600', border: 'border-sky-500', text: 'text-white' },
+      // 13th - Violet
+      { bg: 'bg-gradient-to-r from-violet-400 to-violet-600', border: 'border-violet-500', text: 'text-white' },
+      // 14th - Fuchsia
+      { bg: 'bg-gradient-to-r from-fuchsia-400 to-fuchsia-600', border: 'border-fuchsia-500', text: 'text-white' },
+      // 15th - Lime
+      { bg: 'bg-gradient-to-r from-lime-400 to-lime-600', border: 'border-lime-500', text: 'text-white' }
     ];
     
     return colors[rank] || { bg: 'bg-gradient-to-r from-[#19adff] to-[#28374d]', border: 'border-[#19adff]', text: 'text-white' };
@@ -365,7 +375,7 @@ export default function Leaderboard() {
         {/* Leaderboard Skeleton */}
         <div className="rounded-2xl p-2 shadow-lg" style={{width:"105%",marginLeft:"-3%"}}>
           <div className="space-y-3">
-            {[...Array(10)].map((_, index) => (
+            {[...Array(15)].map((_, index) => (
               <div key={index} className="flex items-center px-4 py-2 rounded-xl border bg-gradient-to-r from-gray-100 to-gray-200">
                 {/* Profile Picture with Rank Badge */}
                 <div className="flex items-center space-x-3 flex-1">
@@ -437,7 +447,7 @@ export default function Leaderboard() {
               onMouseOut={(e) => (e.currentTarget.style.transform = 'scale(1)')}
               aria-label="Reward info"
             >
-              <img src="/candy/arb.png" alt="rewards"  />
+              <img src="/images/icon.jpg" alt="rewards"  />
             </div>
             <div>
               <div style={{ color: '#ffffff', fontSize: '14px', fontWeight: 600 }}>{poolDisplay}</div>
@@ -538,7 +548,7 @@ export default function Leaderboard() {
                  <p className="text-lg font-bold text-[#19adff]">{(userInfo.currentSeasonScore || userInfo.score || 0).toLocaleString()}</p>
                  <p className="text-xs text-gray-600">Level {userInfo.level}</p>
              
-              {userInfo.duration && ((userRank <= 10 && userInfo.duration >= 3000) || (userRank > 10 && userInfo.duration >= 60)) &&   <p className="text-xs text-gray-500"><FontAwesomeIcon icon={faStopwatch} /> {formatDuration(userInfo.duration)}</p>}
+              {userInfo.duration && ((userRank <= 15 && userInfo.duration >= 3000) || (userRank > 15 && userInfo.duration >= 60)) &&   <p className="text-xs text-gray-500"><FontAwesomeIcon icon={faStopwatch} /> {formatDuration(userInfo.duration)}</p>}
                </div>
              </div>
              
@@ -546,7 +556,7 @@ export default function Leaderboard() {
             {viewMode !== 'ath' && userRank <= 15 && userInfo.nftCount && userInfo.nftCount > 0 && (
                <div className="mt-2 px-2 py-1 bg-gradient-to-r from-green-50 to-emerald-50 rounded-md border border-green-200">
                  <p className="text-xs font-bold text-green-700 flex items-center">
-                   💰 Reward: ${formatReward(getRewardAmount(userRank - 1))} worth of $CRSH
+                   💰 Reward: ${formatReward(getRewardAmount(userRank - 1))} $CRSH
                  </p>
                </div>
              )}
@@ -587,9 +597,9 @@ export default function Leaderboard() {
         ) : (
           <div className="space-y-3">
             {leaderboard.map((entry, index) => {
-              const rankColors = index < 10 && entry.nftCount && entry.nftCount > 0 
+              const rankColors = index < 15 && entry.nftCount && entry.nftCount > 0 
                 ? getRankColors(index) 
-                : getRankColors(99); // Default colors for non-top-10
+                : getRankColors(99); // Default colors for non-top-15
               
               return (
               <div key={entry.fid} className={`flex items-center px-4 py-2 rounded-xl border ${rankColors.bg} ${rankColors.border}`}>
@@ -644,7 +654,7 @@ export default function Leaderboard() {
                     </p>
                  
                     {viewMode !== 'ath' && entry.nftCount && entry.nftCount > 0 ? (
-                      <p className={`text-xs ${index < 10 && entry.nftCount > 0 ? 'text-yellow-300' : rankColors.text} font-medium`}>
+                      <p className={`text-xs ${index < 15 && entry.nftCount > 0 ? 'text-yellow-300' : rankColors.text} font-medium`}>
                         <FontAwesomeIcon icon={faPalette} /> {entry.nftCount} NFT{entry.nftCount > 1 ? 's' : ''}
                       </p>
                     ) : (
@@ -653,7 +663,7 @@ export default function Leaderboard() {
                     {/* Reward Amount for Top 15 NFT Holders */}
                     {viewMode !== 'ath' && index < 15 && entry.nftCount && entry.nftCount > 0 && (
                       <p className={`text-xs ${index < 3 ? 'text-green-800' : 'text-green-300'} font-bold`}>
-                        <FontAwesomeIcon icon={faCoins} /> ${formatReward(getRewardAmount(index))}$CRSH
+                        <FontAwesomeIcon icon={faCoins} /> ${formatReward(getRewardAmount(index))} $CRSH
                       </p>
                     )}
                   </div>
@@ -666,8 +676,8 @@ export default function Leaderboard() {
                     Level {entry.level}
                   </p>
                
-
-                  {entry.duration && ((index < 10 && entry.duration >= 3000) || (index >= 10 && entry.duration >= 60)) ? <p className={`text-xs ${rankColors.text} opacity-90`}>
+                    
+                  {entry.duration && ((index < 15 && entry.duration >= 3000) || (index >= 15 && entry.duration >= 60)) ? <p className={`text-xs ${rankColors.text} opacity-90`}>
                         <FontAwesomeIcon icon={faStopwatch} /> {formatDuration(entry?.duration)}
                       </p>:""}
                 </div>
@@ -702,7 +712,7 @@ export default function Leaderboard() {
         <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4" onClick={() => setShowRewardInfo(false)}>
           <div className="rounded-2xl p-6 max-w-md w-full shadow-2xl transform transition-all duration-300 scale-100" style={{ background: 'rgba(15, 23, 42, 0.95)', border: '1px solid rgba(59, 130, 246, 0.3)' }} onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
-            <img src="/candy/arb.png" alt="rewards"  style={{width:"50px",height:"50px"}} />
+            <img src="/images/icon.jpg" alt="rewards"  style={{width:"50px",height:"50px"}} />
               <h3 className="text-xl font-bold flex items-center space-x-2" style={{ color: '#e5e7eb' }}>
                 {/* <FontAwesomeIcon icon={faCoins} className="text-yellow-400" /> */}
                 <span>Weekly Rewards</span>
@@ -724,24 +734,24 @@ export default function Leaderboard() {
                   {/* Top 3 distinct */}
                   <div className="flex items-center justify-between p-2 rounded-lg" style={{ background: 'rgba(2, 6, 23, 0.6)', border: '1px solid rgba(59, 130, 246, 0.15)' }}>
                     <span className="font-bold" style={{ color: '#fde68a' }}>🥇 1st Place ($15)</span>
-                    <span className="font-bold" style={{ color: '#93c5fd' }}>${firstAmt.toLocaleString()} worth of $CRSH</span>
+                    <span className="font-bold" style={{ color: '#93c5fd' }}>${firstAmt.toLocaleString()} $CRSH</span>
                   </div>
                   <div className="flex items-center justify-between p-2 rounded-lg" style={{ background: 'rgba(2, 6, 23, 0.6)', border: '1px solid rgba(59, 130, 246, 0.15)' }}>
                     <span className="font-bold" style={{ color: '#e5e7eb' }}>🥈 2nd Place ($10)</span>
-                    <span className="font-bold" style={{ color: '#93c5fd' }}>${secondAmt.toLocaleString()} worth of $CRSH</span>
+                    <span className="font-bold" style={{ color: '#93c5fd' }}>${secondAmt.toLocaleString()} $CRSH</span>
                   </div>
                   <div className="flex items-center justify-between p-2 rounded-lg" style={{ background: 'rgba(2, 6, 23, 0.6)', border: '1px solid rgba(59, 130, 246, 0.15)' }}>
                     <span className="font-bold" style={{ color: '#fdba74' }}>🥉 3rd Place ($10)</span>
-                    <span className="font-bold" style={{ color: '#93c5fd' }}>${thirdAmt.toLocaleString()} worth of $CRSH</span>
+                    <span className="font-bold" style={{ color: '#93c5fd' }}>${thirdAmt.toLocaleString()} $CRSH</span>
                   </div>
                   {/* Batches */}
                   <div className="flex items-center justify-between p-2 rounded-lg" style={{ background: 'rgba(2, 6, 23, 0.6)', border: '1px solid rgba(59, 130, 246, 0.15)' }}>
                     <span className="font-bold" style={{ color: '#cbd5e1' }}>4th–10th Place ($8 each)</span>
-                    <span className="font-bold" style={{ color: '#93c5fd' }}>${per4to10.toLocaleString()} worth of $CRSH each</span>
+                    <span className="font-bold" style={{ color: '#93c5fd' }}>${per4to10.toLocaleString()} $CRSH each</span>
                   </div>
                   <div className="flex items-center justify-between p-2 rounded-lg" style={{ background: 'rgba(2, 6, 23, 0.6)', border: '1px solid rgba(59, 130, 246, 0.15)' }}>
                     <span className="font-bold" style={{ color: '#cbd5e1' }}>11th–15th Place ($5 each)</span>
-                    <span className="font-bold" style={{ color: '#93c5fd' }}>${per11to15.toLocaleString()} worth of $CRSH each</span>
+                    <span className="font-bold" style={{ color: '#93c5fd' }}>${per11to15.toLocaleString()} $CRSH each</span>
                   </div>
                 </div>
               </div>
