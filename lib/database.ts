@@ -679,13 +679,10 @@ export async function getAllTimeHighLeaderboard(limit: number = 50): Promise<Gam
   const client = await clientPromise;
   const db = client.db('chaincrush');
   
-  // const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
-  
+  // Get all players with ATH scores, regardless of current season
   const leaderboard = await db.collection('gameScores')
     .find({ 
-      currentSeasonScore: { $exists: true }
-      // hasMintedToday: true, // COMMENTED OUT: This was causing daily reset
-      // lastMintDate: today   // COMMENTED OUT: This was causing daily reset
+      score: { $exists: true, $gt: 0 }
     })
     .sort({ score: -1 })
     .limit(limit)
