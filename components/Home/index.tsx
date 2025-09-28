@@ -1807,7 +1807,7 @@ function BottomNavbar({ activeTab, onTabChange, onShowGame, onShowNFTs, onShowSt
   const tabs = [
     { id: 'home', icon: faHome, label: 'Home', color: 'from-cyan-400 to-blue-500' },
     { id: 'shop', icon: faStore, label: 'Shop', color: 'from-orange-400 to-red-500' },
-    { id: 'airdrop', icon: faGift, label: 'Rewards', color: 'from-yellow-400 to-orange-500' },
+    // { id: 'airdrop', icon: faGift, label: 'Rewards', color: 'from-yellow-400 to-orange-500' },
     { id: 'stats', icon: faChartBar, label: 'Stats', color: 'from-green-400 to-cyan-400' },
     { id: 'leaderboard', icon: faTrophy, label: 'Top', color: 'from-purple-600 to-cyan-500' },
   ];
