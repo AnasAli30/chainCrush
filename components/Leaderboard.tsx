@@ -41,12 +41,12 @@ export default function Leaderboard() {
   // View mode: current season or all-time high
   const [viewMode, setViewMode] = useState<'season' | 'ath'>('season');
 
-  // Reward pool ($CRSH)
-  const POOL_CRSH = 100; // $100 worth of $CRSH total pool
+  // Reward pool (ARB)
+  const POOL_CRSH = 200; // 200 ARB total pool
   const formatMillions = (n: number) => `${(n / 1_000_000).toFixed(2)}M`;
-  const poolDisplay = `$100 $CRSH Pool`;
+  const poolDisplay = `200 ARB Pool`;
   // Top 15 distribution: 1st ($15), 2nd-3rd ($10 each), 4th-10th ($8 each), 11th-15th ($5 each) = $100 total
-  const DISTRIBUTION = [10, 10, 10, 8, 8, 8, 8, 8, 8, 8, 5, 5, 5, 5, 5];
+  const DISTRIBUTION = [20, 20, 16, 16, 16, 16, 16, 10, 10, 10, 10, 10, 10, 10, 10]
   const distributionAmounts = DISTRIBUTION.map((pct) => Math.round((POOL_CRSH * pct) / 100));
   const firstAmt = distributionAmounts[0];
   const secondAmt = distributionAmounts[1];
@@ -266,7 +266,7 @@ export default function Leaderboard() {
     try {
           const isRewardEligible = userRank <= 15 && userInfo.nftCount && userInfo.nftCount > 0;
     const rewardText = isRewardEligible
-    ? `\n💰 Loot Secured: $${formatReward(getRewardAmount(userRank - 1))} $CRSH`
+    ? `\n💰 Loot Secured: ${formatReward(getRewardAmount(userRank - 1))} ARB`
     : '';
     
     await actions?.composeCast({
@@ -454,11 +454,11 @@ export default function Leaderboard() {
               onMouseOut={(e) => (e.currentTarget.style.transform = 'scale(1)')}
               aria-label="Reward info"
             >
-              <img src="/images/icon.jpg" alt="rewards"  />
+              <img src="/candy/arb.png" alt="rewards"  />
             </div>
             <div>
               <div style={{ color: '#ffffff', fontSize: '14px', fontWeight: 600 }}>{poolDisplay}</div>
-              <div style={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '12px' }}>Click $CRSH for details</div>
+              <div style={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '12px' }}>Click ARB for details</div>
             </div>
           </div>
        
@@ -563,7 +563,7 @@ export default function Leaderboard() {
             {viewMode !== 'ath' && userRank <= 15 && userInfo.nftCount && userInfo.nftCount > 0 && (
                <div className="mt-2 px-2 py-1 bg-gradient-to-r from-green-50 to-emerald-50 rounded-md border border-green-200">
                  <p className="text-xs font-bold text-green-700 flex items-center">
-                   💰 Reward: ${formatReward(getRewardAmount(userRank - 1))} $CRSH
+                  💰 Reward: {formatReward(getRewardAmount(userRank - 1))} ARB
                  </p>
                </div>
              )}
@@ -670,7 +670,7 @@ export default function Leaderboard() {
                     {/* Reward Amount for Top 15 NFT Holders */}
                     {viewMode !== 'ath' && index < 15 && entry.nftCount && entry.nftCount > 0 && (
                       <p className={`text-xs ${index < 3 ? 'text-green-800' : 'text-green-300'} font-bold`}>
-                        <FontAwesomeIcon icon={faCoins} /> ${formatReward(getRewardAmount(index))} $CRSH
+                        <FontAwesomeIcon icon={faCoins} /> {formatReward(getRewardAmount(index))} ARB
                       </p>
                     )}
                   </div>
@@ -719,7 +719,7 @@ export default function Leaderboard() {
         <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4" onClick={() => setShowRewardInfo(false)}>
           <div className="rounded-2xl p-6 max-w-md w-full shadow-2xl transform transition-all duration-300 scale-100" style={{ background: 'rgba(15, 23, 42, 0.95)', border: '1px solid rgba(59, 130, 246, 0.3)' }} onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
-            <img src="/images/icon.jpg" alt="rewards"  style={{width:"50px",height:"50px"}} />
+            <img src="/candy/arb.png" alt="rewards"  style={{width:"50px",height:"50px"}} />
               <h3 className="text-xl font-bold flex items-center space-x-2" style={{ color: '#e5e7eb' }}>
                 {/* <FontAwesomeIcon icon={faCoins} className="text-yellow-400" /> */}
                 <span>Weekly Rewards</span>
@@ -736,36 +736,36 @@ export default function Leaderboard() {
 
             <div className="space-y-4">
               <div className="rounded-xl p-4" style={{ background: 'rgba(30, 41, 59, 0.8)', border: '1px solid rgba(59, 130, 246, 0.2)' }}>
-                <h4 className="font-bold mb-3 text-center" style={{ color: '#e5e7eb' }}>Top 15 Players Get Rewards</h4>
+                <h4 className="font-bold mb-3 text-center" style={{ color: '#e5e7eb' }}>Top 15 Players Get Rewards (ARB)</h4>
                 <div className="space-y-2 text-sm">
                   {/* Top 3 distinct */}
                   <div className="flex items-center justify-between p-2 rounded-lg" style={{ background: 'rgba(2, 6, 23, 0.6)', border: '1px solid rgba(59, 130, 246, 0.15)' }}>
-                    <span className="font-bold" style={{ color: '#fde68a' }}>🥇 1st Place ($15)</span>
-                    <span className="font-bold" style={{ color: '#93c5fd' }}>${firstAmt.toLocaleString()} $CRSH</span>
+                    <span className="font-bold" style={{ color: '#fde68a' }}>🥇 1st Place</span>
+                    <span className="font-bold" style={{ color: '#93c5fd' }}>{firstAmt.toLocaleString()} ARB</span>
                   </div>
                   <div className="flex items-center justify-between p-2 rounded-lg" style={{ background: 'rgba(2, 6, 23, 0.6)', border: '1px solid rgba(59, 130, 246, 0.15)' }}>
-                    <span className="font-bold" style={{ color: '#e5e7eb' }}>🥈 2nd Place ($10)</span>
-                    <span className="font-bold" style={{ color: '#93c5fd' }}>${secondAmt.toLocaleString()} $CRSH</span>
+                    <span className="font-bold" style={{ color: '#e5e7eb' }}>🥈 2nd Place</span>
+                    <span className="font-bold" style={{ color: '#93c5fd' }}>{secondAmt.toLocaleString()} ARB</span>
                   </div>
                   <div className="flex items-center justify-between p-2 rounded-lg" style={{ background: 'rgba(2, 6, 23, 0.6)', border: '1px solid rgba(59, 130, 246, 0.15)' }}>
-                    <span className="font-bold" style={{ color: '#fdba74' }}>🥉 3rd Place ($10)</span>
-                    <span className="font-bold" style={{ color: '#93c5fd' }}>${thirdAmt.toLocaleString()} $CRSH</span>
+                    <span className="font-bold" style={{ color: '#fdba74' }}>🥉 3rd Place</span>
+                    <span className="font-bold" style={{ color: '#93c5fd' }}>{thirdAmt.toLocaleString()} ARB</span>
                   </div>
                   {/* Batches */}
                   <div className="flex items-center justify-between p-2 rounded-lg" style={{ background: 'rgba(2, 6, 23, 0.6)', border: '1px solid rgba(59, 130, 246, 0.15)' }}>
-                    <span className="font-bold" style={{ color: '#cbd5e1' }}>4th–10th Place ($8 each)</span>
-                    <span className="font-bold" style={{ color: '#93c5fd' }}>${per4to10.toLocaleString()} $CRSH each</span>
+                    <span className="font-bold" style={{ color: '#cbd5e1' }}>4th–10th Place</span>
+                    <span className="font-bold" style={{ color: '#93c5fd' }}>{per4to10.toLocaleString()} ARB each</span>
                   </div>
                   <div className="flex items-center justify-between p-2 rounded-lg" style={{ background: 'rgba(2, 6, 23, 0.6)', border: '1px solid rgba(59, 130, 246, 0.15)' }}>
-                    <span className="font-bold" style={{ color: '#cbd5e1' }}>11th–15th Place ($5 each)</span>
-                    <span className="font-bold" style={{ color: '#93c5fd' }}>${per11to15.toLocaleString()} $CRSH each</span>
+                    <span className="font-bold" style={{ color: '#cbd5e1' }}>11th–15th Place</span>
+                    <span className="font-bold" style={{ color: '#93c5fd' }}>{per11to15.toLocaleString()} ARB each</span>
                   </div>
                 </div>
               </div>
               
               <div className="text-center">
                 <p className="text-xs mb-2" style={{ color: '#94a3b8' }}>⏰ Rewards distributed Weekly at midnight UTC</p>
-                <p className="text-xs" style={{ color: '#64748b' }}>Pool: $100 worth of $CRSH</p>
+                <p className="text-xs" style={{ color: '#64748b' }}>Pool: 200 ARB</p>
               </div>
             </div>
 
