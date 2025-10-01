@@ -69,6 +69,7 @@ export default function CandyCrushGame({ onBack }: CandyCrushGameProps) {
   const [showShop, setShowShop] = useState(false);
   const [showBoosterPopup, setShowBoosterPopup] = useState(false);
   const [boosterPopupShown, setBoosterPopupShown] = useState(false);
+  const [boosterBusy, setBoosterBusy] = useState(false);
 
   // Add power-ups state
   const [reshuffles, setReshuffles] = useState(1);
@@ -4278,9 +4279,11 @@ Come for my spot or stay mid 😏🏆${improvementText}`;
           {totalReshuffles > 0 && (
             <button
               onClick={() => {
+                if (boosterBusy) return;
                 if (reshuffleGridRef.current) {
                   try {
                     setReshuffleError(null); // Clear any previous errors
+                    setBoosterBusy(true);
                     reshuffleGridRef.current();
                     
                     // Use game boosters first, then database boosters
@@ -4291,6 +4294,8 @@ Come for my spot or stay mid 😏🏆${improvementText}`;
                       // Update database immediately
                       updateDatabaseBoosters('shuffle', 1);
                     }
+                    // Re-enable after animation/cascade likely completes
+                    setTimeout(() => setBoosterBusy(false), 1600);
                   } catch (error) {
                     console.error('Reshuffle failed:', error);
                     setReshuffleError('Reshuffle failed, but grid was updated');
@@ -4303,6 +4308,7 @@ Come for my spot or stay mid 😏🏆${improvementText}`;
                     }
                     // Clear error after 3 seconds
                     setTimeout(() => setReshuffleError(null), 3000);
+                    setTimeout(() => setBoosterBusy(false), 1200);
                   }
                 } else {
                   setReshuffleError('Reshuffle not available yet');
@@ -4332,7 +4338,9 @@ Come for my spot or stay mid 😏🏆${improvementText}`;
                 // minWidth: '140px',
                 justifyContent: 'center',
                 position: 'relative',
-                overflow: 'hidden'
+                overflow: 'hidden',
+                opacity: boosterBusy ? 0.6 : 1,
+                pointerEvents: boosterBusy ? 'none' : 'auto'
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.transform = 'translateY(-4px) scale(1.05)';
@@ -4404,9 +4412,11 @@ Come for my spot or stay mid 😏🏆${improvementText}`;
           {totalPartyPoppers > 0 && (
             <button
               onClick={() => {
+                if (boosterBusy) return;
                 if (partyPopperRef.current) {
                   try {
                     setPartyPopperError(null); // Clear any previous errors
+                    setBoosterBusy(true);
                     partyPopperRef.current();
                     
                     // Use game boosters first, then database boosters
@@ -4417,6 +4427,8 @@ Come for my spot or stay mid 😏🏆${improvementText}`;
                       // Update database immediately
                       updateDatabaseBoosters('partyPopper', 1);
                     }
+                    // Re-enable after effect/cascade window
+                    setTimeout(() => setBoosterBusy(false), 2200);
                   } catch (error) {
                     console.error('Party Popper failed:', error);
                     setPartyPopperError('Party Popper failed');
@@ -4429,6 +4441,7 @@ Come for my spot or stay mid 😏🏆${improvementText}`;
                     }
                     // Clear error after 3 seconds
                     setTimeout(() => setPartyPopperError(null), 3000);
+                    setTimeout(() => setBoosterBusy(false), 1500);
                   }
                 } else {
                   setPartyPopperError('Party Popper not available yet');
@@ -4458,7 +4471,9 @@ Come for my spot or stay mid 😏🏆${improvementText}`;
                 // minWidth: '140px',
                 justifyContent: 'center',
                 position: 'relative',
-                overflow: 'hidden'
+                overflow: 'hidden',
+                opacity: boosterBusy ? 0.6 : 1,
+                pointerEvents: boosterBusy ? 'none' : 'auto'
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.transform = 'translateY(-4px) scale(1.05)';
