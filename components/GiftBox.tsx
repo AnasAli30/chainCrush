@@ -17,7 +17,7 @@ interface GiftBoxProps {
 }
 
 interface GiftBoxReward {
-  tokenType: 'arb' | 'pepe' | 'crsh' | 'none';
+  tokenType: 'arb' | 'pepe' | 'crsh' | 'boop' | 'none';
   amount: number;
   amountInWei?: string;
   signature?: string;
@@ -197,7 +197,7 @@ export default function GiftBox({ onClose, onClaimComplete }: GiftBoxProps) {
       localStorage.setItem('giftBoxClaims', JSON.stringify(existingClaims));
       
       // Update total rewards
-      const existingTotals = JSON.parse(localStorage.getItem('giftBoxTotals') || '{"arb": 0, "pepe": 0, "crsh": 0, "totalClaims": 0}');
+      const existingTotals = JSON.parse(localStorage.getItem('giftBoxTotals') || '{"arb": 0, "pepe": 0, "boop": 0, "crsh": 0, "totalClaims": 0}');
       existingTotals.totalClaims += 1;
       
       if (reward.tokenType !== 'none') {
@@ -254,7 +254,7 @@ export default function GiftBox({ onClose, onClaimComplete }: GiftBoxProps) {
     }
   }, [claimError, claimErrorObj, isClaiming]);
 
-  const getTokenAddress = (tokenType: 'arb' | 'pepe' | 'crsh' | 'none'): string => {
+  const getTokenAddress = (tokenType: 'arb' | 'pepe' | 'crsh' | 'boop' | 'none'): string => {
     switch (tokenType) {
       case 'arb':
         return '0x912CE59144191C1204E64559FE8253a0e49E6548';
@@ -262,6 +262,8 @@ export default function GiftBox({ onClose, onClaimComplete }: GiftBoxProps) {
         return '0x25d887Ce7a35172C62FeBFD67a1856F20FaEbB00';
       case 'crsh':
         return '0xe461003E78A7bF4F14F0D30b3ac490701980aB07';
+      case 'boop':
+        return '0x13A7DeDb7169a17bE92B0E3C7C2315B46f4772B3';
       case 'none':
         throw new Error('Cannot get token address for "none" type');
       default:
@@ -269,7 +271,7 @@ export default function GiftBox({ onClose, onClaimComplete }: GiftBoxProps) {
     }
   };
 
-  const getTokenInfo = (tokenType: 'arb' | 'pepe' | 'crsh' | 'none') => {
+  const getTokenInfo = (tokenType: 'arb' | 'pepe' | 'crsh' | 'boop' | 'none') => {
     switch (tokenType) {
       case 'arb':
         return { name: '$ARB', color: 'text-blue-400', icon: '/candy/arb.png' };
@@ -277,6 +279,8 @@ export default function GiftBox({ onClose, onClaimComplete }: GiftBoxProps) {
         return { name: '$PEPE', color: 'text-green-400', icon: '/candy/2.png' };
       case 'crsh':
         return { name: '$CRSH', color: 'text-purple-400', icon: '/images/icon.jpg' };
+      case 'boop':
+        return { name: '$BOOP', color: 'text-pink-400', icon: '/candy/1.png' };
       case 'none':
         return { name: 'Better Luck Next Time!', color: 'text-gray-400', icon: '😔' };
       default:

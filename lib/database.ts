@@ -71,7 +71,7 @@ export interface GameSession {
 export interface GiftBoxClaim {
   userAddress: string;
   fid?: number;
-  tokenType: 'arb' | 'pepe' | 'crsh' | 'none';
+  tokenType: 'arb' | 'pepe' | 'crsh' | 'boop' | 'none';
   amount: number;
   timestamp: number;
   signature?: string;
@@ -898,7 +898,7 @@ export async function canUserSeeGiftBox(userAddress: string, fid?: number): Prom
 }
 
 export async function generateGiftBoxReward(score: number = 0): Promise<{
-  tokenType: 'arb' | 'pepe' | 'crsh' | 'none';
+  tokenType: 'arb' | 'pepe' | 'crsh' | 'boop' | 'none';
   amount: number;
 }> {
   // Calculate "better luck next time" probability based on score
@@ -925,20 +925,25 @@ export async function generateGiftBoxReward(score: number = 0): Promise<{
     return { tokenType: 'none', amount: 0 };
   }
   
-  // Remaining chance of getting a token (distributed equally among the 3 tokens)
+  // Remaining chance of getting a token (distributed equally among the 4 tokens)
   const tokenRandom = Math.random();
-  const tokenChance = (1 - betterLuckProbability) / 3; // Equal distribution among 3 tokens
+  const tokenChance = (1 - betterLuckProbability) / 4; // Equal distribution among 4 tokens
   
   if (tokenRandom < tokenChance) {
-    // ARB: 0.025 - 0.075 (halved from 0.05 - 0.15)
-    const arbAmount = 0.03 + (Math.random() * 0.05);
+    // ARB: doubled amount
+    const arbAmount = 2 * (0.03 + (Math.random() * 0.05));
     console.log(`🎁 Gift Box: ARB reward! (${(tokenChance * 100).toFixed(1)}% chance) - Amount: ${arbAmount.toFixed(6)} - Score: ${score.toLocaleString()}`);
     return { tokenType: 'arb', amount: parseFloat(arbAmount.toFixed(6)) };
   } else if (tokenRandom < tokenChance * 2) {
-    // PEPE: 2236 - 6778 (halved from 4473 - 13557)
-    const pepeAmount = 2236 + Math.floor(Math.random() * (3778 - 1236 + 1));
+    // PEPE: doubled amount
+    const pepeAmount = 2 * (2236 + Math.floor(Math.random() * (3778 - 1236 + 1)));
     console.log(`🎁 Gift Box: PEPE reward! (${(tokenChance * 100).toFixed(1)}% chance) - Amount: ${pepeAmount.toLocaleString()} - Score: ${score.toLocaleString()}`);
     return { tokenType: 'pepe', amount: pepeAmount };
+  } else if (tokenRandom < tokenChance * 3) {
+    // BOOP: doubled amount
+    const boopAmount = 2 * (500 + Math.floor(Math.random() * (1500 - 500 + 1)));
+    console.log(`🎁 Gift Box: BOOP reward! (${(tokenChance * 100).toFixed(1)}% chance) - Amount: ${boopAmount.toLocaleString()} - Score: ${score.toLocaleString()}`);
+    return { tokenType: 'boop', amount: boopAmount };
   } else {
     // CRSH: 80000 - 130000
     const crshAmount = 80000 + Math.floor(Math.random() * (130000 - 80000 + 1));
@@ -949,7 +954,7 @@ export async function generateGiftBoxReward(score: number = 0): Promise<{
 
 export async function claimGiftBox(userAddress: string, fid?: number): Promise<{
   success: boolean;
-  tokenType: 'arb' | 'pepe' | 'crsh' | 'none';
+  tokenType: 'arb' | 'pepe' | 'crsh' | 'boop' | 'none';
   amount: number;
   amountInWei?: string;
   signature?: string;
@@ -1106,7 +1111,7 @@ export async function claimGiftBox(userAddress: string, fid?: number): Promise<{
   };
 }
 
-function getTokenAddress(tokenType: 'arb' | 'pepe' | 'crsh' | 'none'): string {
+function getTokenAddress(tokenType: 'arb' | 'pepe' | 'crsh' | 'boop' | 'none'): string {
   // These should match your actual token contract addresses
   switch (tokenType) {
     case 'arb':
@@ -1115,6 +1120,8 @@ function getTokenAddress(tokenType: 'arb' | 'pepe' | 'crsh' | 'none'): string {
       return '0x25d887Ce7a35172C62FeBFD67a1856F20FaEbB00'; // PEPE token address
     case 'crsh':
       return '0xe461003E78A7bF4F14F0D30b3ac490701980aB07';
+    case "boop":
+      return '0x13A7DeDb7169a17bE92B0E3C7C2315B46f4772B3'
     case 'none':
       throw new Error('Cannot get token address for "none" type');
     default:
@@ -1133,6 +1140,7 @@ export async function getUserGiftBoxStats(userAddress: string, fid?: number): Pr
   totalClaims: number;
   totalArb: number;
   totalPepe: number;
+  totalBoop: number;
   totalCrsh: number;
   claimsToday: number;
   remainingClaims: number;
@@ -1171,10 +1179,12 @@ export async function getUserGiftBoxStats(userAddress: string, fid?: number): Pr
   let totalArb = 0;
   let totalPepe = 0;
   let totalCrsh = 0;
+  let totalBoop = 0;
   
   allClaims.forEach(claim => {
     if (claim.tokenType === 'arb') totalArb += claim.amount;
     else if (claim.tokenType === 'pepe') totalPepe += claim.amount;
+    else if (claim.tokenType === 'boop') totalBoop += claim.amount;
     else if (claim.tokenType === 'crsh') totalCrsh += claim.amount;
   });
   
@@ -1182,6 +1192,7 @@ export async function getUserGiftBoxStats(userAddress: string, fid?: number): Pr
     totalClaims: allClaims.length,
     totalArb,
     totalPepe,
+    totalBoop,
     totalCrsh,
     claimsToday,
     remainingClaims: Math.max(0, GIFT_BOXES_PER_DAY - claimsToday),
