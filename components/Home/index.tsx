@@ -702,7 +702,7 @@ export function Demo() {
             <StatsCard 
               icon={faCoins} 
               title="Rewards Pool" 
-              value="150$ CRSH" 
+              value="200 ARB"
               trend="LIVE" 
               color="from-purple-500 via-cyan-400 to-green-400"
             />
