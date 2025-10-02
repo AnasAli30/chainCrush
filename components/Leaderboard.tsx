@@ -741,31 +741,31 @@ export default function Leaderboard() {
                   {/* Top 3 distinct */}
                   <div className="flex items-center justify-between p-2 rounded-lg" style={{ background: 'rgba(2, 6, 23, 0.6)', border: '1px solid rgba(59, 130, 246, 0.15)' }}>
                     <span className="font-bold" style={{ color: '#fde68a' }}>🥇 1st Place ($15)</span>
-                    <span className="font-bold" style={{ color: '#93c5fd' }}>${firstAmt.toLocaleString()} $CRSH</span>
+                    <span className="font-bold" style={{ color: '#93c5fd' }}>${firstAmt.toLocaleString()} ARB</span>
                   </div>
                   <div className="flex items-center justify-between p-2 rounded-lg" style={{ background: 'rgba(2, 6, 23, 0.6)', border: '1px solid rgba(59, 130, 246, 0.15)' }}>
                     <span className="font-bold" style={{ color: '#e5e7eb' }}>🥈 2nd Place ($10)</span>
-                    <span className="font-bold" style={{ color: '#93c5fd' }}>${secondAmt.toLocaleString()} $CRSH</span>
+                    <span className="font-bold" style={{ color: '#93c5fd' }}>${secondAmt.toLocaleString()} ARB</span>
                   </div>
                   <div className="flex items-center justify-between p-2 rounded-lg" style={{ background: 'rgba(2, 6, 23, 0.6)', border: '1px solid rgba(59, 130, 246, 0.15)' }}>
                     <span className="font-bold" style={{ color: '#fdba74' }}>🥉 3rd Place ($10)</span>
-                    <span className="font-bold" style={{ color: '#93c5fd' }}>${thirdAmt.toLocaleString()} $CRSH</span>
+                    <span className="font-bold" style={{ color: '#93c5fd' }}>${thirdAmt.toLocaleString()} ARB</span>
                   </div>
                   {/* Batches */}
                   <div className="flex items-center justify-between p-2 rounded-lg" style={{ background: 'rgba(2, 6, 23, 0.6)', border: '1px solid rgba(59, 130, 246, 0.15)' }}>
                     <span className="font-bold" style={{ color: '#cbd5e1' }}>4th–10th Place ($8 each)</span>
-                    <span className="font-bold" style={{ color: '#93c5fd' }}>${per4to10.toLocaleString()} $CRSH each</span>
+                    <span className="font-bold" style={{ color: '#93c5fd' }}>${per4to10.toLocaleString()} ARB each</span>
                   </div>
                   <div className="flex items-center justify-between p-2 rounded-lg" style={{ background: 'rgba(2, 6, 23, 0.6)', border: '1px solid rgba(59, 130, 246, 0.15)' }}>
                     <span className="font-bold" style={{ color: '#cbd5e1' }}>11th–15th Place ($5 each)</span>
-                    <span className="font-bold" style={{ color: '#93c5fd' }}>${per11to15.toLocaleString()} $CRSH each</span>
+                    <span className="font-bold" style={{ color: '#93c5fd' }}>${per11to15.toLocaleString()} ARB each</span>
                   </div>
                 </div>
               </div>
               
               <div className="text-center">
                 <p className="text-xs mb-2" style={{ color: '#94a3b8' }}>⏰ Rewards distributed Weekly at midnight UTC</p>
-                <p className="text-xs" style={{ color: '#64748b' }}>Pool: $100 worth of $CRSH</p>
+                <p className="text-xs" style={{ color: '#64748b' }}>Pool: $100 worth of ARB</p>
               </div>
             </div>
 
