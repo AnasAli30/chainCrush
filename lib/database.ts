@@ -939,17 +939,12 @@ export async function generateGiftBoxReward(score: number = 0): Promise<{
     const pepeAmount = 2 * (2236 + Math.floor(Math.random() * (3778 - 1236 + 1)));
     console.log(`🎁 Gift Box: PEPE reward! (${(tokenChance * 100).toFixed(1)}% chance) - Amount: ${pepeAmount.toLocaleString()} - Score: ${score.toLocaleString()}`);
     return { tokenType: 'pepe', amount: pepeAmount };
-  } else if (tokenRandom < tokenChance * 3) {
+  } else{
     // BOOP: doubled amount
     const boopAmount = 2 * (500 + Math.floor(Math.random() * (1500 - 500 + 1)));
     console.log(`🎁 Gift Box: BOOP reward! (${(tokenChance * 100).toFixed(1)}% chance) - Amount: ${boopAmount.toLocaleString()} - Score: ${score.toLocaleString()}`);
     return { tokenType: 'boop', amount: boopAmount };
-  } else {
-    // CRSH: 80000 - 130000
-    const crshAmount = 80000 + Math.floor(Math.random() * (130000 - 80000 + 1));
-    console.log(`🎁 Gift Box: CRSH reward! (${(tokenChance * 100).toFixed(1)}% chance) - Amount: ${crshAmount.toLocaleString()} - Score: ${score.toLocaleString()}`);
-    return { tokenType: 'crsh', amount: crshAmount };
-  }
+  } 
 }
 
 export async function claimGiftBox(userAddress: string, fid?: number): Promise<{
