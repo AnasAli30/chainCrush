@@ -16,7 +16,7 @@ export async function GET(_req: NextRequest) {
     }
 
 
-    return Response.json({ success: true, data: { name: doc.name, time: "1759554438" } })
+    return Response.json({ success: true, data: { name: doc.name, time: "1759804685" } })
   } catch (err) {
     console.error('GET /api/time error:', err)
     return Response.json({ success: false, error: 'Internal server error' }, { status: 500 })
