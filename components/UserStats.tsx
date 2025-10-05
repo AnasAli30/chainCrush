@@ -92,6 +92,12 @@ export default function UserStats() {
   } | null>(null);
   const [hasFollowed, setHasFollowed] = useState<boolean>(false);
   const [followLoading, setFollowLoading] = useState<boolean>(false);
+  const [miniAppLoading, setMiniAppLoading] = useState(false);
+  const [miniAppRewardInfo, setMiniAppRewardInfo] = useState<{
+    canClaim: boolean;
+    timeUntilNextMiniApp: number;
+    lastMiniAppTime?: number;
+  } | null>(null);
 
   // Get best score from localStorage
   const getBestScoreFromStorage = () => {
@@ -468,6 +474,54 @@ localStorage.setItem('giftBoxTotals', JSON.stringify({
     }
   };
 
+  // Check mini app reward eligibility
+  const checkMiniAppRewardEligibility = async () => {
+    if (!address || !context?.user?.fid) return;
+    
+    try {
+      const response = await authenticatedFetch(`/api/mini-app-reward?userAddress=${address}&fid=${context.user.fid}`);
+      const result = await response.json();
+      
+      if (result.success) {
+        setMiniAppRewardInfo({
+          canClaim: result.canClaim,
+          timeUntilNextMiniApp: result.timeUntilNextMiniApp,
+          lastMiniAppTime: result.lastMiniAppTime
+        });
+      }
+    } catch (error) {
+      console.error('Error checking mini app reward eligibility:', error);
+    }
+  };
+
+  // Claim mini app reward
+  const claimMiniAppReward = async () => {
+    if (!address || !context?.user?.fid) return;
+    
+    try {
+      const response = await authenticatedFetch('/api/mini-app-reward', {
+        method: 'POST',
+        body: JSON.stringify({
+          userAddress: address,
+          fid: context.user.fid
+        })
+      });
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        // Refresh mini app reward info
+        await checkMiniAppRewardEligibility();
+        // Show success message or update UI
+        console.log('Mini app reward claimed successfully!');
+      } else {
+        console.error('Failed to claim mini app reward:', result.error);
+      }
+    } catch (error) {
+      console.error('Error claiming mini app reward:', error);
+    }
+  };
+
   // Share stats function using Farcaster ComposerCast
   const shareStats = async () => {
     if (!actions) {
@@ -543,6 +597,32 @@ localStorage.setItem('giftBoxTotals', JSON.stringify({
       console.error('Failed to share stats:', error);
     } finally {
       setSharing(false);
+    }
+  };
+
+  // Open mini app function
+  const openMiniApp = async () => {
+    if (!actions) {
+      console.error('Farcaster actions not available');
+      return;
+    }
+
+    setMiniAppLoading(true);
+    try {
+      // Import the SDK dynamically
+      const { sdk } = await import("@farcaster/miniapp-sdk");
+      
+      await sdk.actions.openMiniApp({
+        url: "https://farcaster.xyz/miniapps/q9eJI4VJb8Dl/wagmi-blaster"
+      });
+      
+      // Claim mini app reward after successful opening
+      await claimMiniAppReward();
+      
+    } catch (error) {
+      console.error('Failed to open mini app:', error);
+    } finally {
+      setMiniAppLoading(false);
     }
   };
 
@@ -655,6 +735,7 @@ localStorage.setItem('giftBoxTotals', JSON.stringify({
           fetchEthBalance(),
           fetchNftBalance(),
           checkShareRewardEligibility(),
+          checkMiniAppRewardEligibility(),
           getGiftBoxStatsFromAPI(),
           checkFollowStatus()
         ]);
@@ -983,6 +1064,41 @@ localStorage.setItem('giftBoxTotals', JSON.stringify({
                     </div>
                   )}
         </button>
+        </div>
+
+        {/* Mini App Button */}
+        <div className='rounded-[13px] mt-4' style={{width:"100%",border:"4px #ff6b35 solid"}}>
+          <button
+            onClick={openMiniApp}
+            disabled={miniAppLoading || (miniAppRewardInfo?.canClaim === false)}
+            className="flex flex-col items-center justify-center space-y-1 text-orange-600 bg-white px-3 py-3 rounded-[10px] text-sm font-medium hover:bg-gray-100 transition-colors disabled:opacity-50 w-full text-center"
+          >
+            <div className="flex items-center space-x-2">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none">
+                <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="#ff6b35" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M2 17L12 22L22 17" stroke="#ff6b35" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M2 12L12 17L22 12" stroke="#ff6b35" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              <span>
+                {miniAppLoading ? 'Opening...' : 'Open Mini App'}
+              </span>
+            </div>
+            
+            {/* Mini App Reward Info integrated in button */}
+            {miniAppRewardInfo && (
+              <div className="text-base">
+                {miniAppRewardInfo.canClaim ? (
+                  <div className="text-green-600">
+                    🎁 Earn 3x daily reward in this for 24 hour limited!
+                  </div>
+                ) : (
+                  <div className="text-yellow-600">
+                    ⏰ Next mini app claim in {Math.ceil(miniAppRewardInfo.timeUntilNextMiniApp / (1000 * 60 * 60))}h
+                  </div>
+                )}
+              </div>
+            )}
+          </button>
         </div>
 
         {/* Follow Button - Only show if user hasn't followed yet */}
