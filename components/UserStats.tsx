@@ -613,8 +613,12 @@ localStorage.setItem('giftBoxTotals', JSON.stringify({
       const { sdk } = await import("@farcaster/miniapp-sdk");
       
       await sdk.actions.openMiniApp({
-        url: "https://farcaster.xyz/miniapps/q9eJI4VJb8Dl/wagmi-blaster"
+        url: "https://farcaster.xyz/miniapps/-T_OQBmVvoW2/monad-realm"
       });
+
+      // actions.openMiniApp({
+      //   url: "https://farcaster.xyz/miniapps/-T_OQBmVvoW2/monad-realm"
+      // });
       
       // Claim mini app reward after successful opening
       await claimMiniAppReward();
