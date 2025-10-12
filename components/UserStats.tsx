@@ -613,7 +613,7 @@ localStorage.setItem('giftBoxTotals', JSON.stringify({
       const { sdk } = await import("@farcaster/miniapp-sdk");
       
       await sdk.actions.openMiniApp({
-        url: "https://farcaster.xyz/miniapps/-T_OQBmVvoW2/monad-realm"
+        url: "https://farcaster.xyz/miniapps/cFGpvpDI-nDJ/base-jump"
       });
 
       // actions.openMiniApp({
