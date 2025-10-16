@@ -3,7 +3,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { createAppKit } from '@reown/appkit/react'
 import { WagmiAdapter } from '@reown/appkit-adapter-wagmi'
-import { base } from 'viem/chains'
+import { arbitrum } from 'viem/chains'
 import { WagmiProvider } from 'wagmi'
 import { farcasterMiniApp as miniAppConnector } from '@farcaster/miniapp-wagmi-connector'
 
@@ -12,7 +12,7 @@ const projectId = process.env.NEXT_PUBLIC_REOWN_PROJECT_ID || 'demo-project-id'
 
 // Set up Wagmi Adapter with Farcaster connector
 const wagmiAdapter = new WagmiAdapter({
-  networks: [base],
+  networks: [arbitrum],
   projectId,
   ssr: true,
   connectors: [
@@ -23,7 +23,7 @@ const wagmiAdapter = new WagmiAdapter({
 // Create AppKit instance
 createAppKit({
   adapters: [wagmiAdapter],
-  networks: [base],
+  networks: [arbitrum],
   projectId,
   metadata: {
     name: 'Chain Crush',
