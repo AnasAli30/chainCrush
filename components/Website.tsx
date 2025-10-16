@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import WaitlistForm from './WaitlistForm'
 import { 
   faCirclePlay, faUsers, faGem, faCoins, faGamepad, faArrowRight, faGift, 
   faShareNodes, faCheckCircle, faTrophy, faChartLine, faLock, faVault,
@@ -1369,6 +1370,17 @@ export default function Website() {
                   </div>
                 </motion.button>
               </motion.div>
+            </motion.div>
+
+            {/* Waitlist Form Section */}
+            <motion.div 
+              className="mt-16 max-w-md mx-auto"
+              initial={{ opacity: 0, y: 50 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.4, duration: 0.8 }}
+            >
+              <WaitlistForm />
             </motion.div>
 
             {/* Social Proof Banner */}
