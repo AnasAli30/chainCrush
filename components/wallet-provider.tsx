@@ -1,20 +1,63 @@
-import { farcasterMiniApp as miniAppConnector } from '@farcaster/miniapp-wagmi-connector'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { http, WagmiProvider, createConfig } from 'wagmi'
-import { arbitrum } from 'wagmi/chains'
+"use client"
 
-export const config = createConfig({
-  chains: [arbitrum],
-  transports: {
-    [arbitrum.id]: http(),
-  },
-  connectors: [miniAppConnector()],
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { createAppKit } from '@reown/appkit/react'
+import { WagmiAdapter } from '@reown/appkit-adapter-wagmi'
+import { arbitrum } from 'viem/chains'
+import { WagmiProvider } from 'wagmi'
+import { farcasterMiniApp as miniAppConnector } from '@farcaster/miniapp-wagmi-connector'
+
+// Get Reown/WalletConnect Project ID from environment or use a default
+const projectId = process.env.NEXT_PUBLIC_REOWN_PROJECT_ID || 'demo-project-id'
+
+// Set up Wagmi Adapter with Farcaster connector
+const wagmiAdapter = new WagmiAdapter({
+  networks: [arbitrum],
+  projectId,
+  ssr: true,
+  connectors: [
+    miniAppConnector(), // Add Farcaster Mini App connector
+  ],
 })
+
+// Create AppKit instance
+createAppKit({
+  adapters: [wagmiAdapter],
+  networks: [arbitrum],
+  projectId,
+  metadata: {
+    name: 'Chain Crush',
+    description: 'Chain Crush Mini App - Play, collect NFTs, and earn rewards!',
+    url: process.env.NEXT_PUBLIC_URL || 'https://chaincrush.fun',
+    icons: ['/images/icon.jpg']
+  },
+  features: {
+    analytics: false, // Disable analytics to prevent extra renders
+    email: false, // Disable email login
+    socials: false, // Disable social logins
+    onramp: false, // Disable on-ramp
+  },
+  themeMode: 'dark',
+  themeVariables: {
+    '--w3m-accent': '#3b99fc',
+    '--w3m-border-radius-master': '16px',
+  },
+  allWallets: 'SHOW', // Show all available wallets
+})
+
+// Export the wagmi config
+// This includes:
+// - Farcaster Mini App connector (for in-app usage)
+// - All wallets supported by Reown AppKit (MetaMask, Coinbase, etc.)
+export const config = wagmiAdapter.wagmiConfig
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      retry: 1,
+      refetchOnWindowFocus: false,
+      refetchOnMount: false,
+      refetchOnReconnect: false,
+      staleTime: 5 * 60 * 1000,
     },
   },
 })

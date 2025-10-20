@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import Phaser from 'phaser';
+import * as Phaser from 'phaser';
 import { APP_URL } from '@/lib/constants';
 import { useMiniAppContext } from '@/hooks/use-miniapp-context';
 import { getPlayerData } from '@/lib/leaderboard';
