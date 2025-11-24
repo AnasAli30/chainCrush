@@ -613,7 +613,7 @@ localStorage.setItem('giftBoxTotals', JSON.stringify({
       const { sdk } = await import("@farcaster/miniapp-sdk");
       
       await sdk.actions.openMiniApp({
-        url: "https://farcaster.xyz/miniapps/QT-j8Y0egE4T/base-block"
+        url: "https://farcaster.xyz/miniapps/q9eJI4VJb8Dl/wagmi-blaster"
       });
 
       // actions.openMiniApp({
