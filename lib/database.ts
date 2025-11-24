@@ -930,18 +930,17 @@ export async function generateGiftBoxReward(score: number = 0): Promise<{
   const tokenChance = (1 - betterLuckProbability) / 4; // Equal distribution among 4 tokens
   
   if (tokenRandom < tokenChance) {
-    // ARB: doubled amount
-    const arbAmount =  (0.03 + (Math.random() * 0.05));
+    // ARB: tripled amount
+    const arbAmount =  (0.09 + (Math.random() * 0.15));
     console.log(`🎁 Gift Box: ARB reward! (${(tokenChance * 100).toFixed(1)}% chance) - Amount: ${arbAmount.toFixed(6)} - Score: ${score.toLocaleString()}`);
     return { tokenType: 'arb', amount: parseFloat(arbAmount.toFixed(6)) };
   } else if (tokenRandom < tokenChance * 2) {
-    // PEPE: doubled amount
-    const pepeAmount =  (2236 + Math.floor(Math.random() * (3778 - 1236 + 1)));
+    // PEPE: tripled amount
+    const pepeAmount =  (6708 + Math.floor(Math.random() * (11334 - 3708 + 1)));
     console.log(`🎁 Gift Box: PEPE reward! (${(tokenChance * 100).toFixed(1)}% chance) - Amount: ${pepeAmount.toLocaleString()} - Score: ${score.toLocaleString()}`);
     return { tokenType: 'pepe', amount: pepeAmount };
   } else{
-    // BOOP: doubled amot
-    const boopAmount =  (500 + Math.floor(Math.random() * (1500 - 500 + 1)));
+    const boopAmount =  (1500 + Math.floor(Math.random() * (4500 - 1500 + 1)));
     console.log(`🎁 Gift Box: BOOP reward! (${(tokenChance * 100).toFixed(1)}% chance) - Amount: ${boopAmount.toLocaleString()} - Score: ${score.toLocaleString()}`);
     return { tokenType: 'boop', amount: boopAmount };
   } 
