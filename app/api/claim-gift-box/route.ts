@@ -11,7 +11,7 @@ function getPusherInstance(): Pusher | null {
 
   // Validate all required credentials are present
   if (!appId || !key || !secret) {
-    console.warn('⚠️ Pusher credentials missing. Notifications will not be sent.');
+    console.warn('⚠️ Pusher credentials missing. Notifications will not be sent.', appId,key,secret,cluster);
     return null;
   }
 
