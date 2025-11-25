@@ -35,6 +35,13 @@ MONGODB_URI=mongodb+srv://username:password@cluster0.mongodb.net/chaincrush?retr
 # Redis Configuration (optional)
 UPSTASH_REDIS_REST_URL=https://your-redis-url.upstash.io
 UPSTASH_REDIS_REST_TOKEN=your-redis-token
+
+# Pusher Configuration (for real-time notifications)
+PUSHER_APP_ID=your-pusher-app-id
+PUSHER_SECRET=your-pusher-secret
+NEXT_PUBLIC_PUSHER_KEY=your-pusher-key
+NEXT_PUBLIC_PUSHER_CLUSTER=us2
+PUSHER_CLUSTER=us2
 ```
 
 ## Development Setup

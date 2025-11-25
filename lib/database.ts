@@ -954,6 +954,9 @@ export async function claimGiftBox(userAddress: string, fid?: number): Promise<{
   signature?: string;
   claimsToday: number;
   remainingClaims: number;
+  username?: string;
+  pfpUrl?: string;
+  score?: number;
 }> {
   const client = await clientPromise;
   const db = client.db('chaincrush');
@@ -972,8 +975,10 @@ export async function claimGiftBox(userAddress: string, fid?: number): Promise<{
     };
   }
   
-  // Get user's best score for reward calculation
+  // Get user's best score for reward calculation and user data
   let userBestScore = 0;
+  let username: string | undefined;
+  let pfpUrl: string | undefined;
   if (fid) {
     try {
       const userGameData = await db.collection('gameScores').findOne(
@@ -981,6 +986,8 @@ export async function claimGiftBox(userAddress: string, fid?: number): Promise<{
         { sort: { score: -1 } }
       );
       userBestScore = userGameData?.currentSeasonScore || 0;
+      username = userGameData?.username;
+      pfpUrl = userGameData?.pfpUrl;
       console.log(`🎯 User best score for gift box calculation: ${userBestScore.toLocaleString()}`);
     } catch (error) {
       console.log('⚠️ Error getting user score for gift box, using 0:', error);
@@ -1101,7 +1108,10 @@ export async function claimGiftBox(userAddress: string, fid?: number): Promise<{
     amountInWei: reward.tokenType !== 'none' ? convertToWei(reward.amount).toString() : '0',
     signature,
     claimsToday: newClaimsInPeriod,
-    remainingClaims: Math.max(0, GIFT_BOXES_PER_DAY - newClaimsInPeriod)
+    remainingClaims: Math.max(0, GIFT_BOXES_PER_DAY - newClaimsInPeriod),
+    username,
+    pfpUrl,
+    score: userBestScore
   };
 }
 

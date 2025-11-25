@@ -1,5 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { claimGiftBox } from '@/lib/database';
+import Pusher from 'pusher';
+
+// Initialize Pusher server instance
+const pusher = new Pusher({
+  appId: process.env.PUSHER_APP_ID || '',
+  key: process.env.NEXT_PUBLIC_PUSHER_KEY || '',
+  secret: process.env.PUSHER_SECRET || '',
+  cluster: process.env.PUSHER_CLUSTER || process.env.NEXT_PUBLIC_PUSHER_CLUSTER || 'ap2',
+  useTLS: true
+});
 
 export async function POST(request: NextRequest) {
   try {
@@ -20,6 +30,28 @@ export async function POST(request: NextRequest) {
         claimsToday: result.claimsToday,
         remainingClaims: result.remainingClaims
       }, { status: 429 });
+    }
+
+    // Trigger Pusher notification if user won a token (not "none")
+    if (result.tokenType !== 'none' && result.amount > 0) {
+      try {
+        await pusher.trigger('Monad-spin', 'win', {
+          username: result.username,
+          address: userAddress,
+          pfpUrl: result.pfpUrl,
+          score: result.score || 0,
+          amount: result.amount,
+          token: result.tokenType
+        });
+        console.log('✅ Pusher notification sent for win:', {
+          username: result.username,
+          token: result.tokenType,
+          amount: result.amount
+        });
+      } catch (pusherError) {
+        console.error('❌ Error sending Pusher notification:', pusherError);
+        // Don't fail the request if Pusher fails
+      }
     }
 
     return NextResponse.json({

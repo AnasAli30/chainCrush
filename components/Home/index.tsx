@@ -24,6 +24,7 @@ import Shop from '../Shop'
 import ShopPage from '../ShopPage'
 import Airdrop from '../Airdrop'
 import TokenLaunchPopup, { FloatingTokenIcon } from '../TokenLaunchPopup'
+import WinNotifications from '../WinNotifications'
 import { useConnect, useAccount, useDisconnect, useWriteContract, useWaitForTransactionReceipt } from 'wagmi'
 import { motion, AnimatePresence, sync } from 'framer-motion'
 import GameLoader from '../GameLoader'
@@ -442,6 +443,9 @@ export function Demo() {
 
   return (
     <div className="min-h-screen overflow-hidden">
+      {/* Win Notifications Bar */}
+      <WinNotifications />
+      
       {/* Token Launch Popup */}
       <TokenLaunchPopup 
         isOpen={showTokenPopup} 
