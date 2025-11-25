@@ -1,5 +1,10 @@
-import type { FrameNotificationDetails } from "@farcaster/frame-sdk";
 import { redis } from "./redis";
+
+// Define FrameNotificationDetails type based on actual usage
+export interface FrameNotificationDetails {
+  url: string;
+  token: string;
+}
 
 const notificationServiceKey = "minikit";
 

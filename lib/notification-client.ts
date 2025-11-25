@@ -1,6 +1,8 @@
-import { getUserNotificationDetails } from "@/lib/notifications";
 import {
-  FrameNotificationDetails,
+  getUserNotificationDetails,
+  type FrameNotificationDetails,
+} from "@/lib/notifications";
+import {
   type SendNotificationRequest,
   sendNotificationResponseSchema,
 } from "@farcaster/frame-sdk";
