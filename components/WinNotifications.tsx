@@ -91,12 +91,8 @@ export default function WinNotifications() {
           animationType: randomAnimation
         }
 
-        setNotifications(prev => [...prev, notification])
-
-        // Auto-remove notification after 8 seconds
-        setTimeout(() => {
-          setNotifications(prev => prev.filter(n => n.id !== notification.id))
-        }, 8000)
+        // Replace previous notification with new one (keep only latest)
+        setNotifications([notification])
       }
     })
 
@@ -169,15 +165,9 @@ export default function WinNotifications() {
             transform: translateX(100%);
             opacity: 0;
           }
-          10% {
-            opacity: 1;
-          }
-          90% {
-            opacity: 1;
-          }
           100% {
-            transform: translateX(-100%);
-            opacity: 0;
+            transform: translateX(0);
+            opacity: 1;
           }
         }
 
@@ -186,15 +176,9 @@ export default function WinNotifications() {
             transform: translateX(-100%);
             opacity: 0;
           }
-          10% {
-            opacity: 1;
-          }
-          90% {
-            opacity: 1;
-          }
           100% {
-            transform: translateX(100%);
-            opacity: 0;
+            transform: translateX(0);
+            opacity: 1;
           }
         }
 
@@ -203,15 +187,9 @@ export default function WinNotifications() {
             transform: translateY(-100%);
             opacity: 0;
           }
-          10% {
-            opacity: 1;
-          }
-          90% {
-            opacity: 1;
-          }
           100% {
-            transform: translateY(100%);
-            opacity: 0;
+            transform: translateY(0);
+            opacity: 1;
           }
         }
 
@@ -220,32 +198,26 @@ export default function WinNotifications() {
             transform: translateY(100%);
             opacity: 0;
           }
-          10% {
-            opacity: 1;
-          }
-          90% {
-            opacity: 1;
-          }
           100% {
-            transform: translateY(-100%);
-            opacity: 0;
+            transform: translateY(0);
+            opacity: 1;
           }
         }
 
         .animate-slide-right-left {
-          animation: slide-right-left 8s ease-in-out forwards;
+          animation: slide-right-left 1s ease-out forwards;
         }
 
         .animate-slide-left-right {
-          animation: slide-left-right 8s ease-in-out forwards;
+          animation: slide-left-right 1s ease-out forwards;
         }
 
         .animate-slide-top-bottom {
-          animation: slide-top-bottom 8s ease-in-out forwards;
+          animation: slide-top-bottom 1s ease-out forwards;
         }
 
         .animate-slide-bottom-top {
-          animation: slide-bottom-top 8s ease-in-out forwards;
+          animation: slide-bottom-top 1s ease-out forwards;
         }
       `}</style>
 
