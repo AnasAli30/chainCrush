@@ -902,7 +902,7 @@ export async function generateGiftBoxReward(score: number = 0): Promise<{
   amount: number;
 }> {
   // Calculate "better luck next time" probability based on score
-  let betterLuckProbability = 0.8; // Default 50%
+  let betterLuckProbability = 0.5; // Default 50%
   
   if (score < 10000) {
     betterLuckProbability = 0.96; // 90% chance for scores under 4000
